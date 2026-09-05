@@ -684,7 +684,6 @@ class QuotationService {
 
       // Return immediately if failed, so we don't broadcast confirmation
       if (paymentData.transactionResult === 'failed') {
-        client.release();
         return { quotationId, status: returnQuotationStatus, message: returnMessage };
       }
     } catch (error) {

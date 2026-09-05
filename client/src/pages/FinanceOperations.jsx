@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 
-const INITIAL_FINANCE_APPROVALS = [
-  { id: 'Q-103', customer: 'CyberNet Systems', amount: 112000, riskScore: 18.20, rep: 'John Sales', status: 'pending_finance_approval', reason: 'Discount 18% requested on high-volume hardware & subscription bundle' },
-];
-
+// Keep the others hardcoded for now, or just leave as is.
 const RECURRING_BILLING_SCHEDULES = [
   { id: 'BS-801', quoteId: 'Q-101', customer: 'Acme Corp', amount: 4250.00, cycle: 'Monthly', nextBillingDate: '2026-10-01', status: 'Active', prorationNotes: 'Standard 1st of month billing' },
   { id: 'BS-802', quoteId: 'Q-105', customer: 'Echo Energy', amount: 12500.00, cycle: 'Quarterly', nextBillingDate: '2026-11-01', status: 'Active', prorationNotes: 'Prorated mid-cycle +10 users added' }
@@ -19,11 +17,46 @@ const CREDIT_NOTES_LOG = [
 export default function FinanceOperations() {
   const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
-  const [approvals, setApprovals] = useState(INITIAL_FINANCE_APPROVALS);
+  const [approvals, setApprovals] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleFinanceAction = (quoteId, action) => {
-    setApprovals(approvals.filter(a => a.id !== quoteId));
-    showNotification('success', `Finance ${action} action recorded for Quote ${quoteId}! Reconciled in accounting ledger.`);
+  useEffect(() => {
+    fetchApprovals();
+  }, []);
+
+  const fetchApprovals = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/approvals/pending');
+      // Finance operations is mainly interested in pending_finance_approval
+      const financeApprovals = res.data?.filter(a => a.status === 'pending_finance_approval') || [];
+      setApprovals(financeApprovals);
+    } catch (err) {
+      console.error('Failed to fetch finance approvals:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFinanceAction = async (quoteId, action) => {
+    let reason = `Finance ${action} action recorded.`;
+    if (action === 'reject') {
+      const input = window.prompt("Enter reason for rejection:");
+      if (input === null) return; // cancelled
+      if (!input.trim()) {
+        showNotification('error', 'Reason is required for rejection.');
+        return;
+      }
+      reason = input.trim();
+    }
+
+    try {
+      await api.post(`/approvals/${quoteId}/action`, { action, reason });
+      showNotification('success', `Finance ${action} action recorded for Quote ${quoteId}! Reconciled in accounting ledger.`);
+      fetchApprovals();
+    } catch (err) {
+      showNotification('error', err.response?.data?.error || 'Failed to process action.');
+    }
   };
 
   return (
@@ -51,32 +84,39 @@ export default function FinanceOperations() {
           </span>
         </div>
 
-        {approvals.length > 0 ? (
+        {loading ? (
+          <div className="p-8 text-center bg-slate-50 border border-dashed border-surface-soft rounded-xl">
+            <i className="fa-solid fa-spinner fa-spin text-primary text-3xl mb-2"></i>
+            <p className="text-slate-700 font-semibold text-sm">Loading queue...</p>
+          </div>
+        ) : approvals.length > 0 ? (
           <div className="space-y-3">
             {approvals.map(app => (
               <div key={app.id} className="border border-purple-200 rounded-xl p-4 bg-purple-50/40 flex flex-wrap justify-between items-center gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <span className="font-mono font-bold text-purple-700 text-sm">{app.id}</span>
-                    <span className="font-bold text-text-main text-sm">{app.customer}</span>
+                    <span className="font-bold text-text-main text-sm">{app.customer_name}</span>
                     <span className="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      Risk: {app.riskScore}%
+                      Risk: {Number(app.blended_risk_score || 0).toFixed(2)}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-600">Rep: <strong>{app.rep}</strong> &bull; Total Value: <strong>{formatMoney(app.amount)}</strong></p>
-                  <p className="text-xs text-purple-900 italic"><i className="fa-solid fa-circle-info mr-1"></i> {app.reason}</p>
+                  <p className="text-xs text-slate-600">Rep: <strong>{app.sales_rep_name}</strong> &bull; Total Value: <strong>{formatMoney(app.total_amount)}</strong></p>
+                  <p className="text-xs text-purple-900 italic">
+                    <i className="fa-solid fa-circle-info mr-1"></i> Awaiting final finance authorization due to high risk profile.
+                  </p>
                 </div>
 
                 <div className="flex space-x-2">
                   <button
-                    onClick={() => handleFinanceAction(app.id, 'Approve')}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-text-main text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors"
+                    onClick={() => handleFinanceAction(app.id, 'approve')}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors"
                   >
                     <i className="fa-solid fa-check mr-1"></i> Authorize Discount
                   </button>
                   <button
-                    onClick={() => handleFinanceAction(app.id, 'Reject')}
-                    className="bg-red-600 hover:bg-red-700 text-text-main text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors"
+                    onClick={() => handleFinanceAction(app.id, 'reject')}
+                    className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors"
                   >
                     Reject
                   </button>
