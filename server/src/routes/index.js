@@ -43,6 +43,7 @@ router.use('/auth', authRoutes);
 router.use('/marketplace', marketplaceRoutes);
 router.use('/products', productRoutes);
 router.use('/quotations', quotationRoutes);
+router.use('/payments', require('./payment.routes'));
 router.use('/approvals', approvalRoutes);
 router.use('/inquiries', inquiryRoutes);
 router.use('/warehouses', warehouseRoutes);

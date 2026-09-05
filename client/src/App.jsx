@@ -21,6 +21,7 @@ import CurrencySettings from './pages/CurrencySettings';
 import PaymentSettings from './pages/PaymentSettings';
 import AdminWorkspace from './pages/AdminWorkspace';
 import FinanceOperations from './pages/FinanceOperations';
+import TransactionHistory from './pages/TransactionHistory';
 import OperationsDashboard from './pages/OperationsDashboard';
 import InquiryList from './pages/InquiryList';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -105,6 +106,7 @@ function App() {
                 <Route path="admin" element={<AdminWorkspace />} />
                 <Route path="payment-settings" element={<PaymentSettings />} />
                 <Route path="finance" element={<FinanceOperations />} />
+                <Route path="transactions" element={<TransactionHistory />} />
                 <Route path="operations" element={<OperationsDashboard />} />
                 {/* Intelligent Redirect */}
                 <Route index element={<AppIndexRedirect />} />

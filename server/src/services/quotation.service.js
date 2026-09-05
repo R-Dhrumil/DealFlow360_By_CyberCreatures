@@ -588,26 +588,27 @@ class QuotationService {
         throw ApiError.conflict('Cannot confirm a rejected quotation.');
       }
 
-      // Handle failed payment scenario
+      let finalPaymentStatus = 'completed';
+      let returnMessage = 'Payment successful.';
+      let returnQuotationStatus = 'closed';
+
       if (paymentData.transactionResult === 'failed') {
+        finalPaymentStatus = 'failed';
         const attempts = (quotation.payment_attempts || 0) + 1;
         if (attempts >= 3) {
-          // Block the quotation
-          await client.query('UPDATE quotations SET status = $1, payment_attempts = $2 WHERE id = $3', ['blocked', attempts, quotationId]);
-          await client.query('COMMIT');
-          return { quotationId, status: 'blocked', message: 'Quotation blocked due to 3 failed payment attempts.' };
+          returnQuotationStatus = 'blocked';
+          returnMessage = 'Quotation blocked due to 3 failed payment attempts.';
         } else {
-          await client.query('UPDATE quotations SET payment_attempts = $1 WHERE id = $2', [attempts, quotationId]);
-          await client.query('COMMIT');
-          return { quotationId, status: quotation.status, message: `Payment failed. You have ${3 - attempts} attempt(s) remaining.` };
+          returnQuotationStatus = quotation.status;
+          returnMessage = `Payment failed. You have ${3 - attempts} attempt(s) remaining.`;
+        }
+      } else {
+        if ((paymentData.paymentMethod || 'cod').toLowerCase() === 'cod') {
+          finalPaymentStatus = 'pending';
         }
       }
 
-      // On successful payment (or default behavior) -> Close quotation
-      await quotationRepository.updateQuotationStatusAndScore(
-        quotationId, 'closed', quotation.blended_risk_score || 0, client
-      );
-
+      // 1. Insert Payment Record
       if (paymentData.paymentMethod) {
         await this.ensurePaymentTable(client);
 
@@ -633,7 +634,6 @@ class QuotationService {
 
         const normalizedType = (paymentData.paymentType === 'recurring' || paymentData.paymentType === 'subscription-monthly')
           ? 'subscription-monthly'
-
           : 'one-time';
         const rawMethod = (paymentData.paymentMethod || 'cod').toLowerCase();
         const normalizedMethod = (rawMethod === 'cod' || rawMethod.includes('cash')) ? 'cod' : (rawMethod.includes('upi') ? 'upi' : 'manual');
@@ -651,7 +651,7 @@ class QuotationService {
             parseFloat(paymentData.amount) || 0,
             normalizedType,
             normalizedMethod,
-            normalizedMethod === 'cod' ? 'pending' : 'completed'
+            finalPaymentStatus
           ]);
         } catch (insertErr) {
           console.warn('Payment record insert notice:', insertErr.message);
@@ -659,14 +659,34 @@ class QuotationService {
             await client.query(`
               INSERT INTO payments (id, quotation_id, amount, payment_method, status)
               VALUES ($1, $2, $3, $4, $5)
-            `, [paymentId, quotationId, parseFloat(paymentData.amount) || 0, normalizedMethod, normalizedMethod === 'cod' ? 'pending' : 'completed']);
+            `, [paymentId, quotationId, parseFloat(paymentData.amount) || 0, normalizedMethod, finalPaymentStatus]);
           } catch (fallbackErr) {
             console.warn('Payment record fallback notice:', fallbackErr.message);
           }
         }
       }
 
+      // 2. Update Quotation Status
+      if (paymentData.transactionResult === 'failed') {
+        const attempts = (quotation.payment_attempts || 0) + 1;
+        if (returnQuotationStatus === 'blocked') {
+          await client.query('UPDATE quotations SET status = $1, payment_attempts = $2 WHERE id = $3', ['blocked', attempts, quotationId]);
+        } else {
+          await client.query('UPDATE quotations SET payment_attempts = $1 WHERE id = $2', [attempts, quotationId]);
+        }
+      } else {
+        await quotationRepository.updateQuotationStatusAndScore(
+          quotationId, 'closed', quotation.blended_risk_score || 0, client
+        );
+      }
+
       await client.query('COMMIT');
+
+      // Return immediately if failed, so we don't broadcast confirmation
+      if (paymentData.transactionResult === 'failed') {
+        client.release();
+        return { quotationId, status: returnQuotationStatus, message: returnMessage };
+      }
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;

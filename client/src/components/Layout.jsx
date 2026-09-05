@@ -26,6 +26,7 @@ export default function Layout() {
     { name: 'Finance Hub', path: '/app/finance', icon: 'fa-coins', roles: ['finance_manager', 'admin', 'sales_manager'] },
     { name: 'Admin Operations', path: '/app/admin', icon: 'fa-user-gear', roles: ['admin'] },
     { name: 'Payment Settings', path: '/app/payment-settings', icon: 'fa-credit-card', roles: ['admin', 'super_admin', 'finance_manager'] },
+    { name: 'Transaction History', path: '/app/transactions', icon: 'fa-money-check-dollar', roles: ['admin', 'finance_manager', 'sales_manager'] },
     { name: 'Reporting', path: '/app/reporting', icon: 'fa-chart-bar', roles: ['sales_manager', 'finance_manager', 'admin'] },
     { name: 'Global Tenants', path: '/app/superadmin', search: '?tab=tenants', icon: 'fa-globe', roles: ['super_admin'] },
     { name: 'Platform Settings', path: '/app/superadmin', search: '?tab=settings', icon: 'fa-gear', roles: ['super_admin'] },

@@ -56,6 +56,7 @@ const UniversalDashboard = () => {
   const { formatMoney } = useCurrency();
   const formatCurrency = (val, compact = true) => formatMoney(val, { compact });
   const [quotations, setQuotations] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState('');
   const [selectedStage, setSelectedStage] = useState('all');
@@ -161,6 +162,13 @@ const UniversalDashboard = () => {
       setLoading(true);
       const res = await api.get('/quotations');
       setQuotations(res.data || []);
+      
+      if (role === 'admin' || role === 'super_admin' || role === 'finance_manager') {
+        const txRes = await api.get('/payments').catch(() => null);
+        if (txRes?.data?.success) {
+          setTransactions(txRes.data.payments.slice(0, 5) || []);
+        }
+      }
     } catch (err) {
       console.error('Failed to fetch quotations for dashboard:', err);
     } finally {
@@ -860,6 +868,52 @@ const UniversalDashboard = () => {
               </div>
             </div>
           </div>
+          
+          {/* Recent Transactions Widget */}
+          {(role === 'admin' || role === 'super_admin' || role === 'finance_manager') && (
+            <div className="flex flex-col p-4 rounded-2xl bg-white border border-surface-soft shadow-sm overflow-hidden mt-4">
+              <div className="flex items-center justify-between pb-3 border-b border-surface-soft">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="relative flex items-center justify-center w-7 h-7 rounded-xl bg-primary/10 text-primary border border-primary/20 flex-shrink-0">
+                    <i className="fa-solid fa-money-check-dollar text-sm"></i>
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-xs text-text-main truncate">Recent Transactions</h3>
+                    <span className="text-[10px] text-text-muted block truncate">Latest Payment Activity</span>
+                  </div>
+                </div>
+                <Link to="/app/transactions" className="text-[10px] font-bold text-primary hover:underline whitespace-nowrap">View All</Link>
+              </div>
+              
+              <div className="flex flex-col gap-3 pt-3">
+                {transactions.length === 0 ? (
+                  <div className="p-3 rounded-xl bg-border-soft border border-surface-soft text-xs text-text-muted text-center">
+                    No recent transactions.
+                  </div>
+                ) : (
+                  transactions.map((tx) => (
+                    <div key={tx.id} className="p-3 rounded-xl bg-border-soft border border-surface-soft flex flex-col gap-1.5 shadow-2xs overflow-hidden">
+                      <div className="flex items-center justify-between gap-2 min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${tx.status === 'completed' ? 'bg-emerald-500' : tx.status === 'failed' ? 'bg-rose-500' : 'bg-amber-500'}`}></span>
+                          <span className="font-bold text-xs text-text-main truncate" title={tx.customer_name || 'Account'}>
+                            {tx.customer_name || 'Account'}
+                          </span>
+                        </div>
+                        <span className="font-bold text-xs text-text-main">{formatCurrency(tx.amount)}</span>
+                      </div>
+                      <div className="flex justify-between items-center mt-0.5">
+                        <span className="text-[10px] font-mono text-text-muted bg-surface-soft px-1.5 py-0.5 rounded">{tx.quotation_id ? formatQuoteCode(tx.quotation_id) : '-'}</span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${tx.status === 'completed' ? 'bg-emerald-100 text-emerald-700' : tx.status === 'failed' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {tx.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
