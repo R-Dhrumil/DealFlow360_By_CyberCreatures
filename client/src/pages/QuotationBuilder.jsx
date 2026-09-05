@@ -98,7 +98,7 @@ export default function QuotationBuilder() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-slate-50">
+      <div className="flex justify-center items-center h-screen bg-border-soft">
         <i className="fa-solid fa-spinner fa-spin text-primary text-4xl"></i>
       </div>
     );
@@ -110,7 +110,7 @@ export default function QuotationBuilder() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-8 space-y-6">
+    <div className="min-h-screen bg-border-soft p-6 md:p-8 space-y-6">
       <header className="flex flex-wrap justify-between items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-text-main tracking-tight">Quotation Builder</h1>
@@ -127,21 +127,21 @@ export default function QuotationBuilder() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-xl shadow-sm border border-surface-soft p-6">
-            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
-              <h2 className="text-lg font-bold text-slate-800">Order Lines</h2>
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-surface-soft">
+              <h2 className="text-lg font-bold text-text-main">Order Lines</h2>
               
               {/* Overall Live Margin Meter (Section B3 Spec) */}
-              <div className="flex items-center space-x-3 bg-slate-50 px-3 py-1.5 rounded-lg border border-surface-soft">
+              <div className="flex items-center space-x-3 bg-surface-soft/40 px-3 py-1.5 rounded-lg border border-surface-soft">
                 <span className="text-xs text-text-muted font-semibold">Live Order Margin:</span>
                 <span className={`text-sm font-black ${
-                  overallMargin > 35 ? 'text-emerald-600' : overallMargin > 20 ? 'text-amber-600' : 'text-red-600'
+                  overallMargin > 35 ? 'text-emerald-status' : overallMargin > 20 ? 'text-amber-status' : 'text-rose-status'
                 }`}>
                   {overallMargin}%
                 </span>
-                <div className="w-16 bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div className="w-16 bg-surface-soft h-2 rounded-full overflow-hidden">
                   <div 
                     className={`h-full transition-all duration-500 ${
-                      overallMargin > 35 ? 'bg-emerald-500' : overallMargin > 20 ? 'bg-amber-500' : 'bg-red-500'
+                      overallMargin > 35 ? 'bg-emerald-status' : overallMargin > 20 ? 'bg-amber-status' : 'bg-rose-status'
                     }`}
                     style={{ width: `${Math.min(100, Math.max(0, overallMargin))}%` }}
                   ></div>
@@ -150,9 +150,9 @@ export default function QuotationBuilder() {
             </div>
             
             {lines.length === 0 ? (
-              <div className="text-center py-12 bg-slate-50 border-2 border-dashed border-surface-soft rounded-xl">
+              <div className="text-center py-12 bg-surface-soft/20 border-2 border-dashed border-surface-soft rounded-xl">
                 <i className="fa-solid fa-cart-arrow-down text-text-muted text-4xl mb-3"></i>
-                <p className="text-slate-600 font-semibold text-sm">No items in quotation cart.</p>
+                <p className="text-text-main font-semibold text-sm">No items in quotation cart.</p>
                 <p className="text-xs text-text-muted mt-1">Select products from the catalog or click quick add below.</p>
               </div>
             ) : (
@@ -169,11 +169,11 @@ export default function QuotationBuilder() {
                       <th className="pb-3"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-surface-soft">
                     {lines.map((line, idx) => {
                       const netPrice = line.basePrice * (1 - line.discountPercent / 100);
                       return (
-                        <tr key={idx} className="hover:bg-slate-50/80">
+                        <tr key={idx} className="hover:bg-surface-soft/30 transition-colors">
                           <td className="py-3 text-text-main font-semibold text-sm">
                             {line.productName}
                             <span className="text-[10px] text-text-muted block font-normal">{line.category}</span>
@@ -187,7 +187,7 @@ export default function QuotationBuilder() {
                               onChange={(e) => updateLine(idx, 'quantity', parseInt(e.target.value) || 1)}
                             />
                           </td>
-                          <td className="py-3 text-slate-600 text-xs">${line.basePrice.toFixed(2)}</td>
+                          <td className="py-3 text-text-muted text-xs">${line.basePrice.toFixed(2)}</td>
                           <td className="py-3">
                             <input 
                               type="number" 
@@ -203,7 +203,7 @@ export default function QuotationBuilder() {
                             <i className={`fa-solid fa-circle text-xs ${getMarginIndicator(line)}`}></i>
                           </td>
                           <td className="py-3 text-right">
-                            <button onClick={() => removeLine(idx)} className="text-text-muted hover:text-red-500 p-1">
+                            <button onClick={() => removeLine(idx)} className="text-text-muted hover:text-rose-status p-1">
                               <i className="fa-solid fa-trash"></i>
                             </button>
                           </td>
@@ -216,14 +216,14 @@ export default function QuotationBuilder() {
             )}
 
             <div className="mt-6 flex justify-end">
-              <div className="bg-slate-50 p-4 rounded-xl border border-surface-soft min-w-[260px] space-y-2 text-xs">
+              <div className="bg-surface-soft/30 p-4 rounded-xl border border-surface-soft min-w-[260px] space-y-2 text-xs">
                 <div className="flex justify-between text-text-muted">
                   <span>Gross Total:</span>
                   <span className="font-semibold">${lines.reduce((acc, l) => acc + (l.basePrice * l.quantity), 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-text-muted">
                   <span>Total Discount:</span>
-                  <span className="font-semibold text-amber-600">-${(lines.reduce((acc, l) => acc + (l.basePrice * l.quantity), 0) - calculateTotal()).toFixed(2)}</span>
+                  <span className="font-semibold text-amber-status">-${(lines.reduce((acc, l) => acc + (l.basePrice * l.quantity), 0) - calculateTotal()).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm font-black text-text-main border-t border-surface-soft pt-2 mt-2">
                   <span>Final Quote Total:</span>
@@ -271,13 +271,13 @@ export default function QuotationBuilder() {
                         <div className="flex flex-col space-y-1 text-right">
                           <button 
                             onClick={() => addLine(product)}
-                            className="text-xs font-bold text-text-main bg-primary hover:bg-indigo-700 px-3 py-1.5 rounded-lg shadow-sm transition-colors flex items-center justify-center"
+                            className="text-xs font-bold text-on-primary bg-primary hover:bg-primary-dark px-3 py-1.5 rounded-lg shadow-sm transition-colors flex items-center justify-center"
                           >
                             <i className="fa-solid fa-plus mr-1"></i> Add
                           </button>
                           <button 
                             onClick={() => setDismissedUpsells([...dismissedUpsells, product.id])}
-                            className="text-[10px] text-text-muted hover:text-slate-600 pt-1"
+                            className="text-[10px] text-text-muted hover:text-text-main pt-1"
                           >
                             Dismiss
                           </button>
@@ -299,14 +299,14 @@ export default function QuotationBuilder() {
               {products.map(product => (
                 <div 
                   key={product.id} 
-                  className="border border-surface-soft rounded-lg p-3 hover:border-primary/60 hover:bg-slate-50/60 transition-all cursor-pointer group flex justify-between items-center" 
+                  className="border border-surface-soft rounded-lg p-3 hover:border-primary/60 hover:bg-surface-soft/30 transition-all cursor-pointer group flex justify-between items-center" 
                   onClick={() => addLine(product)}
                 >
                   <div>
-                    <h4 className="font-bold text-slate-800 text-xs group-hover:text-primary">{product.name}</h4>
+                    <h4 className="font-bold text-text-main text-xs group-hover:text-primary">{product.name}</h4>
                     <span className="text-[11px] text-text-muted">{product.category} &bull; ${parseFloat(product.base_price).toFixed(2)}</span>
                   </div>
-                  <button className="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-primary group-hover:text-text-main text-text-muted flex items-center justify-center transition-colors">
+                  <button className="w-7 h-7 rounded-lg bg-surface-soft group-hover:bg-primary group-hover:text-on-primary text-text-muted flex items-center justify-center transition-colors">
                     <i className="fa-solid fa-plus text-xs"></i>
                   </button>
                 </div>

@@ -37,11 +37,11 @@ export default function Layout() {
 
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans">
+    <div className="flex h-screen bg-border-soft font-sans">
       {/* Main Sidebar */}
       <aside className="w-64 bg-white text-text-muted flex flex-col print:hidden shadow-lg border-r border-surface-soft">
         <div className="p-4 bg-white border-b border-surface-soft flex items-center space-x-3">
-          <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-text-main shadow-md font-bold text-lg">
+          <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-on-primary shadow-md font-bold text-lg">
             DF
           </div>
           <div>
@@ -63,7 +63,7 @@ export default function Layout() {
                 to={fullTarget}
                 className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all ${
                   isActive 
-                    ? 'bg-purple-600 text-white shadow-md font-semibold' 
+                    ? 'bg-primary text-on-primary shadow-md font-semibold' 
                     : 'text-text-muted hover:bg-surface-soft hover:text-text-main'
                 }`}
               >
@@ -95,7 +95,7 @@ export default function Layout() {
       </aside>
 
       {/* Main Page Area */}
-      <main className="flex-1 overflow-auto bg-slate-50">
+      <main className="flex-1 overflow-auto bg-border-soft">
         <Outlet />
       </main>
     </div>

@@ -22,6 +22,18 @@
   --color-amber-status: #d97706;
   --color-rose-status: #dc2626;
 
+  /* Executive studio slate scale mapped to theme palette */
+  --color-slate-50: #faf2ff;
+  --color-slate-100: #f5e8ff;
+  --color-slate-200: #e2d0f5;
+  --color-slate-300: #d4c1cc;
+  --color-slate-400: #83737c;
+  --color-slate-500: #6b6278;
+  --color-slate-600: #4b4356;
+  --color-slate-700: #352e3b;
+  --color-slate-800: #201925;
+  --color-slate-900: #110d1a;
+
   --font-headline-xl: "Plus Jakarta Sans", sans-serif;
   --font-label-sm: "JetBrains Mono", monospace;
   --font-headline-lg: "Plus Jakarta Sans", sans-serif;
@@ -38,7 +50,7 @@
 }
 
 body {
-  @apply bg-[#f5e8ff] text-[#4b4356] antialiased;
+  @apply bg-border-soft text-text-body antialiased;
   margin: 0;
   padding: 0;
   overscroll-behavior: none;
