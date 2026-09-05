@@ -20,14 +20,14 @@ INSERT INTO users (id, company_id, name, email, password_hash, role) VALUES
 ('u11', 'c1', 'Fiona Finance Mgr', 'financemanager@cybercreatures.com', '$2b$10$7dUTsQ9oFpY7X1/JJOg7FOxA/TR0iL2fKiqD0kOEXkC3Q45q8G2P.', 'finance_manager'),
 ('u6', 'c1', 'J. Rao', 'j.rao@cybercreatures.com', '$2b$10$oyAD0GU22wk712.zDbS/E.FaiijyBrsnOd7w7X0JVZ8XXJOXxmyGS', 'sales_rep'),
 ('u7', 'c1', 'Jim Halpert', 'j.halpert@cybercreatures.com', '$2b$10$oyAD0GU22wk712.zDbS/E.FaiijyBrsnOd7w7X0JVZ8XXJOXxmyGS', 'sales_rep')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- Vertex Users
 INSERT INTO users (id, company_id, name, email, password_hash, role) VALUES 
 ('u8', 'c2', 'Vertex Admin', 'admin@vertex.com', '$2b$10$pD7pRAT.XkYzwIpr/jlzpujw84rgWR98turse0M22P/YSXZ6CMNgm', 'admin'),
 ('u9', 'c2', 'Mike Manager', 'manager@vertex.com', '$2b$10$LDSmhVjVVS3v0pYUnQ4WxO07aLpIo0h6USxnqvySqBKV6LP4eam2i', 'sales_manager'),
 ('u10', 'c2', 'Lisa Rep', 'rep@vertex.com', '$2b$10$oyAD0GU22wk712.zDbS/E.FaiijyBrsnOd7w7X0JVZ8XXJOXxmyGS', 'sales_rep')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- 3. Insert Customers
 INSERT INTO customers (id, name, email, password_hash) VALUES 
@@ -36,7 +36,7 @@ INSERT INTO customers (id, name, email, password_hash) VALUES
 ('cust3', 'Soylent Corp', 'procurement@soylent.com', '$2b$10$1mei/6Yi3zPvmEKKPZIEN.lh9ZUYHsAoDNZO5NSUbxlDNRVunrqaW'),
 ('cust4', 'Delta Systems LLC', 'contact@deltasystems.com', '$2b$10$1mei/6Yi3zPvmEKKPZIEN.lh9ZUYHsAoDNZO5NSUbxlDNRVunrqaW'),
 ('cust5', 'Hyperion Logistics', 'ops@hyperionlogistics.com', '$2b$10$1mei/6Yi3zPvmEKKPZIEN.lh9ZUYHsAoDNZO5NSUbxlDNRVunrqaW')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 -- 4. Insert Products (CyberCreatures - Hardware, Services, Software)
 INSERT INTO products (id, company_id, name, category, base_price, unit, tax_rate, description, is_promoted, margin_percent) VALUES 

@@ -3,9 +3,10 @@ const crypto = require('crypto');
 
 class CustomerRepository {
   async findByEmail(email) {
+    const cleanEmail = (email || '').trim().toLowerCase();
     const result = await db.query(
-      'SELECT * FROM customers WHERE email = $1',
-      [email]
+      'SELECT * FROM customers WHERE LOWER(email) = LOWER($1)',
+      [cleanEmail]
     );
     return result.rows[0] || null;
   }

@@ -60,7 +60,10 @@ const Login = ({ defaultIsSignup = false }) => {
         }
       } else {
         // Unified Login
-        const res = await api.post('/auth/login', { email, password });
+        const res = await api.post('/auth/login', {
+          email: (email || '').trim().toLowerCase(),
+          password: (password || '').trim()
+        });
         if (res.data && res.data.token) {
           localStorage.setItem('token', res.data.token);
           const user = res.data.user;
@@ -82,7 +85,16 @@ const Login = ({ defaultIsSignup = false }) => {
       }
     } catch (err) {
       console.error('Authentication failed:', err);
-      const serverMsg = err.response?.data?.error || err.response?.data?.message || 'Invalid email or password. Please try again.';
+      let serverMsg = 'Invalid email or password. Please try again.';
+      if (!err.response) {
+        serverMsg = 'Cannot reach backend API server. Please verify the DealFlow360 backend is running.';
+      } else if (err.response.status === 429) {
+        serverMsg = 'Too many attempts. Please wait a moment and try again.';
+      } else if (err.response.status >= 500) {
+        serverMsg = err.response?.data?.error || err.response?.data?.details || 'Database or server initializing. Please try again in a few seconds.';
+      } else if (err.response?.data?.error || err.response?.data?.message) {
+        serverMsg = err.response.data.error || err.response.data.message;
+      }
       setError(serverMsg);
     } finally {
       setLoading(false);

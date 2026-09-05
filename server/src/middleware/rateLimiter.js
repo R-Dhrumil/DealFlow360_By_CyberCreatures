@@ -13,7 +13,7 @@ const globalRateLimiter = rateLimit({
 
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 30, // limit login/signup to 30 attempts per 15 mins
+  max: 1000, // generous limit for hackathon dev/testing across shared Wi-Fi
   standardHeaders: true,
   legacyHeaders: false,
   message: {

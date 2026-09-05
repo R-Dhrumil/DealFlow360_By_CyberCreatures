@@ -2,9 +2,10 @@ const db = require('../config/db');
 
 class UserRepository {
   async findByEmail(email) {
+    const cleanEmail = (email || '').trim().toLowerCase();
     const result = await db.query(
-      'SELECT * FROM users WHERE email = $1',
-      [email]
+      'SELECT * FROM users WHERE LOWER(email) = LOWER($1)',
+      [cleanEmail]
     );
     return result.rows[0] || null;
   }
