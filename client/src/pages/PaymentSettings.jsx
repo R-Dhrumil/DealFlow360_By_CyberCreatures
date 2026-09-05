@@ -18,7 +18,15 @@ const PaymentSettings = () => {
     const fetchSettings = async () => {
       try {
         const { data } = await api.get('/companies/payment-settings');
-        setSettings(data);
+        if (data) {
+          setSettings({
+            is_manual_payment_enabled: !!data.is_manual_payment_enabled,
+            is_upi_payment_enabled: !!data.is_upi_payment_enabled,
+            is_cod_enabled: !!data.is_cod_enabled,
+            upi_id: data.upi_id || '',
+            manual_payment_instructions: data.manual_payment_instructions || ''
+          });
+        }
       } catch (err) {
         console.error('Failed to load payment settings', err);
       } finally {
@@ -41,12 +49,13 @@ const PaymentSettings = () => {
     setSaving(true);
     setMessage('');
     try {
-      await api.put('/companies/payment-settings', settings);
-      setMessage('Settings updated successfully!');
-      setTimeout(() => setMessage(''), 3000);
+      const res = await api.put('/companies/payment-settings', settings);
+      setMessage(res.data?.message || 'Settings updated successfully!');
+      setTimeout(() => setMessage(''), 4000);
     } catch (err) {
       console.error('Failed to update settings', err);
-      setMessage('Error saving settings.');
+      const errMsg = err.response?.data?.message || err.response?.data?.error || 'Error saving settings.';
+      setMessage(errMsg);
     } finally {
       setSaving(false);
     }
