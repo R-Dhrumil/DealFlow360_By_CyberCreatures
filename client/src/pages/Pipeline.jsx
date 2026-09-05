@@ -43,8 +43,8 @@ export default function Pipeline() {
     }
   };
 
-  const filteredDeals = deals.filter(d => 
-    d.customer.toLowerCase().includes(filterText.toLowerCase()) || 
+  const filteredDeals = deals.filter(d =>
+    d.customer.toLowerCase().includes(filterText.toLowerCase()) ||
     d.id.toLowerCase().includes(filterText.toLowerCase())
   );
 
@@ -53,7 +53,7 @@ export default function Pipeline() {
       {/* Top Header */}
       <div className="flex flex-wrap justify-between items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-text-main tracking-tight">Deal Pipeline (Kanban)</h1>
+          <h1 className="text-2xl font-bold text-text-main tracking-tight">Deal Pipeline</h1>
           <p className="text-sm text-text-muted">Self-Governing Deal Operations Stage Tracker</p>
         </div>
 
@@ -99,7 +99,7 @@ export default function Pipeline() {
               {/* Deal Cards */}
               <div className="flex-1 space-y-3">
                 {stageDeals.map(deal => (
-                  <div 
+                  <div
                     key={deal.id}
                     className="bg-white rounded-lg p-4 border border-surface-soft shadow-sm hover:shadow-md hover:border-primary-400 transition-all cursor-pointer group"
                   >
@@ -124,14 +124,14 @@ export default function Pipeline() {
                     <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-xs text-text-muted">
                       <span><i className="fa-solid fa-box mr-1"></i> {deal.linesCount} items</span>
                       <div className="flex space-x-1">
-                        <Link 
+                        <Link
                           to={`/app/quote/${deal.rawId || deal.id}`}
                           className="px-2 py-1 bg-slate-100 hover:bg-primary-600 hover:text-text-main rounded text-[11px] font-medium transition-colors"
                         >
                           View
                         </Link>
                         {deal.stage.includes('Approval') && (
-                          <Link 
+                          <Link
                             to="/app/approvals"
                             className="px-2 py-1 bg-amber-500 text-text-main rounded text-[11px] font-semibold hover:bg-amber-600 transition-colors"
                           >
