@@ -1,22 +1,15 @@
 const authService = require('../services/auth.service');
-const ApiResponse = require('../utils/apiResponse');
 
 class AuthController {
-  async login(req, res) {
+  async unifiedLogin(req, res) {
     const { email, password } = req.body;
-    const result = await authService.loginUser(email, password);
+    const result = await authService.unifiedLogin(email, password);
     return res.json(result);
   }
 
-  async customerLogin(req, res) {
-    const { email, password } = req.body;
-    const result = await authService.loginCustomer(email, password);
-    return res.json(result);
-  }
-
-  async customerSignup(req, res) {
-    const { name, email, password } = req.body;
-    const result = await authService.signupCustomer(name, email, password);
+  async unifiedSignup(req, res) {
+    const { accountType, name, email, password, companyName } = req.body;
+    const result = await authService.unifiedSignup(accountType, name, email, password, companyName);
     return res.status(201).json(result);
   }
 }
