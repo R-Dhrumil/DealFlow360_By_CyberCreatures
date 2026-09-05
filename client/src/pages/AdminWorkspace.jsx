@@ -296,31 +296,43 @@ export default function AdminWorkspace() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredProducts.map(p => (
-                    <tr key={p.id} className="hover:bg-purple-50/40 transition-colors">
-                      <td className="p-3 font-mono font-bold text-text-muted">{p.sku || 'SKU-00' + p.id}</td>
-                      <td className="p-3 font-extrabold text-text-main">{p.name}</td>
-                      <td className="p-3">
-                        <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg text-[10px] font-bold">
-                          {p.category}
-                        </span>
-                      </td>
-                      <td className="p-3 text-right font-black text-purple-700">
-                        ${typeof p.base_price === 'number' ? p.base_price.toLocaleString() : p.base_price}
-                        <span className="text-[10px] text-text-muted font-normal block">/ {p.unit || 'unit'}</span>
-                      </td>
-                      <td className="p-3 text-center">
-                        <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px]">
-                          Min {p.min_margin || 25}%
-                        </span>
-                      </td>
-                      <td className="p-3 text-center">
-                        <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-[10px]">
-                          Active
-                        </span>
+                  {filteredProducts.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="p-8 text-center text-text-muted">
+                        <div className="flex flex-col items-center justify-center space-y-2">
+                          <i className="fa-solid fa-box-open text-2xl text-slate-300"></i>
+                          <p className="font-medium text-slate-600">No products in catalog</p>
+                          <p className="text-xs text-text-muted">Use the form to add products for your company over time.</p>
+                        </div>
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    filteredProducts.map(p => (
+                      <tr key={p.id} className="hover:bg-purple-50/40 transition-colors">
+                        <td className="p-3 font-mono font-bold text-text-muted">{p.sku || 'SKU-00' + p.id}</td>
+                        <td className="p-3 font-extrabold text-text-main">{p.name}</td>
+                        <td className="p-3">
+                          <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg text-[10px] font-bold">
+                            {p.category}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right font-black text-purple-700">
+                          ${typeof p.base_price === 'number' ? p.base_price.toLocaleString() : p.base_price}
+                          <span className="text-[10px] text-text-muted font-normal block">/ {p.unit || 'unit'}</span>
+                        </td>
+                        <td className="p-3 text-center">
+                          <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px]">
+                            Min {p.min_margin || 25}%
+                          </span>
+                        </td>
+                        <td className="p-3 text-center">
+                          <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-[10px]">
+                            Active
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
