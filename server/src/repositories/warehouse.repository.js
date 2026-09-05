@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const crypto = require('crypto');
 
 class WarehouseRepository {
   async getStockForProducts(companyId, productIds) {
@@ -29,10 +30,11 @@ class WarehouseRepository {
       await client.query('DELETE FROM fulfillment_splits WHERE quotation_id = $1', [quotationId]);
       
       for (const split of splits) {
+        const splitId = 'split_' + crypto.randomUUID();
         await client.query(
-          `INSERT INTO fulfillment_splits (quotation_id, warehouse_id, quantity, shipment_cost)
-           VALUES ($1, $2, $3, $4)`,
-          [quotationId, split.warehouseId, split.quantity, split.shipmentCost]
+          `INSERT INTO fulfillment_splits (id, quotation_id, warehouse_id, quantity, shipment_cost)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [splitId, quotationId, split.warehouseId, split.quantity, split.shipmentCost]
         );
       }
       await client.query('COMMIT');

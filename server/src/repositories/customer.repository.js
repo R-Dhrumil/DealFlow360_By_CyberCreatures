@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const crypto = require('crypto');
 
 class CustomerRepository {
   async findByEmail(email) {
@@ -10,9 +11,10 @@ class CustomerRepository {
   }
 
   async create(name, email, passwordHash) {
+    const customerId = 'cust_' + crypto.randomUUID();
     const result = await db.query(
-      'INSERT INTO customers (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email, created_at',
-      [name, email, passwordHash]
+      'INSERT INTO customers (id, name, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING id, name, email, created_at',
+      [customerId, name, email, passwordHash]
     );
     return result.rows[0];
   }

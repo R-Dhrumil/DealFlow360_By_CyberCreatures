@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const crypto = require('crypto');
 
 const MOCK_PRODUCTS = [
   {
@@ -57,12 +58,13 @@ class ProductRepository {
 
   async create(companyId, productData) {
     const { name, category, basePrice, unit, description, sku, minMargin } = productData;
+    const productId = 'p_' + crypto.randomUUID();
     try {
       const result = await db.query(
-        `INSERT INTO products (company_id, name, category, base_price, unit, description)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO products (id, company_id, name, category, base_price, unit, description)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING *`,
-        [companyId, name, category, basePrice, unit || 'unit', description || '']
+        [productId, companyId, name, category, basePrice, unit || 'unit', description || '']
       );
       return result.rows[0];
     } catch (err) {

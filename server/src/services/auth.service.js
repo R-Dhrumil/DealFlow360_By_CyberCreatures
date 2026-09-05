@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const userRepository = require('../repositories/user.repository');
@@ -104,17 +105,20 @@ class AuthService {
         const passwordHash = await bcrypt.hash(password, 10);
         const slug = (companyName || name).toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now().toString().slice(-4);
         
+        const companyId = 'c_' + crypto.randomUUID();
+        const userId = 'u_' + crypto.randomUUID();
+
         const companyRes = await db.query(
-          'INSERT INTO companies (name, subdomain_slug) VALUES ($1, $2) RETURNING id, name',
-          [companyName || `${name} Organization`, slug]
+          'INSERT INTO companies (id, name, subdomain_slug) VALUES ($1, $2, $3) RETURNING id, name',
+          [companyId, companyName || `${name} Organization`, slug]
         );
         const company = companyRes.rows[0];
 
         const userRes = await db.query(
-          `INSERT INTO users (company_id, name, email, password_hash, role)
-           VALUES ($1, $2, $3, $4, 'admin')
+          `INSERT INTO users (id, company_id, name, email, password_hash, role)
+           VALUES ($1, $2, $3, $4, $5, 'admin')
            RETURNING id, name, email, role, company_id`,
-          [company.id, name, cleanEmail, passwordHash]
+          [userId, company.id, name, cleanEmail, passwordHash]
         );
         const newUser = userRes.rows[0];
 

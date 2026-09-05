@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const crypto = require('crypto');
 
 class ApprovalRepository {
   async getPendingApprovalsByStatusFilter(companyId, statusFilter) {
@@ -55,10 +56,11 @@ class ApprovalRepository {
   }
 
   async logApprovalAction(quotationId, approverId, action, reason) {
+    const logId = 'appr_' + crypto.randomUUID();
     await db.query(
-      `INSERT INTO approvals_log (quotation_id, approver_id, action, reason)
-       VALUES ($1, $2, $3, $4)`,
-      [quotationId, approverId, action, reason]
+      `INSERT INTO approvals_log (id, quotation_id, approver_id, action, reason)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [logId, quotationId, approverId, action, reason]
     );
   }
 
