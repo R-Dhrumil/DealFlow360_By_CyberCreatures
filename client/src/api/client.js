@@ -21,4 +21,23 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Response interceptor: automatically log out user and redirect to login if unauthorized (401)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      const isAuthEndpoint = error.config?.url?.includes('/auth/login') || error.config?.url?.includes('/auth/signup');
+      if (!isAuthEndpoint) {
+        console.warn('Unauthorized 401 detected — logging out user and clearing local session.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

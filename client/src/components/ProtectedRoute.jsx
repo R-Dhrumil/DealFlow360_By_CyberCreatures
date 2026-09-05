@@ -7,13 +7,24 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
   const userStr = localStorage.getItem('user');
   
   if (!token || !userStr) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     return <Navigate to="/login" replace />;
   }
 
-  const user = JSON.parse(userStr);
+  let user;
+  try {
+    user = JSON.parse(userStr);
+  } catch (e) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    return <Navigate to="/login" replace />;
+  }
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/unauthorized" replace />;
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    return <Navigate to="/login" replace />;
   }
 
   return <Outlet />;
