@@ -10,6 +10,8 @@ const approvalRoutes = require('./approval.routes');
 const warehouseRoutes = require('./warehouse.routes');
 const dashboardRoutes = require('./dashboard.routes');
 const superadminRoutes = require('./superadmin.routes');
+const exportRoutes = require('./export.routes');
+const uploadRoutes = require('./upload.routes');
 
 // Health check endpoint
 router.get('/health', async (req, res) => {
@@ -41,5 +43,7 @@ router.use('/approvals', approvalRoutes);
 router.use('/warehouses', warehouseRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/superadmin', superadminRoutes);
+router.use('/export', exportRoutes);
+router.use('/upload', uploadRoutes);
 
 module.exports = router;

@@ -2,6 +2,7 @@ const app = require('./src/app');
 const config = require('./src/config/environment');
 const { pool } = require('./src/config/db');
 const logger = require('./src/utils/logger');
+const { initSocket } = require('./src/services/socket.service');
 const os = require('os');
 
 const PORT = config.port;
@@ -12,7 +13,6 @@ function getLocalIpAddresses() {
   const addresses = [];
   for (const name of Object.keys(interfaces)) {
     for (const net of interfaces[name]) {
-      // IPv4 and not internal (127.0.0.1)
       if ((net.family === 'IPv4' || net.family === 4) && !net.internal) {
         addresses.push(net.address);
       }
@@ -32,6 +32,9 @@ const server = app.listen(PORT, HOST, () => {
     });
   }
 });
+
+// Initialize WebSockets Real-Time Server
+initSocket(server);
 
 // Graceful Shutdown
 const shutdown = async (signal) => {
