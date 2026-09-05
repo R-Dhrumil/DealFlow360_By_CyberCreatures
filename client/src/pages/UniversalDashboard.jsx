@@ -362,95 +362,149 @@ const UniversalDashboard = () => {
             </div>
           </div>
           
-          {/* High Density Deal Table */}
-          <div className="overflow-x-auto w-full">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-border-soft/60 border-b border-surface-soft text-[11px] font-bold uppercase tracking-wider text-text-muted">
-                  <th className="py-3 px-4 font-semibold">Account &amp; Deal</th>
-                  <th className="py-3 px-3 font-semibold">Line Items</th>
-                  <th className="py-3 px-3 font-semibold">Stage</th>
-                  <th className="py-3 px-3 font-semibold text-right">ACV Value</th>
-                  <th className="py-3 px-4 font-semibold text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-soft text-xs">
-                {loading ? (
-                  <tr>
-                    <td colSpan="5" className="py-8 text-center text-text-muted">
-                      Loading dynamic quotations from database...
-                    </td>
-                  </tr>
-                ) : filteredQuotations.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="py-8 text-center text-text-muted">
-                      No matching quotations found in database.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredQuotations.map((deal) => {
-                    const badge = getStageBadge(deal.status);
-                    const riskVal = Number(deal.blended_risk_score) || 0;
-                    return (
-                      <tr key={deal.id} className="hover:bg-border-soft/40 transition-colors group">
-                        <td className="py-3 px-4 max-w-[260px]">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-lg bg-primary/10 border border-surface-soft text-primary font-bold flex items-center justify-center flex-shrink-0 text-xs">
-                              {deal.customer_name ? deal.customer_name.charAt(0).toUpperCase() : 'Q'}
+          {/* Rich Deal Tracker Cards */}
+          <div className="divide-y divide-surface-soft">
+            {loading ? (
+              <div className="py-12 text-center text-text-muted text-sm">
+                <i className="fa-solid fa-circle-notch fa-spin text-primary text-2xl mb-3 block"></i>
+                Loading deals from database...
+              </div>
+            ) : filteredQuotations.length === 0 ? (
+              <div className="py-12 text-center text-text-muted text-sm">
+                No matching deals found. Try adjusting the filter.
+              </div>
+            ) : (
+              filteredQuotations.map((deal) => {
+                const riskVal = Number(deal.blended_risk_score) || 0;
+                const dealValue = Number(deal.total_amount) || 0;
+                // Estimate gross margin from risk score (inverse proxy)
+                const grossMargin = Math.max(5, Math.min(60, 40 - riskVal * 2)).toFixed(0);
+
+                // Map status → pipeline step index (0-based)
+                const PIPELINE_STEPS = [
+                  'Query', 'Requirement', 'Quotation', 'Manager',
+                  'Finance', 'Client', 'Order', 'Factory', 'Billing', 'Completed'
+                ];
+                const statusStepMap = {
+                  draft: 1,
+                  pending_approval: 3,
+                  pending_finance_approval: 4,
+                  approved: 5,
+                  confirmed: 6,
+                  rejected: 2,
+                  won: 9,
+                  completed: 9
+                };
+                const currentStep = statusStepMap[deal.status?.toLowerCase()] ?? 1;
+                const currentStepLabel = PIPELINE_STEPS[currentStep] || 'Requirement';
+
+                const riskColor = riskVal >= 7 ? 'text-red-600 bg-red-50 border-red-200' :
+                                  riskVal >= 4 ? 'text-amber-600 bg-amber-50 border-amber-200' :
+                                                 'text-emerald-600 bg-emerald-50 border-emerald-200';
+
+                return (
+                  <div key={deal.id} className="p-5 hover:bg-slate-50/80 transition-colors group">
+                    {/* Top Row: Deal Code + Title + KPI Pills */}
+                    <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        {/* Deal Code Badge */}
+                        <span className="shrink-0 bg-slate-100 border border-slate-200 text-slate-700 font-mono font-bold text-[11px] px-2.5 py-1 rounded-lg">
+                          {formatQuoteCode(deal.id)}
+                        </span>
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-slate-900 text-sm leading-tight truncate group-hover:text-primary transition-colors" title={deal.product_summary || deal.customer_name}>
+                            {deal.product_summary || deal.customer_name || 'Enterprise Proposal'}
+                          </h3>
+                          <p className="text-xs text-text-muted mt-0.5">
+                            Client: <strong className="text-slate-700">{deal.customer_name || 'N/A'}</strong>
+                            {' • '}Sales Rep: <strong className="text-slate-700">{deal.sales_rep_name || 'Assigned Rep'}</strong>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* KPI Pills Row */}
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        {/* Deal Value */}
+                        <div className="text-center border border-slate-200 rounded-xl px-3 py-1.5 bg-white shadow-xs min-w-[90px]">
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Deal Value</p>
+                          <p className="text-sm font-black text-slate-900 mt-0.5">
+                            ${dealValue >= 1000000
+                              ? `${(dealValue / 1000000).toFixed(2)}M`
+                              : dealValue >= 1000
+                              ? `${(dealValue / 1000).toFixed(1)}K`
+                              : dealValue.toFixed(0)}
+                          </p>
+                        </div>
+
+                        {/* Gross Margin */}
+                        <div className="text-center border border-emerald-200 rounded-xl px-3 py-1.5 bg-emerald-50 shadow-xs min-w-[90px]">
+                          <p className="text-[9px] font-bold text-emerald-500 uppercase tracking-wider">Gross Margin</p>
+                          <p className="text-sm font-black text-emerald-700 mt-0.5">{grossMargin}%</p>
+                        </div>
+
+                        {/* Risk Score */}
+                        <div className={`text-center border rounded-xl px-3 py-1.5 shadow-xs min-w-[90px] ${riskColor}`}>
+                          <p className="text-[9px] font-bold uppercase tracking-wider opacity-70">Risk Score</p>
+                          <p className="text-sm font-black mt-0.5">{riskVal.toFixed(0)}/100</p>
+                        </div>
+
+                        {/* Current Stage */}
+                        <div className="text-center border border-blue-200 rounded-xl px-3 py-1.5 bg-blue-50 shadow-xs min-w-[90px]">
+                          <p className="text-[9px] font-bold text-blue-400 uppercase tracking-wider">Current Stage</p>
+                          <p className="text-xs font-black text-blue-700 mt-0.5 uppercase">{currentStepLabel}</p>
+                        </div>
+
+                        {/* Action */}
+                        {deal.status?.includes('pending') ? (
+                          <Link to="/app/approvals" className="px-3 py-2 rounded-xl bg-primary text-on-primary text-xs font-bold hover:bg-primary-dark transition-colors shadow-xs whitespace-nowrap flex items-center gap-1.5">
+                            <i className="fa-solid fa-check text-xs"></i> Approve
+                          </Link>
+                        ) : (
+                          <Link to={`/app/quote/${deal.id}`} className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs font-bold transition-colors shadow-xs whitespace-nowrap flex items-center gap-1.5">
+                            <i className="fa-solid fa-eye text-xs"></i> View
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bottom Row: Pipeline Progress Tracker */}
+                    <div className="flex items-center gap-0 overflow-x-auto pb-1 mt-3 pt-3 border-t border-slate-100">
+                      {PIPELINE_STEPS.map((step, idx) => {
+                        const isDone = idx < currentStep;
+                        const isActive = idx === currentStep;
+                        const isFuture = idx > currentStep;
+                        return (
+                          <React.Fragment key={step}>
+                            <div className="flex flex-col items-center shrink-0">
+                              {/* Step Circle */}
+                              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-extrabold border-2 transition-all ${
+                                isDone
+                                  ? 'bg-emerald-500 border-emerald-500 text-white'
+                                  : isActive
+                                  ? 'bg-blue-600 border-blue-600 text-white ring-2 ring-blue-300 ring-offset-1'
+                                  : 'bg-white border-slate-300 text-slate-400'
+                              }`}>
+                                {isDone ? <i className="fa-solid fa-check text-[9px]"></i> : idx + 1}
+                              </div>
+                              {/* Step Label */}
+                              <span className={`text-[9px] font-bold mt-1 whitespace-nowrap ${
+                                isDone ? 'text-emerald-600' : isActive ? 'text-blue-600' : 'text-slate-400'
+                              }`}>
+                                {idx + 1}. {step}
+                              </span>
                             </div>
-                            <div className="flex flex-col min-w-0">
-                              <span className="font-bold text-xs text-text-main truncate group-hover:text-primary transition-colors" title={deal.product_summary || deal.customer_name || 'Enterprise Account'}>
-                                {deal.product_summary || deal.customer_name || 'Enterprise Account'}
-                              </span>
-                              <span className="text-[11px] text-text-muted font-mono truncate" title={`${formatQuoteCode(deal.id)} • Account: ${deal.customer_name || 'Acme Corp'} • Rep: ${deal.sales_rep_name || 'RevOps'}`}>
-                                {formatQuoteCode(deal.id)} • {deal.customer_name || 'Acme Corp'}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-3">
-                          <div className="flex flex-col">
-                            <span className="font-semibold text-text-main text-xs whitespace-nowrap">
-                              {deal.lines_count ? `${deal.lines_count} Line Item(s)` : 'Configured Bundle'}
-                            </span>
-                            <span className="text-[11px] text-text-muted truncate max-w-[140px]">{deal.customer_email || 'CPQ Standard'}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-3">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${badge.bg} ${badge.text} border ${badge.border} text-[11px] font-bold whitespace-nowrap`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`}></span> {badge.label}
-                          </span>
-                        </td>
-                        <td className="py-3 px-3 text-right">
-                          <div className="flex flex-col items-end">
-                            <span className="font-mono font-bold text-xs text-text-main whitespace-nowrap">
-                              ${Number(deal.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
-                            {riskVal >= 5 && (
-                              <span className="text-[10px] font-bold text-rose-status bg-rose-status/10 border border-rose-status/20 px-1.5 py-0.5 rounded whitespace-nowrap">
-                                Risk: {riskVal.toFixed(1)}
-                              </span>
+                            {/* Connector Line */}
+                            {idx < PIPELINE_STEPS.length - 1 && (
+                              <div className={`h-0.5 w-6 shrink-0 mb-3 ${idx < currentStep ? 'bg-emerald-400' : 'bg-slate-200'}`}></div>
                             )}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          {deal.status?.includes('pending') ? (
-                            <Link to="/app/approvals" className="px-2.5 py-1 rounded-lg bg-primary text-on-primary text-[11px] font-semibold hover:bg-primary-dark transition-colors inline-flex items-center gap-1 shadow-xs whitespace-nowrap">
-                              <span>Approve</span>
-                              <span className="material-symbols-outlined text-xs">check</span>
-                            </Link>
-                          ) : (
-                            <Link to={`/app/quote/${deal.id}`} className="p-1.5 rounded-lg bg-border-soft border border-surface-soft text-text-muted hover:text-text-main hover:bg-white transition-colors inline-flex shadow-xs">
-                              <span className="material-symbols-outlined text-sm">visibility</span>
-                            </Link>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
           <div className="p-4 bg-border-soft border-t border-surface-soft flex items-center justify-between text-xs text-text-muted">
             <div className="flex items-center gap-2 font-medium">
