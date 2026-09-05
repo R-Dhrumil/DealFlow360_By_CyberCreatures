@@ -1,13 +1,15 @@
 const db = require('../config/db');
+const crypto = require('crypto');
 const { logAction } = require('../services/audit.service');
 
 class QuotationRepository {
   async createQuotation(companyId, customerId, salesRepId, status = 'draft', client = db) {
+    const qId = 'q_' + crypto.randomUUID();
     const result = await client.query(
-      `INSERT INTO quotations (company_id, customer_id, sales_rep_id, status)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO quotations (id, company_id, customer_id, sales_rep_id, status)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [companyId, customerId, salesRepId, status]
+      [qId, companyId, customerId, salesRepId, status]
     );
     const newQuote = result.rows[0];
     if (newQuote) {
@@ -17,11 +19,12 @@ class QuotationRepository {
   }
 
   async createQuotationLine(quotationId, productId, quantity, unitPrice, discountPercent = 0, lineType = 'one_time', client = db) {
+    const qlId = 'ql_' + crypto.randomUUID();
     const result = await client.query(
-      `INSERT INTO quotation_lines (quotation_id, product_id, quantity, unit_price, discount_percent, line_type)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO quotation_lines (id, quotation_id, product_id, quantity, unit_price, discount_percent, line_type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [quotationId, productId, quantity, unitPrice, discountPercent, lineType]
+      [qlId, quotationId, productId, quantity, unitPrice, discountPercent, lineType]
     );
     return result.rows[0];
   }
