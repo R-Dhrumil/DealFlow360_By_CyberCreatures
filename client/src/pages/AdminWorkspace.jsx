@@ -3,6 +3,108 @@ import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAlert } from '../contexts/AlertContext';
 
+// ── Role-Level Discount Authority Configuration Panel ──────────────────────────
+function DiscountAuthorityPanel({ showNotification }) {
+  const ROLES = [
+    { key: 'sales_rep', label: 'Sales Rep', icon: 'fa-user', color: 'blue', defaultMax: 10 },
+    { key: 'sales_manager', label: 'Sales Manager', icon: 'fa-user-tie', color: 'purple', defaultMax: 20 },
+    { key: 'finance', label: 'Finance', icon: 'fa-chart-line', color: 'orange', defaultMax: 25 },
+    { key: 'admin', label: 'Admin (Floor Override)', icon: 'fa-shield-halved', color: 'rose', defaultMax: 100 },
+  ];
+
+  const [roleLimits, setRoleLimits] = useState(
+    ROLES.reduce((acc, r) => { acc[r.key] = r.defaultMax; return acc; }, {})
+  );
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    api.get('/approvals/config/discount-tiers').then(res => {
+      if (res.data && Array.isArray(res.data)) {
+        const loaded = {};
+        res.data.forEach(t => { loaded[t.tier_name] = parseFloat(t.max_discount_percent); });
+        setRoleLimits(prev => ({ ...prev, ...loaded }));
+      }
+    }).catch(() => {});
+  }, []);
+
+  const saveRoleLimit = async (roleKey) => {
+    try {
+      setSaving(true);
+      await api.put('/approvals/config/discount-tiers', {
+        tierName: roleKey,
+        maxDiscountPercent: roleLimits[roleKey]
+      });
+      showNotification('success', `Discount authority for ${roleKey.replace('_', ' ')} saved.`);
+    } catch (e) {
+      showNotification('error', 'Failed to save discount authority.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const colorMap = {
+    blue: 'bg-blue-50 border-blue-200 text-blue-700',
+    purple: 'bg-purple-50 border-purple-200 text-purple-700',
+    orange: 'bg-orange-50 border-orange-200 text-orange-700',
+    rose: 'bg-rose-50 border-rose-200 text-rose-700',
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
+      <div className="flex items-center gap-2">
+        <i className="fa-solid fa-scale-balanced text-primary"></i>
+        <div>
+          <h3 className="font-extrabold text-text-main text-base">Salesperson Discount Authority</h3>
+          <p className="text-xs text-text-muted">
+            Configure the maximum discount % each role can offer without requiring escalation.
+            Exceeding this triggers automatic manager/admin approval.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {ROLES.map(role => (
+          <div key={role.key} className={`rounded-xl border p-4 space-y-3 ${colorMap[role.color]}`}>
+            <div className="flex items-center gap-2">
+              <i className={`fa-solid ${role.icon} text-sm`}></i>
+              <span className="font-bold text-sm">{role.label}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.5"
+                className="flex-1 px-3 py-2 text-xs font-bold bg-white/80 border border-white rounded-xl outline-none text-slate-800 text-center"
+                value={roleLimits[role.key] || 0}
+                onChange={e => setRoleLimits(prev => ({ ...prev, [role.key]: parseFloat(e.target.value) || 0 }))}
+              />
+              <span className="text-sm font-black">%</span>
+            </div>
+            {role.key === 'admin' && (
+              <p className="text-[10px] font-medium opacity-80">Admin can approve even below floor price — this sets their discount ceiling for manager-level checks.</p>
+            )}
+            <button
+              onClick={() => saveRoleLimit(role.key)}
+              disabled={saving}
+              className="w-full py-1.5 bg-white/70 hover:bg-white text-xs font-bold rounded-lg transition-all border border-white/50"
+            >
+              Save
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="text-xs text-slate-500 bg-slate-50 rounded-xl p-3 border border-slate-200">
+        <strong>Approval escalation chain: </strong>
+        Sales Rep (auto-approve within limit) →
+        <span className="text-amber-600 font-bold"> Sales Manager </span> (if rep exceeds limit or net price &lt; floor price) →
+        <span className="text-rose-600 font-bold"> Company Admin </span> (if manager can't approve or floor price still violated).
+      </div>
+    </div>
+  );
+}
+
 export default function AdminWorkspace() {
   const { showNotification } = useNotification();
   const { showAlert } = useAlert();
@@ -120,6 +222,7 @@ export default function AdminWorkspace() {
   const [team, setTeam] = useState([]);
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState('sales_rep');
 
   // Warehouses State
@@ -157,20 +260,51 @@ export default function AdminWorkspace() {
   };
 
   const fetchTeam = async () => {
-    const userStr = localStorage.getItem('user');
-    const user = userStr ? JSON.parse(userStr) : null;
-    if (user?.role !== 'super_admin') return;
     try {
-      const res = await api.get('/superadmin/users');
+      const res = await api.get('/users');
       setTeam(res.data || []);
     } catch (_err) {
       setTeam([]);
     }
   };
 
+  const fetchTiers = async () => {
+    try {
+      const res = await api.get('/approvals/config/discount-tiers');
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        setTiers(prev => {
+          const updated = [...prev];
+          res.data.forEach(dbTier => {
+            const idx = updated.findIndex(t => t.tier?.toLowerCase() === dbTier.tier_name?.toLowerCase());
+            if (idx !== -1) {
+              updated[idx] = {
+                ...updated[idx],
+                maxDiscount: parseFloat(dbTier.max_discount_percent),
+                minMargin: dbTier.min_margin_percent ? parseFloat(dbTier.min_margin_percent) : updated[idx].minMargin,
+                approver: dbTier.approver || updated[idx].approver
+              };
+            } else {
+              updated.push({
+                id: dbTier.id,
+                tier: dbTier.tier_name,
+                maxDiscount: parseFloat(dbTier.max_discount_percent),
+                minMargin: dbTier.min_margin_percent ? parseFloat(dbTier.min_margin_percent) : 20.0,
+                approver: dbTier.approver || 'Sales Manager'
+              });
+            }
+          });
+          return updated;
+        });
+      }
+    } catch (_err) {
+      console.warn('Could not fetch tiers from API');
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchTeam();
+    fetchTiers();
   }, []);
 
   const handleAddProduct = async (e) => {
@@ -319,6 +453,9 @@ export default function AdminWorkspace() {
         unit: updatedProd.unit,
         sku: updatedProd.sku,
         minMargin: updatedProd.min_margin,
+        floorPrice: editingProduct.floor_price !== null && editingProduct.floor_price !== undefined
+          ? parseFloat(editingProduct.floor_price)
+          : null,
         stock: updatedProd.stock,
         status: updatedProd.status
       });
@@ -382,7 +519,35 @@ export default function AdminWorkspace() {
     );
   };
 
-  const handleAddTier = (e) => {
+  const handleSaveTierConfig = async (tierObj) => {
+    try {
+      await api.put('/approvals/config/discount-tiers', {
+        tierName: tierObj.tier,
+        maxDiscountPercent: tierObj.maxDiscount,
+        minMarginPercent: tierObj.minMargin,
+        approver: tierObj.approver
+      });
+
+      setAuditLogs(prev => [
+        {
+          id: 'LOG-' + Date.now().toString().slice(-4),
+          action: 'TIER_CONFIG_UPDATED',
+          entity: `${tierObj.tier} Tier`,
+          user: 'CyberCreatures Admin',
+          role: 'admin',
+          timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
+          details: `Updated max discount to ${tierObj.maxDiscount}%, min margin to ${tierObj.minMargin}%, approver: ${tierObj.approver}`
+        },
+        ...prev
+      ]);
+
+      showNotification('success', `Saved configuration for ${tierObj.tier} Tier!`);
+    } catch (_err) {
+      showNotification('error', `Failed to save ${tierObj.tier} Tier configuration.`);
+    }
+  };
+
+  const handleAddTier = async (e) => {
     e.preventDefault();
     if (!newTierName.trim() || !newTierDiscount) return;
 
@@ -391,34 +556,60 @@ export default function AdminWorkspace() {
       tier: newTierName,
       maxDiscount: parseFloat(newTierDiscount),
       minMargin: parseFloat(newTierMargin || 20),
-      approver: newTierApprover,
-      maxQty: 100
+      approver: newTierApprover
     };
 
-    setTiers([...tiers, newTierObj]);
+    try {
+      await api.put('/approvals/config/discount-tiers', {
+        tierName: newTierName,
+        maxDiscountPercent: parseFloat(newTierDiscount),
+        minMarginPercent: parseFloat(newTierMargin || 20),
+        approver: newTierApprover
+      });
+    } catch (_e) {}
+
+    setTiers(prev => [...prev.filter(t => t.tier !== newTierName), newTierObj]);
     setNewTierName('');
     setNewTierDiscount('');
     setNewTierMargin('');
     showNotification('success', `Discount Tier '${newTierObj.tier}' configured with max ${newTierObj.maxDiscount}% discount ceiling!`);
   };
 
-  const handleAddTeamMember = (e) => {
+  const handleAddTeamMember = async (e) => {
     e.preventDefault();
-    if (!newName.trim() || !newEmail.trim()) return;
+    if (!newName.trim() || !newEmail.trim() || !newPassword.trim()) return;
 
-    const newMember = {
-      id: Date.now(),
-      name: newName,
-      email: newEmail,
-      role: newRole,
-      status: 'Active',
-      dealsCount: 0
-    };
+    try {
+      const res = await api.post('/users', {
+        name: newName,
+        email: newEmail,
+        password: newPassword,
+        role: newRole
+      });
 
-    setTeam([...team, newMember]);
-    setNewName('');
-    setNewEmail('');
-    showNotification('success', `Successfully provisioned ${newMember.name} as ${newMember.role.replace('_', ' ')}!`);
+      const newMember = res.data;
+      setTeam(prev => [newMember, ...prev]);
+      setNewName('');
+      setNewEmail('');
+      setNewPassword('');
+
+      setAuditLogs(prev => [
+        {
+          id: 'LOG-' + Date.now().toString().slice(-4),
+          action: 'USER_PROVISIONED',
+          entity: newMember.name,
+          user: 'CyberCreatures Admin',
+          role: 'admin',
+          timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
+          details: `Provisioned as ${newMember.role.replace('_', ' ')}`
+        },
+        ...prev
+      ]);
+
+      showNotification('success', `Successfully provisioned ${newMember.name} as ${newMember.role.replace('_', ' ')}!`);
+    } catch (err) {
+      showNotification('error', err.response?.data?.message || 'Failed to provision team member');
+    }
   };
 
   const handleAddWarehouse = (e) => {
@@ -817,34 +1008,93 @@ export default function AdminWorkspace() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {tiers.map(t => (
-                <div key={t.id || t.tier} className="bg-slate-50 rounded-2xl border border-surface-soft p-5 space-y-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
+                <div key={t.id || t.tier} className="bg-slate-50 rounded-2xl border border-surface-soft p-5 space-y-3 flex flex-col justify-between hover:border-purple-200 transition-all shadow-xs">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center border-b border-slate-200/60 pb-2">
                       <h4 className="font-black text-text-main text-base">{t.tier} Tier</h4>
-                      <span className="bg-primary text-text-main text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow">
+                      <span className="bg-primary text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow">
                         Max {t.maxDiscount}%
                       </span>
                     </div>
 
-                    <div className="space-y-1.5 text-xs text-slate-600">
-                      <div className="flex justify-between bg-white p-2 rounded-xl border border-slate-100">
-                        <span>Max Allowed Discount:</span>
-                        <strong className="text-purple-700">{t.maxDiscount}%</strong>
+                    <div className="space-y-2 text-xs">
+                      <div>
+                        <label className="block font-bold text-slate-700 mb-1 flex justify-between">
+                          <span>Max Allowed Discount:</span>
+                          <span className="text-purple-700 font-extrabold">{t.maxDiscount}%</span>
+                        </label>
+                        <div className="flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.5"
+                            className="w-full text-xs font-bold text-purple-700 bg-transparent outline-none px-1"
+                            value={t.maxDiscount}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) || 0;
+                              setTiers(prev => prev.map(item => item.tier === t.tier ? { ...item, maxDiscount: val } : item));
+                            }}
+                          />
+                          <span className="text-slate-400 font-bold text-xs pr-1">%</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between bg-white p-2 rounded-xl border border-slate-100">
-                        <span>Minimum Margin:</span>
-                        <strong className="text-slate-800">{t.minMargin}%</strong>
+
+                      <div>
+                        <label className="block font-bold text-slate-700 mb-1 flex justify-between">
+                          <span>Minimum Margin:</span>
+                          <span className="text-slate-800 font-extrabold">{t.minMargin}%</span>
+                        </label>
+                        <div className="flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.5"
+                            className="w-full text-xs font-bold text-slate-800 bg-transparent outline-none px-1"
+                            value={t.minMargin}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) || 0;
+                              setTiers(prev => prev.map(item => item.tier === t.tier ? { ...item, minMargin: val } : item));
+                            }}
+                          />
+                          <span className="text-slate-400 font-bold text-xs pr-1">%</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between bg-white p-2 rounded-xl border border-slate-100">
-                        <span>Escalation Approver:</span>
-                        <strong className="text-primary">{t.approver}</strong>
+
+                      <div>
+                        <label className="block font-bold text-slate-700 mb-1">Escalation Approver:</label>
+                        <select
+                          className="w-full bg-white border border-slate-200 rounded-xl px-2 py-1.5 text-xs font-semibold text-primary outline-none focus:ring-2 focus:ring-primary"
+                          value={t.approver}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setTiers(prev => prev.map(item => item.tier === t.tier ? { ...item, approver: val } : item));
+                          }}
+                        >
+                          <option value="Auto-Approve">Auto-Approve</option>
+                          <option value="Sales Manager">Sales Manager</option>
+                          <option value="Finance Lead">Finance Lead</option>
+                          <option value="Admin Override">Admin Override</option>
+                        </select>
                       </div>
                     </div>
                   </div>
+
+                  <button
+                    onClick={() => handleSaveTierConfig(t)}
+                    className="w-full mt-2 py-1.5 px-3 bg-primary hover:bg-primary-dark text-white font-bold text-xs rounded-xl transition-all shadow flex justify-center items-center gap-1.5"
+                  >
+                    <i className="fa-solid fa-floppy-disk"></i>
+                    <span>Save {t.tier} Config</span>
+                  </button>
                 </div>
               ))}
             </div>
           </div>
+
+          {/* ── NEW: Role-Level Discount Authority Config ── */}
+          <DiscountAuthorityPanel showNotification={showNotification} />
 
           {/* Add New Tier Config Form & Category Ceilings */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -933,6 +1183,12 @@ export default function AdminWorkspace() {
                   </div>
                 ))}
               </div>
+
+              <div className="mt-2 bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700">
+                <i className="fa-solid fa-info-circle mr-1.5"></i>
+                <strong>Floor Price</strong> — Set per-product in the <strong>Product & Price Listing</strong> tab.
+                When a quotation's net price falls below a product's floor price, it escalates to Manager and then Admin approval automatically.
+              </div>
             </div>
           </div>
         </div>
@@ -1006,6 +1262,18 @@ export default function AdminWorkspace() {
                   className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Account Password</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Set account password"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
                 />
               </div>
 
@@ -1212,7 +1480,25 @@ export default function AdminWorkspace() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Floor Price field — triggers Manager→Admin escalation if net price falls below */}
+              <div className="mt-2">
+                <label className="block font-bold text-slate-700 mb-1 flex items-center gap-2">
+                  <i className="fa-solid fa-shield-halved text-rose-500 text-xs"></i>
+                  Floor Price (₹)
+                  <span className="text-[10px] font-normal text-slate-400 ml-1">— Optional. Discount cannot bring net price below this value without Admin approval.</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="e.g. 850 — leave blank for no floor"
+                  value={editingProduct.floor_price || ''}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, floor_price: e.target.value ? parseFloat(e.target.value) : null })}
+                  className="w-full bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-rose-300 placeholder:text-slate-400"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mt-2">
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Unit Pricing Model</label>
                   <select

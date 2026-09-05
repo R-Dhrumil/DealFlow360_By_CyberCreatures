@@ -85,7 +85,7 @@ class ProductRepository {
   }
 
   async update(companyId, productId, updateData) {
-    const { name, category, basePrice, unit, description, sku, minMargin, stock, status } = updateData;
+    const { name, category, basePrice, unit, description, sku, minMargin, stock, status, floorPrice } = updateData;
     try {
       const result = await db.query(
         `UPDATE products 
@@ -93,10 +93,11 @@ class ProductRepository {
              category = COALESCE($2, category),
              base_price = COALESCE($3, base_price),
              unit = COALESCE($4, unit),
-             description = COALESCE($5, description)
-         WHERE id = $6 AND company_id = $7
+             description = COALESCE($5, description),
+             floor_price = $6
+         WHERE id = $7 AND company_id = $8
          RETURNING *`,
-        [name, category, basePrice, unit, description, productId, companyId]
+        [name, category, basePrice, unit, description, floorPrice !== undefined ? floorPrice : null, productId, companyId]
       );
       if (result.rows.length > 0) {
         return {
@@ -119,6 +120,7 @@ class ProductRepository {
         description: description || '',
         sku,
         min_margin: minMargin !== undefined ? parseFloat(minMargin) : 25,
+        floor_price: floorPrice !== undefined ? floorPrice : null,
         stock: stock !== undefined ? parseInt(stock, 10) : 100,
         status: status || 'Active'
       };

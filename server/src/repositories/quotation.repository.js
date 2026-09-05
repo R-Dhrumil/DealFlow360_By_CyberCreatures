@@ -136,7 +136,8 @@ class QuotationRepository {
     const qRes = await db.query(
       `SELECT 
          q.id, q.status, q.company_id, q.customer_id, q.sales_rep_id, q.blended_risk_score, q.created_at,
-         c.name as customer_name, c.email as customer_email,
+         q.approval_level, q.inquiry_id,
+         c.name as customer_name, c.email as customer_email, c.customer_tier,
          u.name as sales_rep_name,
          comp.name as company_name, comp.logo_url as company_logo
        FROM quotations q
@@ -216,7 +217,7 @@ class QuotationRepository {
 
   async findQuotationLinesWithCategory(quotationId) {
     const result = await db.query(
-      `SELECT ql.*, p.name as product_name, p.category, p.margin_percent 
+      `SELECT ql.*, p.name as product_name, p.category, p.margin_percent, p.floor_price
        FROM quotation_lines ql
        JOIN products p ON ql.product_id = p.id
        WHERE ql.quotation_id = $1`,

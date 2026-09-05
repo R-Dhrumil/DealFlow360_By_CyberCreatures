@@ -1,102 +1,100 @@
 const quotationService = require('../services/quotation.service');
 const quotationRepository = require('../repositories/quotation.repository');
+const inquiryService = require('../services/inquiry.service');
 const db = require('../config/db');
 const crypto = require('crypto');
 const { logAction } = require('../services/audit.service');
 const { emitCompanyRoleNotification, emitUserNotification, broadcastPipelineUpdate } = require('../services/socket.service');
 
 class QuotationController {
+  /** POST /quotations — Create a quotation (internal sales rep) */
   async create(req, res) {
-    const { customerId, customerName, customerEmail, lines } = req.body;
+    const { customerId, customerName, customerEmail, lines, inquiryId } = req.body;
     const companyId = req.companyId || req.user?.companyId || 'c1';
     const salesRepId = req.user?.userId || req.user?.id || 'u4';
     const result = await quotationService.createQuotation(
       companyId,
       salesRepId,
       { customerId, customerName, customerEmail },
-      lines
+      lines,
+      inquiryId || null
     );
+
+    // If linked to an inquiry, mark it in_progress
+    if (inquiryId) {
+      await inquiryService.markInProgress(inquiryId);
+    }
+
     return res.status(201).json({ success: true, ...result });
   }
 
+  /** POST /quotations/customer-request — Marketplace inquiry creation */
   async createCustomerRequest(req, res) {
     const { productId, quantity } = req.body;
     const qty = Number(quantity) || 1;
 
-    // 1. Fetch Product details
+    // Fetch Product details
     const prodRes = await db.query('SELECT * FROM products WHERE id = $1', [productId]);
     if (prodRes.rows.length === 0) {
       return res.status(404).json({ error: 'Product not found' });
     }
     const product = prodRes.rows[0];
-
-    // 2. Resolve IDs
     const companyId = product.company_id || 'c1';
-    let customerId = req.user?.customerId || req.user?.id || 'cust1';
-    
+
+    let customerId = req.user?.customerId || req.user?.id || null;
+
     // Ensure customerId exists in customers table
-    const custCheck = await db.query('SELECT id FROM customers WHERE id = $1', [customerId]);
-    if (custCheck.rows.length === 0) {
-      const firstCust = await db.query('SELECT id FROM customers LIMIT 1');
-      customerId = firstCust.rows[0]?.id || 'cust1';
+    if (customerId) {
+      const custCheck = await db.query('SELECT id FROM customers WHERE id = $1', [customerId]);
+      if (custCheck.rows.length === 0) {
+        const firstCust = await db.query('SELECT id FROM customers LIMIT 1');
+        customerId = firstCust.rows[0]?.id || null;
+      }
     }
 
-    // Find active sales rep
-    const repRes = await db.query("SELECT id FROM users WHERE company_id = $1 AND role = 'sales_rep' LIMIT 1", [companyId]);
-    const salesRepId = repRes.rows[0]?.id || 'u4';
+    if (!customerId) {
+      const firstCust = await db.query('SELECT id FROM customers LIMIT 1');
+      customerId = firstCust.rows[0]?.id;
+    }
 
-    // 3. Create Quotation with clean short ID (e.g. q_1092)
-    const quoteId = 'q_' + Math.floor(1000 + Math.random() * 9000);
-    const quoteRes = await db.query(
-      `INSERT INTO quotations (id, company_id, customer_id, sales_rep_id, status, blended_risk_score)
-       VALUES ($1, $2, $3, $4, 'pending_approval', 5.00)
-       RETURNING *`,
-      [quoteId, companyId, customerId, salesRepId]
-    );
-    const newQuote = quoteRes.rows[0];
+    if (!customerId) {
+      return res.status(400).json({ error: 'No customer available' });
+    }
 
-    // 4. Create Quotation Line with unique ID
-    const lineId = 'ql_' + crypto.randomUUID();
-    await db.query(
-      `INSERT INTO quotation_lines (id, quotation_id, product_id, quantity, unit_price, discount_percent, line_type)
-       VALUES ($1, $2, $3, $4, $5, 0.00, 'one_time')`,
-      [lineId, newQuote.id, product.id, qty, product.base_price]
-    );
-
-    await logAction('quotation', newQuote.id, salesRepId, 'customer_requested', {
-      product_name: product.name,
-      base_price: product.base_price
-    });
-
-    // Notify dedicated company admin & assigned sales rep of customer quote request
-    emitCompanyRoleNotification(companyId, ['admin', 'sales_manager'], {
-      type: 'info',
-      title: '🛒 New Customer Request',
-      message: `Customer requested quotation for ${product.name} (Qty: ${qty}) [Quote #${newQuote.id}]`,
-      link: `/app/approvals`
-    });
-    emitUserNotification(salesRepId, {
-      type: 'info',
-      title: '🛒 New Lead / Quote Request',
-      message: `Customer requested a quote for ${product.name} [Quote #${newQuote.id}]`,
-      link: `/app/quote/${newQuote.id}`
-    });
-
-    broadcastPipelineUpdate(companyId, { quotationId: newQuote.id, newStatus: 'pending_approval' });
+    // Create inquiry — notifies all sales reps
+    const inquiryResult = await inquiryService.createInquiry(companyId, customerId, productId, qty);
+    const inquiry = inquiryResult.inquiry;
 
     return res.status(201).json({
       success: true,
-      quotation: newQuote,
-      message: `Quotation requested for ${product.name}`
+      inquiry,
+      message: `Inquiry created for ${product.name}. Sales team has been notified.`
     });
   }
 
+  /** POST /quotations/validate-discount — Real-time discount validation for QuotationBuilder UI */
+  async validateDiscount(req, res) {
+    const companyId = req.companyId;
+    const userId = req.user?.userId || req.user?.id;
+    const { lines } = req.body;
+
+    if (!lines || !Array.isArray(lines)) {
+      return res.status(400).json({ error: 'lines array is required' });
+    }
+
+    const result = await quotationService.validateDiscountLive(companyId, userId, lines);
+    return res.json(result);
+  }
+
+  /** PUT /quotations/:id/submit */
   async submit(req, res) {
     const quotationId = req.params.id;
-    const result = await quotationService.submitQuotation(req.companyId, quotationId);
+    const userId = req.user?.userId || req.user?.id;
+    const result = await quotationService.submitQuotation(req.companyId, quotationId, userId);
     return res.json({ success: true, ...result });
   }
 
+  /** GET /quotations */
   async getCompanyQuotations(req, res) {
     const limit = parseInt(req.query.limit, 10) || 50;
     const page = parseInt(req.query.page, 10) || 1;
@@ -113,8 +111,8 @@ class QuotationController {
       res.set('X-Total-Count', allQuotes.totalCount);
       return res.json(allQuotes.data);
     }
-    
-    // BOLA Protection: Sales Reps can only view their own quotes
+
+    // BOLA Protection: Sales Reps only see their own quotes
     if (req.user && req.user.role === 'sales_rep') {
       const quotations = await quotationRepository.findByCompanyAndSalesRep(req.companyId, req.user.userId, limit, offset);
       res.set('X-Total-Count', quotations.totalCount);
@@ -126,34 +124,45 @@ class QuotationController {
     return res.json(quotations.data);
   }
 
+  /** GET /quotations/:id */
   async getQuotationById(req, res) {
     const quote = await quotationRepository.findDetailById(req.params.id);
     if (!quote) {
       return res.status(404).json({ error: 'Quotation not found' });
     }
-
-    // Public Share Link Access: return quotation details for portal view
     return res.json(quote);
   }
 
+  /** PUT /quotations/:id/approve */
   async approve(req, res) {
     const quotationId = req.params.id;
-    const result = await quotationService.approveQuotation(req.companyId, quotationId, req.user.role);
+    const userId = req.user?.userId || req.user?.id;
+    const { modifiedLines } = req.body;
+    const result = await quotationService.approveQuotation(
+      req.companyId, quotationId, req.user.role, userId, modifiedLines || null
+    );
     return res.json({ success: true, ...result });
   }
 
+  /** PUT /quotations/:id/reject */
   async reject(req, res) {
     const quotationId = req.params.id;
-    const result = await quotationService.rejectQuotation(req.companyId, quotationId, req.user.role);
+    const userId = req.user?.userId || req.user?.id;
+    const { reason } = req.body;
+    const result = await quotationService.rejectQuotation(
+      req.companyId, quotationId, req.user.role, userId, reason || ''
+    );
     return res.json({ success: true, ...result });
   }
 
+  /** PUT /quotations/:id/confirm — Customer accepts quotation */
   async confirm(req, res) {
     const quotationId = req.params.id;
     const result = await quotationService.confirmQuotation(req.companyId, quotationId);
     return res.json({ success: true, ...result });
   }
 
+  /** PUT /quotations/:id/status */
   async updateStatus(req, res) {
     const quotationId = req.params.id;
     const { status } = req.body;
@@ -161,11 +170,7 @@ class QuotationController {
       const result = await quotationService.confirmQuotation(req.companyId, quotationId);
       return res.json({ success: true, ...result });
     }
-    const updated = await quotationRepository.updateQuotationStatusAndScore(
-      quotationId,
-      status,
-      0.00
-    );
+    const updated = await quotationRepository.updateQuotationStatusAndScore(quotationId, status, 0.00);
 
     const quote = await quotationRepository.findDetailById(quotationId);
     const companyId = req.companyId || quote?.company_id;
@@ -190,6 +195,7 @@ class QuotationController {
     return res.json({ success: true, quotation: updated });
   }
 
+  /** PUT /quotations/:id/counter — Customer counter offer */
   async counterOffer(req, res) {
     const quotationId = req.params.id;
     const { lines, status = 'pending_approval' } = req.body;
@@ -209,11 +215,7 @@ class QuotationController {
       }
     }
     const quote = await quotationRepository.findDetailById(quotationId);
-    const updated = await quotationRepository.updateQuotationStatusAndScore(
-      quotationId,
-      status,
-      15.00
-    );
+    const updated = await quotationRepository.updateQuotationStatusAndScore(quotationId, status, 15.00);
 
     const companyId = req.companyId || quote?.company_id;
     broadcastPipelineUpdate(companyId, { quotationId, newStatus: status });
@@ -236,12 +238,14 @@ class QuotationController {
     return res.json({ success: true, quotation: updated });
   }
 
+  /** GET /quotations/:id/messages */
   async getMessages(req, res) {
     const quotationId = req.params.id;
     const messages = await quotationRepository.getNegotiationMessages(quotationId);
     return res.json(messages || []);
   }
 
+  /** POST /quotations/:id/messages */
   async postMessage(req, res) {
     const quotationId = req.params.id;
     const { content, message, sender_type, counter_discount } = req.body;
@@ -251,10 +255,7 @@ class QuotationController {
     }
     const senderType = sender_type || (req.user?.role === 'customer' ? 'customer' : 'rep');
     const newMsg = await quotationRepository.createNegotiationMessage(
-      quotationId,
-      senderType,
-      msgText,
-      counter_discount || null
+      quotationId, senderType, msgText, counter_discount || null
     );
 
     const quote = await quotationRepository.findDetailById(quotationId);
@@ -265,20 +266,6 @@ class QuotationController {
           type: 'info',
           title: '💬 New Customer Message',
           message: `Customer message on Quote #${quotationId}: "${msgText.substring(0, 40)}..."`,
-          link: `/app/quote/${quotationId}`
-        });
-        emitCompanyRoleNotification(companyId, ['admin'], {
-          type: 'info',
-          title: '💬 Customer Negotiation Message',
-          message: `Quote #${quotationId}: "${msgText.substring(0, 40)}..."`,
-          link: `/app/quote/${quotationId}`
-        });
-      } else {
-        // From Rep / Manager
-        emitCompanyRoleNotification(companyId, ['admin'], {
-          type: 'info',
-          title: '💬 Sales Team Message',
-          message: `Quote #${quotationId} message posted by sales rep.`,
           link: `/app/quote/${quotationId}`
         });
       }

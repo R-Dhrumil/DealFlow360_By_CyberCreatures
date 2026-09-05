@@ -20,6 +20,7 @@ import SuperAdminSettings from './pages/SuperAdminSettings';
 import AdminWorkspace from './pages/AdminWorkspace';
 import FinanceOperations from './pages/FinanceOperations';
 import OperationsDashboard from './pages/OperationsDashboard';
+import InquiryList from './pages/InquiryList';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
@@ -82,6 +83,7 @@ function App() {
                 <Route path="quote" element={<QuotationBuilder />} />
                 <Route path="quote/:id" element={<QuotationView />} />
                 <Route path="approvals" element={<ApprovalQueue />} />
+                <Route path="inquiries" element={<InquiryList />} />
                 <Route path="fulfillment/:id" element={<FulfillmentSplit />} />
                 <Route path="reporting" element={<Reporting />} />
                 <Route path="superadmin" element={<SuperAdminConsole />} />

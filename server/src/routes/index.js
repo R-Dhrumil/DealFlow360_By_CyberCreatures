@@ -7,12 +7,14 @@ const marketplaceRoutes = require('./marketplace.routes');
 const productRoutes = require('./product.routes');
 const quotationRoutes = require('./quotation.routes');
 const approvalRoutes = require('./approval.routes');
+const inquiryRoutes = require('./inquiry.routes');
 const warehouseRoutes = require('./warehouse.routes');
 const dashboardRoutes = require('./dashboard.routes');
 const superadminRoutes = require('./superadmin.routes');
 const exportRoutes = require('./export.routes');
 const uploadRoutes = require('./upload.routes');
 const settingsRoutes = require('./settings.routes');
+const userRoutes = require('./user.routes');
 
 // Health check endpoint
 router.get('/health', async (req, res) => {
@@ -41,11 +43,13 @@ router.use('/marketplace', marketplaceRoutes);
 router.use('/products', productRoutes);
 router.use('/quotations', quotationRoutes);
 router.use('/approvals', approvalRoutes);
+router.use('/inquiries', inquiryRoutes);
 router.use('/warehouses', warehouseRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/superadmin', superadminRoutes);
 router.use('/export', exportRoutes);
 router.use('/upload', uploadRoutes);
 router.use('/settings', settingsRoutes);
+router.use('/users', userRoutes);
 
 module.exports = router;

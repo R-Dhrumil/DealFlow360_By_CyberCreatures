@@ -7,26 +7,35 @@ const attachCompanyScope = require('../middleware/attachCompanyScope');
 const checkRole = require('../middleware/checkRole');
 const asyncWrap = require('../utils/asyncWrap');
 
-// Public / Live Portal Accessible Routes (Optional Auth so customer portal link works for unauthenticated users)
+// ── Public / Portal Routes (optional auth so customer portal works unauthenticated) ──
 router.get('/:id', optionalAuth, asyncWrap((req, res) => quotationController.getQuotationById(req, res)));
 router.get('/:id/messages', optionalAuth, asyncWrap((req, res) => quotationController.getMessages(req, res)));
 router.post('/:id/messages', optionalAuth, asyncWrap((req, res) => quotationController.postMessage(req, res)));
 router.put('/:id/counter', optionalAuth, asyncWrap((req, res) => quotationController.counterOffer(req, res)));
 router.put('/:id/confirm', optionalAuth, asyncWrap((req, res) => quotationController.confirm(req, res)));
 
-// Protected Internal Routes (Strict Auth required)
+// ── Protected Internal Routes ──
 router.use(authenticate, attachCompanyScope);
 
 router.get('/', asyncWrap((req, res) => quotationController.getCompanyQuotations(req, res)));
+
+// Customer inquiry via marketplace (any authenticated user / customer)
 router.post('/customer-request', asyncWrap((req, res) => quotationController.createCustomerRequest(req, res)));
 
-// Strict State Machine Endpoints
-router.put('/:id/approve', checkRole('finance', 'admin', 'sales_manager'), asyncWrap((req, res) => quotationController.approve(req, res)));
-router.put('/:id/reject', checkRole('finance', 'admin', 'sales_manager'), asyncWrap((req, res) => quotationController.reject(req, res)));
+// Real-time discount validation
+router.post('/validate-discount', asyncWrap((req, res) => quotationController.validateDiscount(req, res)));
+
+// Approval / rejection (sales_manager + admin can also approve pending_admin_approval)
+router.put('/:id/approve', checkRole('finance', 'admin', 'sales_manager', 'super_admin'),
+  asyncWrap((req, res) => quotationController.approve(req, res)));
+router.put('/:id/reject', checkRole('finance', 'admin', 'sales_manager', 'super_admin'),
+  asyncWrap((req, res) => quotationController.reject(req, res)));
 router.put('/:id/status', asyncWrap((req, res) => quotationController.updateStatus(req, res)));
 
-router.post('/', checkRole('sales_rep', 'admin'), asyncWrap((req, res) => quotationController.create(req, res)));
-router.put('/:id/submit', checkRole('sales_rep', 'admin'), asyncWrap((req, res) => quotationController.submit(req, res)));
+// Create + submit (sales rep and admin)
+router.post('/', checkRole('sales_rep', 'admin', 'super_admin'),
+  asyncWrap((req, res) => quotationController.create(req, res)));
+router.put('/:id/submit', checkRole('sales_rep', 'admin', 'super_admin'),
+  asyncWrap((req, res) => quotationController.submit(req, res)));
 
 module.exports = router;
-
