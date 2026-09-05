@@ -9,10 +9,23 @@ export default function QuotationView() {
   const { id: quotationId } = useParams();
   const [quotation, setQuotation] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
 
   useEffect(() => {
     fetchQuotation();
+    fetchMessages();
   }, [quotationId]);
+
+  const fetchMessages = async () => {
+    try {
+      if (!quotationId) return;
+      const res = await api.get(`/quotations/${quotationId}/messages`);
+      if (res.data) setMessages(res.data);
+    } catch (err) {
+      console.error('Failed to fetch quotation messages:', err);
+    }
+  };
 
   const fetchQuotation = async () => {
     try {
@@ -50,6 +63,29 @@ export default function QuotationView() {
         ]
       });
       setLoading(false);
+    }
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+    const msgText = newMessage;
+    setNewMessage('');
+    try {
+      const res = await api.post(`/quotations/${quotationId}/messages`, {
+        content: msgText,
+        sender_type: 'rep'
+      });
+      setMessages(prev => [...prev, res.data]);
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      const fallbackMsg = {
+        id: Date.now(),
+        sender_type: 'rep',
+        content: msgText,
+        created_at: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, fallbackMsg]);
     }
   };
 
@@ -224,6 +260,70 @@ export default function QuotationView() {
                 })}
               </tbody>
             </table>
+          </section>
+
+          {/* Live Customer Negotiation & Audit Thread */}
+          <section className="card p-6 bg-white border border-surface-soft shadow-sm rounded-2xl space-y-4 print:hidden">
+            <div className="flex items-center justify-between border-b border-surface-soft pb-3">
+              <div className="flex items-center space-x-2">
+                <span className="p-2 rounded-xl bg-purple-100 text-purple-700">
+                  <i className="fa-solid fa-comments text-base"></i>
+                </span>
+                <div>
+                  <h3 className="font-extrabold text-text-main text-base">Customer Negotiation &amp; Discussion Thread</h3>
+                  <p className="text-xs text-text-muted">Shared message stream between Customer, Sales Rep, Manager &amp; Finance</p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 uppercase">
+                Active Negotiation
+              </span>
+            </div>
+
+            <div className="max-h-80 overflow-y-auto space-y-3 p-4 bg-slate-50 rounded-xl border border-surface-soft">
+              {messages.length === 0 ? (
+                <p className="text-xs text-text-muted text-center py-6">No customer messages logged yet for this proposal.</p>
+              ) : (
+                messages.map((msg, idx) => {
+                  const isCustomer = msg.sender_type === 'customer';
+                  return (
+                    <div key={msg.id || idx} className={`flex flex-col ${isCustomer ? 'items-start' : 'items-end'}`}>
+                      <div className="flex items-center space-x-1.5 mb-1">
+                        <span className={`text-[10px] font-bold ${isCustomer ? 'text-amber-700' : 'text-purple-700'}`}>
+                          {isCustomer ? `Customer (${quotation.customer_name || 'Client'})` : 'Internal Sales / Management'}
+                        </span>
+                        <span className="text-[9px] text-text-muted">
+                          {msg.created_at || msg.timestamp ? new Date(msg.created_at || msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                        </span>
+                      </div>
+                      <div className={`p-3 rounded-2xl text-xs max-w-md shadow-xs ${
+                        isCustomer 
+                          ? 'bg-white text-slate-800 border border-surface-soft rounded-tl-none font-medium' 
+                          : 'bg-primary text-text-main text-white font-bold rounded-tr-none shadow'
+                      }`}>
+                        {msg.content || msg.message}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <form onSubmit={handleSendMessage} className="flex gap-2 pt-1">
+              <input
+                type="text"
+                placeholder="Type a reply to the customer or internal team..."
+                className="flex-1 bg-slate-50 border border-surface-soft rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="px-5 py-2.5 bg-primary text-text-main text-white text-xs font-bold rounded-xl shadow hover:bg-primary-dark transition-all flex items-center space-x-1.5"
+              >
+                <span>Send Reply</span>
+                <i className="fa-solid fa-paper-plane text-xs"></i>
+              </button>
+            </form>
           </section>
 
         </div>

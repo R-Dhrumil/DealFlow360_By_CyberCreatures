@@ -349,7 +349,7 @@ export default function CustomerPortal() {
                   <span className="text-xs text-text-muted">Modify numbers above to counter proposal</span>
                   <button 
                     onClick={submitCounterProposal}
-                    className="bg-primary hover:bg-primary-dark text-text-main px-4 py-2 rounded-lg text-xs font-bold shadow transition-colors flex items-center"
+                    className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-xs font-bold shadow transition-colors flex items-center"
                   >
                     <i className="fa-solid fa-calculator mr-2"></i> Submit Counter Proposal
                   </button>
@@ -417,11 +417,11 @@ export default function CustomerPortal() {
                   <div key={msg.id || idx} className={`flex ${msg.sender_type === 'customer' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${
                       msg.sender_type === 'customer' 
-                        ? 'bg-primary text-text-main rounded-tr-sm' 
-                        : 'bg-white border border-surface-soft text-slate-800 rounded-tl-sm'
+                        ? 'bg-primary text-white rounded-tr-sm font-medium' 
+                        : 'bg-white border border-surface-soft text-slate-800 rounded-tl-sm font-medium'
                     }`}>
-                      <p className="text-sm">{msg.content || msg.message}</p>
-                      <p className={`text-[10px] mt-1 text-right ${msg.sender_type === 'customer' ? 'text-on-primary/70' : 'text-text-muted'}`}>
+                      <p className={`text-sm ${msg.sender_type === 'customer' ? 'text-white' : 'text-slate-800'}`}>{msg.content || msg.message}</p>
+                      <p className={`text-[10px] mt-1 text-right ${msg.sender_type === 'customer' ? 'text-white/80' : 'text-text-muted'}`}>
                         {msg.created_at || msg.timestamp ? new Date(msg.created_at || msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
                       </p>
                     </div>

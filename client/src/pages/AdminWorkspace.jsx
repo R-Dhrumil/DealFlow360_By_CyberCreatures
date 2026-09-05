@@ -206,19 +206,19 @@ export default function AdminWorkspace() {
           onClick={() => setActiveTab('products')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
             activeTab === 'products'
-              ? 'bg-primary text-text-main text-white shadow'
+              ? 'bg-primary text-white shadow'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
           <i className="fa-solid fa-boxes-stacked"></i>
-          <span>Product & Price Listing</span>
+          <span>Product &amp; Price Listing</span>
         </button>
 
         <button
           onClick={() => setActiveTab('tiers')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
             activeTab === 'tiers'
-              ? 'bg-primary text-text-main text-white shadow'
+              ? 'bg-primary text-white shadow'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -230,31 +230,31 @@ export default function AdminWorkspace() {
           onClick={() => setActiveTab('team')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
             activeTab === 'team'
-              ? 'bg-primary text-text-main text-white shadow'
+              ? 'bg-primary text-white shadow'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
           <i className="fa-solid fa-users-gear"></i>
-          <span>Team & Role Access</span>
+          <span>Team &amp; Role Access</span>
         </button>
 
         <button
           onClick={() => setActiveTab('warehouses')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
             activeTab === 'warehouses'
-              ? 'bg-primary text-text-main text-white shadow'
+              ? 'bg-primary text-white shadow'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
           <i className="fa-solid fa-warehouse"></i>
-          <span>Warehouses & Stock</span>
+          <span>Warehouses &amp; Stock</span>
         </button>
 
         <button
           onClick={() => setActiveTab('audit')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
             activeTab === 'audit'
-              ? 'bg-primary text-text-main text-white shadow'
+              ? 'bg-primary text-white shadow'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
