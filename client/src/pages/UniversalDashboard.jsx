@@ -130,11 +130,7 @@ const UniversalDashboard = () => {
         
         {/* Quick Action Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
-          <button className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white text-text-main border border-surface-soft hover:bg-border-soft transition-all shadow-sm font-semibold text-xs" type="button">
-            <span className="material-symbols-outlined text-primary text-base">public</span>
-            <span>Global • Enterprise Tier-1</span>
-            <span className="material-symbols-outlined text-text-muted text-base">tune</span>
-          </button>
+          
           
           <Link to="/app/approvals" className="relative group flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-amber-status border border-amber-status/30 hover:bg-amber-status/10 transition-all shadow-sm font-semibold text-xs">
             <span className="material-symbols-outlined text-base">verified</span>
