@@ -260,39 +260,67 @@ export default function CustomerPortal() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-12">
-      {/* Customer Portal Banner */}
-      <header className="bg-white text-text-main border-b border-surface-soft sticky top-0 z-10 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+      {/* Customer Portal Live Document Header */}
+      <header className="bg-white text-slate-900 border-b border-slate-200/80 sticky top-0 z-10 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap justify-between items-center gap-4">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center font-bold text-lg text-white">
-              {quotation.company_name.charAt(0)}
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center font-bold text-xl text-white shadow-sm">
+              {quotation.company_name ? quotation.company_name.charAt(0) : 'D'}
             </div>
             <div>
-              <span className="font-bold text-text-main text-base block leading-tight">{quotation.company_name || 'CyberCreatures'} Customer Portal</span>
-              <span className="text-xs text-text-muted">Negotiable Digital Proposal {formatQuoteCode(quotation.id)}</span>
+              <span className="font-bold text-slate-900 text-base block leading-tight">{quotation.company_name || 'DealFlow360'} Live Proposal Document</span>
+              <span className="text-xs text-slate-500 font-mono">Reference Code: #{formatQuoteCode(quotation.id)}</span>
             </div>
           </div>
 
           <div className="flex items-center space-x-3">
-            <button
-              onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = '/customer/dashboard'}
-              className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all font-bold text-xs flex items-center gap-1.5 border border-surface-soft shadow-2xs"
-            >
-              <i className="fa-solid fa-arrow-left text-xs"></i>
-              <span>Back</span>
-            </button>
+            <div className="text-right hidden sm:block">
+              <span className="text-xs font-bold text-slate-800 block">{quotation.customer_name || 'Customer'}</span>
+              <span className="text-[11px] text-slate-500">{quotation.customer_email || ''}</span>
+            </div>
             <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-              quotation.status === 'accepted' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
-              quotation.status === 'pending_approval' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
-              'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+              quotation.status === 'confirmed' || quotation.status === 'accepted' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
+              quotation.status === 'pending_approval' ? 'bg-amber-100 text-amber-800 border border-amber-300' :
+              quotation.status === 'rejected' ? 'bg-rose-100 text-rose-800 border border-rose-300' :
+              'bg-blue-100 text-blue-800 border border-blue-300'
             }`}>
-              {quotation.status.replace('_', ' ')}
+              {quotation.status.replace(/_/g, ' ')}
             </span>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+        {/* Customer & Proposal Meta Card */}
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="space-y-1 border-b sm:border-b-0 sm:border-r border-slate-100 pb-4 sm:pb-0">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Prepared For</span>
+            <h3 className="font-bold text-slate-900 text-sm">{quotation.customer_name || 'Customer'}</h3>
+            <p className="text-xs text-slate-500 font-mono">{quotation.customer_email || 'No email provided'}</p>
+          </div>
+
+          <div className="space-y-1 border-b sm:border-b-0 sm:border-r border-slate-100 pb-4 sm:pb-0">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Issued By</span>
+            <h3 className="font-bold text-slate-900 text-sm">{quotation.sales_rep_name || 'Sales Representative'}</h3>
+            <p className="text-xs text-slate-500">{quotation.company_name || 'DealFlow360 Solutions'}</p>
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Document Details</span>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-500">Date:</span>
+              <span className="font-semibold text-slate-800">{new Date(quotation.created_at).toLocaleDateString()}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-500">Access Mode:</span>
+              <span className="font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-[10px]">
+                <i className="fa-solid fa-lock text-[9px] mr-1"></i> Unique Direct Link
+              </span>
+            </div>
+          </div>
+        </div>
+
 
         {/* STATUS BANNER: PENDING APPROVAL */}
         {quotation.status === 'pending_approval' && (
