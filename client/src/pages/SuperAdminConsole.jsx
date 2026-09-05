@@ -140,8 +140,6 @@ export default function SuperAdminConsole({ defaultTab }) {
     }
   };
 
-<<<<<<< HEAD
-=======
   const switchTab = (tab) => {
     setActiveTab(tab);
     setSearchParams({ tab });
@@ -161,8 +159,6 @@ export default function SuperAdminConsole({ defaultTab }) {
 
     showNotification('success', `Updated role for ${user.name} to ${newRole.replace('_', ' ').toUpperCase()}`);
   };
-
->>>>>>> e9b55e6741e0a3e222557a71179777233a30aba2
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-slate-50 space-y-3">

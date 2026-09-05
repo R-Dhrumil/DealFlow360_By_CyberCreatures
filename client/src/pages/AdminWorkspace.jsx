@@ -268,11 +268,6 @@ export default function AdminWorkspace() {
   const fetchTeam = async () => {
     try {
       const res = await api.get('/users');
-<<<<<<< HEAD
-      setTeam(res.data || []);
-    } catch {
-      setTeam([]);
-=======
       if (res.data && Array.isArray(res.data) && res.data.length > 0) {
         setTeam(res.data);
       } else {
@@ -280,7 +275,6 @@ export default function AdminWorkspace() {
       }
     } catch (_err) {
       setTeam(INITIAL_TEAM);
->>>>>>> e9b55e6741e0a3e222557a71179777233a30aba2
     }
   };
 
