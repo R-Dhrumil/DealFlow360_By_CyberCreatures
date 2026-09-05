@@ -63,7 +63,7 @@ export default function SuperAdminConsole() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-slate-50">
-        <i className="fa-solid fa-spinner fa-spin text-purple-600 text-4xl"></i>
+        <i className="fa-solid fa-spinner fa-spin text-primary text-4xl"></i>
       </div>
     );
   }
@@ -81,17 +81,17 @@ export default function SuperAdminConsole() {
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-8 space-y-6">
       {/* Super Admin Top Header */}
-      <header className="flex flex-wrap justify-between items-center gap-4 bg-slate-900 text-white p-6 rounded-2xl shadow-md border border-slate-800">
+      <header className="flex flex-wrap justify-between items-center gap-4 bg-white text-text-main p-6 rounded-2xl shadow-md border border-surface-soft">
         <div>
           <div className="flex items-center space-x-3 mb-1">
-            <span className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-400 font-black flex items-center justify-center text-lg">
+            <span className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-status/40 text-amber-status font-black flex items-center justify-center text-lg">
               👑
             </span>
-            <h1 className="text-2xl font-black tracking-tight text-white">
+            <h1 className="text-2xl font-black tracking-tight text-text-main">
               Super Admin Console
             </h1>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-text-muted">
             Tenant Business Card Analytics, Loss Analytics & User Info Governance
           </p>
         </div>
@@ -101,8 +101,8 @@ export default function SuperAdminConsole() {
             onClick={() => setActiveTab('businesses')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
               activeTab === 'businesses'
-                ? 'bg-purple-600 text-white shadow'
-                : 'bg-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-primary text-text-main shadow'
+                : 'bg-surface-soft text-text-muted hover:text-text-main'
             }`}
           >
             <i className="fa-solid fa-building"></i>
@@ -112,8 +112,8 @@ export default function SuperAdminConsole() {
             onClick={() => setActiveTab('users')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
               activeTab === 'users'
-                ? 'bg-purple-600 text-white shadow'
-                : 'bg-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-primary text-text-main shadow'
+                : 'bg-surface-soft text-text-muted hover:text-text-main'
             }`}
           >
             <i className="fa-solid fa-users"></i>
@@ -121,7 +121,7 @@ export default function SuperAdminConsole() {
           </button>
           <Link
             to="/app/settings"
-            className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-slate-700"
+            className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 bg-surface-soft text-text-muted hover:bg-slate-700 hover:text-text-main border border-surface-soft"
           >
             <i className="fa-solid fa-gear"></i>
             <span>Platform Settings</span>
@@ -131,17 +131,17 @@ export default function SuperAdminConsole() {
 
       {/* Top Overview KPI Bar */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-purple-600">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Listed Businesses</p>
-          <h3 className="text-3xl font-black text-slate-900">{companies.length} Organizations</h3>
+        <div className="bg-white p-5 rounded-2xl border border-surface-soft shadow-sm border-l-4 border-l-purple-600">
+          <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Listed Businesses</p>
+          <h3 className="text-3xl font-black text-text-main">{companies.length} Organizations</h3>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-indigo-600">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Registered Users</p>
-          <h3 className="text-3xl font-black text-slate-900">{tenantUsers.length || totalUsers} Active Users</h3>
+        <div className="bg-white p-5 rounded-2xl border border-surface-soft shadow-sm border-l-4 border-l-indigo-600">
+          <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Total Registered Users</p>
+          <h3 className="text-3xl font-black text-text-main">{tenantUsers.length || totalUsers} Active Users</h3>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-600">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Quotations Processed</p>
-          <h3 className="text-3xl font-black text-slate-900">{totalQuotes} Deals</h3>
+        <div className="bg-white p-5 rounded-2xl border border-surface-soft shadow-sm border-l-4 border-l-emerald-600">
+          <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Quotations Processed</p>
+          <h3 className="text-3xl font-black text-text-main">{totalQuotes} Deals</h3>
         </div>
       </div>
 
@@ -149,10 +149,10 @@ export default function SuperAdminConsole() {
       {activeTab === 'businesses' && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-lg font-extrabold text-text-main tracking-tight">
               Listed Businesses & Loss Analytics Cards
             </h2>
-            <span className="text-xs text-slate-500 font-semibold">
+            <span className="text-xs text-text-muted font-semibold">
               Super Admin Analytics Overview
             </span>
           </div>
@@ -174,7 +174,7 @@ export default function SuperAdminConsole() {
               return (
                 <div 
                   key={company.id} 
-                  className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-purple-300 transition-all p-5 space-y-4 flex flex-col justify-between"
+                  className="bg-white rounded-2xl border border-surface-soft shadow-sm hover:shadow-md hover:border-purple-300 transition-all p-5 space-y-4 flex flex-col justify-between"
                 >
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
@@ -183,8 +183,8 @@ export default function SuperAdminConsole() {
                           {company.name.charAt(0)}
                         </div>
                         <div>
-                          <h3 className="font-extrabold text-slate-900 text-sm leading-snug">{company.name}</h3>
-                          <p className="text-[11px] text-slate-400 font-mono">{company.subdomain_slug}.dealflow360.com</p>
+                          <h3 className="font-extrabold text-text-main text-sm leading-snug">{company.name}</h3>
+                          <p className="text-[11px] text-text-muted font-mono">{company.subdomain_slug}.dealflow360.com</p>
                         </div>
                       </div>
                       <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-200">
@@ -194,11 +194,11 @@ export default function SuperAdminConsole() {
 
                     <div className="grid grid-cols-2 gap-2 pt-2 text-xs">
                       <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">Users Info</p>
+                        <p className="text-[10px] text-text-muted font-bold uppercase">Users Info</p>
                         <p className="font-black text-slate-800">{companyUserList.length || company.user_count} Registered</p>
                       </div>
                       <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">Total Revenue</p>
+                        <p className="text-[10px] text-text-muted font-bold uppercase">Total Revenue</p>
                         <p className="font-black text-purple-700">{company.revenue || '$350,000'}</p>
                       </div>
                     </div>
@@ -217,12 +217,12 @@ export default function SuperAdminConsole() {
                   </div>
 
                   <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
-                    <span className="text-[11px] text-slate-500 font-medium"><i className="fa-solid fa-file-invoice mr-1"></i> {totalQ} Quotations</span>
+                    <span className="text-[11px] text-text-muted font-medium"><i className="fa-solid fa-file-invoice mr-1"></i> {totalQ} Quotations</span>
                     <button 
                       onClick={() => setSelectedCompanyUsers({ company, users: companyUserList })}
                       className="px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold rounded-xl transition-all border border-purple-200 flex items-center space-x-1.5"
                     >
-                      <i className="fa-solid fa-id-card text-purple-600"></i>
+                      <i className="fa-solid fa-id-card text-primary"></i>
                       <span>View User Info</span>
                     </button>
                   </div>
@@ -235,18 +235,18 @@ export default function SuperAdminConsole() {
 
       {/* TAB 2: Global Tenant Users Info */}
       {activeTab === 'users' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+        <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
           <div className="flex flex-wrap justify-between items-center gap-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Tenant Users Info Directory</h2>
-              <p className="text-xs text-slate-500">Super admin view of all user credentials, roles, and business affiliations</p>
+              <h2 className="text-lg font-bold text-text-main">Tenant Users Info Directory</h2>
+              <p className="text-xs text-text-muted">Super admin view of all user credentials, roles, and business affiliations</p>
             </div>
             
             <div className="w-full sm:w-72">
               <input
                 type="text"
                 placeholder="Search user, email, role, business..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 value={searchUserQuery}
                 onChange={(e) => setSearchUserQuery(e.target.value)}
               />
@@ -256,7 +256,7 @@ export default function SuperAdminConsole() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50 text-slate-500 uppercase tracking-wider font-bold border-b border-slate-200">
+                <tr className="bg-slate-50 text-text-muted uppercase tracking-wider font-bold border-b border-surface-soft">
                   <th className="p-3">User Name</th>
                   <th className="p-3">Email Address</th>
                   <th className="p-3">Role</th>
@@ -267,7 +267,7 @@ export default function SuperAdminConsole() {
               <tbody className="divide-y divide-slate-100">
                 {filteredUsers.map(user => (
                   <tr key={user.id} className="hover:bg-purple-50/50 transition-colors">
-                    <td className="p-3 font-bold text-slate-900 flex items-center space-x-2">
+                    <td className="p-3 font-bold text-text-main flex items-center space-x-2">
                       <div className="w-7 h-7 rounded-full bg-purple-100 text-purple-800 font-bold flex items-center justify-center text-xs">
                         {user.name.charAt(0)}
                       </div>
@@ -285,7 +285,7 @@ export default function SuperAdminConsole() {
                       </span>
                     </td>
                     <td className="p-3 text-slate-700 font-semibold">{user.company_name || 'CyberCreatures Operations'}</td>
-                    <td className="p-3 text-slate-400 font-mono">{user.created_at?.slice(0, 10) || '2026-02-01'}</td>
+                    <td className="p-3 text-text-muted font-mono">{user.created_at?.slice(0, 10) || '2026-02-01'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -296,18 +296,18 @@ export default function SuperAdminConsole() {
 
       {/* User Info Modal for Selected Company */}
       {selectedCompanyUsers && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 space-y-4">
+        <div className="fixed inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl border border-surface-soft max-w-xl w-full p-6 space-y-4">
             <div className="flex justify-between items-start border-b border-slate-100 pb-4">
               <div>
-                <h3 className="text-lg font-black text-slate-900 flex items-center space-x-2">
+                <h3 className="text-lg font-black text-text-main flex items-center space-x-2">
                   <span>{selectedCompanyUsers.company.name}</span>
                 </h3>
-                <p className="text-xs text-slate-500">Super Admin User Info Breakdown</p>
+                <p className="text-xs text-text-muted">Super Admin User Info Breakdown</p>
               </div>
               <button
                 onClick={() => setSelectedCompanyUsers(null)}
-                className="text-slate-400 hover:text-slate-600 text-lg p-1"
+                className="text-text-muted hover:text-slate-600 text-lg p-1"
               >
                 <i className="fa-solid fa-xmark"></i>
               </button>
@@ -318,8 +318,8 @@ export default function SuperAdminConsole() {
                 selectedCompanyUsers.users.map(u => (
                   <div key={u.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center text-xs">
                     <div className="space-y-0.5">
-                      <p className="font-bold text-slate-900">{u.name}</p>
-                      <p className="text-slate-500 font-mono">{u.email}</p>
+                      <p className="font-bold text-text-main">{u.name}</p>
+                      <p className="text-text-muted font-mono">{u.email}</p>
                     </div>
                     <span className="bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px]">
                       {u.role?.replace('_', ' ')}
@@ -327,8 +327,8 @@ export default function SuperAdminConsole() {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-6 text-slate-400 text-xs font-semibold">
-                  <i className="fa-solid fa-users text-2xl mb-2 text-slate-300 block"></i>
+                <div className="text-center py-6 text-text-muted text-xs font-semibold">
+                  <i className="fa-solid fa-users text-2xl mb-2 text-text-muted block"></i>
                   No custom user records found for this business tenant.
                 </div>
               )}
@@ -337,7 +337,7 @@ export default function SuperAdminConsole() {
             <div className="pt-3 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setSelectedCompanyUsers(null)}
-                className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors"
+                className="px-4 py-2 bg-white text-text-main rounded-xl text-xs font-bold hover:bg-surface-soft transition-colors"
               >
                 Close User Info
               </button>

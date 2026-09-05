@@ -23,10 +23,10 @@ const Login = ({ defaultIsSignup = false }) => {
 
   const getPasswordStrength = (val) => {
     const len = val.length;
-    if (len === 0) return { text: 'Required', color: 'text-[#6b6278]', bars: 0, barColor: 'bg-[#e2d0f5]' };
-    if (len < 6) return { text: 'Weak', color: 'text-[#dc2626]', bars: 1, barColor: 'bg-[#dc2626]' };
-    if (len < 10) return { text: 'Moderate', color: 'text-[#d97706]', bars: 2, barColor: 'bg-[#d97706]' };
-    return { text: 'Enterprise Compliant', color: 'text-[#059669]', bars: 4, barColor: 'bg-[#059669]' };
+    if (len === 0) return { text: 'Required', color: 'text-text-muted', bars: 0, barColor: 'bg-surface-soft' };
+    if (len < 6) return { text: 'Weak', color: 'text-rose-status', bars: 1, barColor: 'bg-rose-status' };
+    if (len < 10) return { text: 'Moderate', color: 'text-amber-status', bars: 2, barColor: 'bg-amber-status' };
+    return { text: 'Enterprise Compliant', color: 'text-emerald-status', bars: 4, barColor: 'bg-emerald-status' };
   };
 
   const strength = getPasswordStrength(password);
@@ -130,7 +130,7 @@ const Login = ({ defaultIsSignup = false }) => {
   };
 
   return (
-    <main className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 lg:p-10 bg-[#f5e8ff] font-body-md text-[#4b4356] antialiased">
+    <main className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 lg:p-10 bg-border-soft font-body-md text-text-body antialiased">
       <div className="flex flex-col w-full max-w-7xl">
         <div className="w-full min-h-[760px] grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
 
@@ -234,19 +234,19 @@ const Login = ({ defaultIsSignup = false }) => {
 
 
           {/* Right Column: Authentication Suite */}
-          <div className="lg:col-span-6 xl:col-span-5 flex flex-col justify-between p-7 md:p-10 rounded-2xl bg-white border border-[#e2d0f5] shadow-xl">
+          <div className="lg:col-span-6 xl:col-span-5 flex flex-col justify-between p-7 md:p-10 rounded-2xl bg-white border border-surface-soft shadow-xl">
             <div>
               {/* Mode Switcher Tabs */}
-              <div className="flex items-center p-1 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] mb-6">
+              <div className="flex items-center p-1 rounded-xl bg-border-soft border border-surface-soft mb-6">
                 <button
-                  className={`flex-1 py-2.5 rounded-lg font-headline-sm text-xs text-center transition-all ${!isSignup ? 'bg-[#702963] text-white font-bold shadow-md' : 'text-[#6b6278] hover:text-[#110d1a] font-semibold'}`}
+                  className={`flex-1 py-2.5 rounded-lg font-headline-sm text-xs text-center transition-all ${!isSignup ? 'bg-primary text-white font-bold shadow-md' : 'text-text-muted hover:text-text-main font-semibold'}`}
                   onClick={() => { setIsSignup(false); setError(''); }}
                   type="button"
                 >
                   Sign In
                 </button>
                 <button
-                  className={`flex-1 py-2.5 rounded-lg font-headline-sm text-xs text-center transition-all ${isSignup ? 'bg-[#702963] text-white font-bold shadow-md' : 'text-[#6b6278] hover:text-[#110d1a] font-semibold'}`}
+                  className={`flex-1 py-2.5 rounded-lg font-headline-sm text-xs text-center transition-all ${isSignup ? 'bg-primary text-white font-bold shadow-md' : 'text-text-muted hover:text-text-main font-semibold'}`}
                   onClick={() => { setIsSignup(true); setError(''); }}
                   type="button"
                 >
@@ -256,13 +256,13 @@ const Login = ({ defaultIsSignup = false }) => {
 
               {/* Header Titles */}
               <div className="mb-6">
-                <span className="font-label-sm text-xs font-bold text-[#702963] uppercase tracking-widest">
+                <span className="font-label-sm text-xs font-bold text-primary uppercase tracking-widest">
                   {isSignup ? 'Create New Account' : 'Sign In to Your Workspace'}
                 </span>
-                <h1 className="font-headline-lg text-2xl md:text-3xl font-bold text-[#110d1a] mt-1 tracking-tight">
+                <h1 className="font-headline-lg text-2xl md:text-3xl font-bold text-text-main mt-1 tracking-tight">
                   {isSignup ? 'Get Started with DealFlow360' : 'Sign In to DealFlow360'}
                 </h1>
-                <p className="font-body-md text-xs text-[#6b6278] mt-1">
+                <p className="font-body-md text-xs text-text-muted mt-1">
                   {isSignup
                     ? 'Select your account type below to set up your DealFlow360 access.'
                     : 'Enter your credentials — your user role will be detected automatically.'}
@@ -282,7 +282,7 @@ const Login = ({ defaultIsSignup = false }) => {
                 {/* Account Type Selector (ONLY in Sign Up Mode) */}
                 {isSignup && (
                   <div className="space-y-2">
-                    <label className="block font-label-md text-xs font-bold text-[#110d1a] uppercase tracking-wider">
+                    <label className="block font-label-md text-xs font-bold text-text-main uppercase tracking-wider">
                       Select Account Type
                     </label>
                     <div className="grid grid-cols-2 gap-3">
@@ -290,14 +290,14 @@ const Login = ({ defaultIsSignup = false }) => {
                         type="button"
                         onClick={() => setAccountType('admin')}
                         className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${accountType === 'admin'
-                            ? 'bg-[#702963]/10 border-[#702963] text-[#702963] ring-2 ring-[#702963]/30 font-bold'
-                            : 'bg-[#faf2ff] border-[#e2d0f5] text-[#6b6278] hover:border-[#702963]/50'
+                            ? 'bg-primary/10 border-primary text-primary ring-2 ring-primary/30 font-bold'
+                            : 'bg-border-soft border-surface-soft text-text-muted hover:border-primary/50'
                           }`}
                       >
-                        <span className="material-symbols-outlined text-xl mb-1 text-[#702963]">domain</span>
+                        <span className="material-symbols-outlined text-xl mb-1 text-primary">domain</span>
                         <div>
-                          <div className="font-bold text-xs text-[#110d1a]">Admin / Business</div>
-                          <div className="text-[10px] text-[#6b6278]">Organization management</div>
+                          <div className="font-bold text-xs text-text-main">Admin / Business</div>
+                          <div className="text-[10px] text-text-muted">Organization management</div>
                         </div>
                       </button>
 
@@ -305,14 +305,14 @@ const Login = ({ defaultIsSignup = false }) => {
                         type="button"
                         onClick={() => setAccountType('customer')}
                         className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${accountType === 'customer'
-                            ? 'bg-[#059669]/10 border-[#059669] text-[#059669] ring-2 ring-[#059669]/30 font-bold'
-                            : 'bg-[#faf2ff] border-[#e2d0f5] text-[#6b6278] hover:border-[#059669]/50'
+                            ? 'bg-emerald-status/10 border-emerald-status text-emerald-status ring-2 ring-emerald-status/30 font-bold'
+                            : 'bg-border-soft border-surface-soft text-text-muted hover:border-emerald-status/50'
                           }`}
                       >
-                        <span className="material-symbols-outlined text-xl mb-1 text-[#059669]">person</span>
+                        <span className="material-symbols-outlined text-xl mb-1 text-emerald-status">person</span>
                         <div>
-                          <div className="font-bold text-xs text-[#110d1a]">Customer Account</div>
-                          <div className="text-[10px] text-[#6b6278]">Quotes & products</div>
+                          <div className="font-bold text-xs text-text-main">Customer Account</div>
+                          <div className="text-[10px] text-text-muted">Quotes & products</div>
                         </div>
                       </button>
                     </div>
@@ -321,11 +321,11 @@ const Login = ({ defaultIsSignup = false }) => {
 
                 {isSignup && (
                   <div className="space-y-1.5">
-                    <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Full Name</label>
+                    <label className="block font-label-md text-xs font-semibold text-text-main">Full Name</label>
                     <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">person</span>
+                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">person</span>
                       <input
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-body-md text-xs placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963]"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-border-soft border border-surface-soft text-text-main font-body-md text-xs placeholder-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="e.g. Sarah Connor"
                         type="text"
                         value={name}
@@ -338,11 +338,11 @@ const Login = ({ defaultIsSignup = false }) => {
 
                 {isSignup && accountType === 'admin' && (
                   <div className="space-y-1.5">
-                    <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Company / Organization Name</label>
+                    <label className="block font-label-md text-xs font-semibold text-text-main">Company / Organization Name</label>
                     <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">corporate_fare</span>
+                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">corporate_fare</span>
                       <input
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-body-md text-xs placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963]"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-border-soft border border-surface-soft text-text-main font-body-md text-xs placeholder-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="e.g. CyberCreatures Inc."
                         type="text"
                         value={companyName}
@@ -355,11 +355,11 @@ const Login = ({ defaultIsSignup = false }) => {
 
                 {/* Email Field */}
                 <div className="space-y-1.5">
-                  <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Email Address</label>
+                  <label className="block font-label-md text-xs font-semibold text-text-main">Email Address</label>
                   <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">alternate_email</span>
+                    <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">alternate_email</span>
                     <input
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-body-md text-xs placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963]"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-border-soft border border-surface-soft text-text-main font-body-md text-xs placeholder-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="name@example.com"
                       type="email"
                       value={email}
@@ -372,12 +372,12 @@ const Login = ({ defaultIsSignup = false }) => {
                 {/* Password Field */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Password</label>
+                    <label className="block font-label-md text-xs font-semibold text-text-main">Password</label>
                   </div>
                   <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">lock</span>
+                    <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">lock</span>
                     <input
-                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-data-tabular text-xs placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963]"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-border-soft border border-surface-soft text-text-main font-data-tabular text-xs placeholder-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={password}
@@ -385,7 +385,7 @@ const Login = ({ defaultIsSignup = false }) => {
                       required
                     />
                     <button
-                      className="absolute right-3 top-2.5 text-[#6b6278] hover:text-[#110d1a] transition-colors"
+                      className="absolute right-3 top-2.5 text-text-muted hover:text-text-main transition-colors"
                       onClick={() => setShowPassword(!showPassword)}
                       type="button"
                     >
@@ -398,7 +398,7 @@ const Login = ({ defaultIsSignup = false }) => {
                 <div className="pt-2">
                   <button
                     disabled={loading}
-                    className="w-full py-3 px-4 rounded-xl bg-[#702963] hover:bg-[#55104b] text-white font-headline-sm text-xs font-bold tracking-wide text-center flex items-center justify-center gap-2 shadow-lg shadow-[#702963]/25 transition-all focus:outline-none focus:ring-2 focus:ring-[#702963] active:scale-[0.99] disabled:opacity-70"
+                    className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-dark text-white font-headline-sm text-xs font-bold tracking-wide text-center flex items-center justify-center gap-2 shadow-lg shadow-primary/25 transition-all focus:outline-none focus:ring-2 focus:ring-primary active:scale-[0.99] disabled:opacity-70"
                     type="submit"
                   >
                     {loading ? (
@@ -417,7 +417,7 @@ const Login = ({ defaultIsSignup = false }) => {
                 <button
                   type="button"
                   onClick={() => { setIsSignup(!isSignup); setError(''); }}
-                  className="text-xs text-[#702963] hover:underline font-bold"
+                  className="text-xs text-primary hover:underline font-bold"
                 >
                   {isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
                 </button>
@@ -425,17 +425,17 @@ const Login = ({ defaultIsSignup = false }) => {
             </div>
 
             {/* Quick Test Credential Filler Bar */}
-            <div className="mt-6 pt-4 border-t border-[#e2d0f5] space-y-2">
-              <div className="flex justify-between items-center text-[11px] font-bold text-[#702963]">
+            <div className="mt-6 pt-4 border-t border-surface-soft space-y-2">
+              <div className="flex justify-between items-center text-[11px] font-bold text-primary">
                 <span>⚡ Quick Test Credentials (1-Click Fill):</span>
-                <span className="text-[10px] text-[#6b6278] font-normal">Temporary Testing Helper</span>
+                <span className="text-[10px] text-text-muted font-normal">Temporary Testing Helper</span>
               </div>
               <div className="flex flex-wrap gap-1.5 text-xs">
-                <button type="button" onClick={() => fillCredentials('superadmin@dealflow360.com', 'SuperAdmin123!')} className="px-2.5 py-1 bg-[#faf2ff] border border-[#e2d0f5] text-[#702963] rounded-lg hover:bg-[#f5e8ff] font-bold text-[11px]">👑 SuperAdmin</button>
-                <button type="button" onClick={() => fillCredentials('admin@cybercreatures.com', 'Admin123!')} className="px-2.5 py-1 bg-[#faf2ff] border border-[#e2d0f5] text-[#702963] rounded-lg hover:bg-[#f5e8ff] font-bold text-[11px]">🏢 Admin</button>
-                <button type="button" onClick={() => fillCredentials('manager@cybercreatures.com', 'Manager123!')} className="px-2.5 py-1 bg-[#faf2ff] border border-[#e2d0f5] text-[#702963] rounded-lg hover:bg-[#f5e8ff] font-bold text-[11px]">💼 Manager</button>
-                <button type="button" onClick={() => fillCredentials('sales@cybercreatures.com', 'Sales123!')} className="px-2.5 py-1 bg-[#faf2ff] border border-[#e2d0f5] text-[#702963] rounded-lg hover:bg-[#f5e8ff] font-bold text-[11px]">🎯 Sales Rep</button>
-                <button type="button" onClick={() => fillCredentials('customer@acme.com', 'Customer123!')} className="px-2.5 py-1 bg-[#faf2ff] border border-[#059669]/30 text-[#059669] rounded-lg hover:bg-[#059669]/10 font-bold text-[11px]">👤 Customer</button>
+                <button type="button" onClick={() => fillCredentials('superadmin@dealflow360.com', 'SuperAdmin123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">👑 SuperAdmin</button>
+                <button type="button" onClick={() => fillCredentials('admin@cybercreatures.com', 'Admin123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">🏢 Admin</button>
+                <button type="button" onClick={() => fillCredentials('manager@cybercreatures.com', 'Manager123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">💼 Manager</button>
+                <button type="button" onClick={() => fillCredentials('sales@cybercreatures.com', 'Sales123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">🎯 Sales Rep</button>
+                <button type="button" onClick={() => fillCredentials('customer@acme.com', 'Customer123!')} className="px-2.5 py-1 bg-border-soft border border-emerald-status/30 text-emerald-status rounded-lg hover:bg-emerald-status/10 font-bold text-[11px]">👤 Customer</button>
               </div>
             </div>
 

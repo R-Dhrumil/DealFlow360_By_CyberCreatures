@@ -29,7 +29,7 @@ export default function Marketplace() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-white shadow-sm border-b border-slate-200 py-4 px-6 md:px-12 flex items-center justify-between">
+      <header className="bg-white shadow-sm border-b border-surface-soft py-4 px-6 md:px-12 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <i className="fa-solid fa-store text-primary-600 text-2xl"></i>
           <h1 className="text-xl font-bold text-slate-800">DealFlow360 Marketplace</h1>
@@ -48,7 +48,7 @@ export default function Marketplace() {
             <div className="mb-4">
               <label className="block text-sm font-medium text-slate-700 mb-1">Search</label>
               <div className="relative">
-                <i className="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
+                <i className="fa-solid fa-magnifying-glass absolute left-3 top-3 text-text-muted"></i>
                 <input 
                   type="text" 
                   className="input-field pl-9" 
@@ -82,16 +82,16 @@ export default function Marketplace() {
             </div>
           ) : products.length === 0 ? (
             <div className="card p-12 text-center">
-              <i className="fa-solid fa-box-open text-slate-300 text-5xl mb-4"></i>
+              <i className="fa-solid fa-box-open text-text-muted text-5xl mb-4"></i>
               <h3 className="text-lg font-medium text-slate-800">No products found</h3>
-              <p className="text-slate-500 mt-2">Try adjusting your filters or search term.</p>
+              <p className="text-text-muted mt-2">Try adjusting your filters or search term.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {products.map(product => (
                 <div key={product.id} className="card overflow-hidden hover:shadow-premium transition-shadow duration-300 flex flex-col">
                   {product.is_promoted && (
-                    <div className="bg-primary-600 text-white text-xs font-bold uppercase tracking-wider py-1 px-3">
+                    <div className="bg-primary-600 text-text-main text-xs font-bold uppercase tracking-wider py-1 px-3">
                       <i className="fa-solid fa-star mr-1"></i> Featured
                     </div>
                   )}
@@ -101,10 +101,10 @@ export default function Marketplace() {
                          <img src={product.company_logo} alt={product.company_name} className="w-6 h-6 rounded-full" />
                       ) : (
                         <div className="w-6 h-6 rounded-full bg-slate-200 flex justify-center items-center">
-                          <i className="fa-solid fa-building text-xs text-slate-500"></i>
+                          <i className="fa-solid fa-building text-xs text-text-muted"></i>
                         </div>
                       )}
-                      <span className="text-xs font-medium text-slate-500">{product.company_name}</span>
+                      <span className="text-xs font-medium text-text-muted">{product.company_name}</span>
                     </div>
                     
                     <h3 className="text-lg font-bold text-slate-800 mb-1">{product.name}</h3>
@@ -115,8 +115,8 @@ export default function Marketplace() {
                     
                     <div className="pt-4 border-t border-slate-100 mt-auto flex items-end justify-between">
                       <div>
-                        <span className="text-2xl font-bold text-slate-900">${parseFloat(product.base_price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                        <span className="text-xs text-slate-500 ml-1">/ {product.unit}</span>
+                        <span className="text-2xl font-bold text-text-main">${parseFloat(product.base_price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        <span className="text-xs text-text-muted ml-1">/ {product.unit}</span>
                       </div>
                       <button className="text-primary-600 hover:text-primary-800 p-2 rounded-full hover:bg-primary-50 transition-colors" title="Requires login to quote">
                          <i className="fa-solid fa-arrow-right"></i>

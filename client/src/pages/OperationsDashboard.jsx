@@ -24,31 +24,31 @@ export default function OperationsDashboard() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-slate-500">Loading Operations Hub...</div>;
+    return <div className="p-8 text-center text-text-muted">Loading Operations Hub...</div>;
   }
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-6">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Operations & Fulfillment Hub</h1>
-          <p className="text-slate-500 text-sm mt-1">Manage warehouse allocation and order fulfillment.</p>
+          <h1 className="text-2xl font-bold text-text-main">Operations & Fulfillment Hub</h1>
+          <p className="text-text-muted text-sm mt-1">Manage warehouse allocation and order fulfillment.</p>
         </div>
       </div>
 
       {quotations.length === 0 ? (
-        <div className="bg-white p-12 text-center rounded-xl border border-slate-200 shadow-sm">
-          <div className="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="bg-white p-12 text-center rounded-xl border border-surface-soft shadow-sm">
+          <div className="w-16 h-16 bg-slate-50 text-text-muted rounded-full flex items-center justify-center mx-auto mb-4">
             <i className="fa-solid fa-box-open text-2xl"></i>
           </div>
-          <h3 className="text-lg font-semibold text-slate-900">No Pending Orders</h3>
-          <p className="text-slate-500 max-w-md mx-auto mt-2">All confirmed deals have been fulfilled or there are no confirmed quotations in the queue.</p>
+          <h3 className="text-lg font-semibold text-text-main">No Pending Orders</h3>
+          <p className="text-text-muted max-w-md mx-auto mt-2">All confirmed deals have been fulfilled or there are no confirmed quotations in the queue.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-surface-soft overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-sm font-medium text-slate-500">
+              <tr className="bg-slate-50 border-b border-surface-soft text-sm font-medium text-text-muted">
                 <th className="p-4">Quotation Ref</th>
                 <th className="p-4">Customer</th>
                 <th className="p-4">Date Confirmed</th>
@@ -64,8 +64,8 @@ export default function OperationsDashboard() {
                       #{q.id.split('-')[0].toUpperCase()}
                     </Link>
                   </td>
-                  <td className="p-4 font-medium text-slate-900">{q.customer_name}</td>
-                  <td className="p-4 text-slate-500 text-sm">{new Date(q.updated_at).toLocaleDateString()}</td>
+                  <td className="p-4 font-medium text-text-main">{q.customer_name}</td>
+                  <td className="p-4 text-text-muted text-sm">{new Date(q.updated_at).toLocaleDateString()}</td>
                   <td className="p-4">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                       Pending Allocation

@@ -54,8 +54,8 @@ export default function DealHealthDashboard() {
     <div className="min-h-screen bg-slate-50 p-6 md:p-8 space-y-6">
       <header className="flex flex-wrap justify-between items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Deal Health & Anomaly Dashboard</h1>
-          <p className="text-sm text-slate-500">Real-time risk scoring, stalled quote detection & discount governance monitoring</p>
+          <h1 className="text-2xl font-bold text-text-main tracking-tight">Deal Health & Anomaly Dashboard</h1>
+          <p className="text-sm text-text-muted">Real-time risk scoring, stalled quote detection & discount governance monitoring</p>
         </div>
         
         <Link to="/app/pipeline" className="btn-secondary text-xs">
@@ -65,11 +65,11 @@ export default function DealHealthDashboard() {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-primary-500">
+        <div className="bg-white p-5 rounded-xl border border-surface-soft shadow-sm border-l-4 border-l-primary-500">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Quotations</p>
-              <h3 className="text-3xl font-black text-slate-900">{metrics.totalQuotes}</h3>
+              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Total Quotations</p>
+              <h3 className="text-3xl font-black text-text-main">{metrics.totalQuotes}</h3>
             </div>
             <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600 font-bold">
               <i className="fa-solid fa-file-invoice"></i>
@@ -77,11 +77,11 @@ export default function DealHealthDashboard() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
+        <div className="bg-white p-5 rounded-xl border border-surface-soft shadow-sm border-l-4 border-l-emerald-500">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Win Rate</p>
-              <h3 className="text-3xl font-black text-slate-900">{metrics.winRate}%</h3>
+              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Win Rate</p>
+              <h3 className="text-3xl font-black text-text-main">{metrics.winRate}%</h3>
             </div>
             <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold">
               <i className="fa-solid fa-trophy"></i>
@@ -89,11 +89,11 @@ export default function DealHealthDashboard() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-amber-500">
+        <div className="bg-white p-5 rounded-xl border border-surface-soft shadow-sm border-l-4 border-l-amber-500">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pending Approvals</p>
-              <h3 className="text-3xl font-black text-slate-900">{metrics.pendingApprovals}</h3>
+              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Pending Approvals</p>
+              <h3 className="text-3xl font-black text-text-main">{metrics.pendingApprovals}</h3>
             </div>
             <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 font-bold">
               <i className="fa-solid fa-clock"></i>
@@ -101,11 +101,11 @@ export default function DealHealthDashboard() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-red-500">
+        <div className="bg-white p-5 rounded-xl border border-surface-soft shadow-sm border-l-4 border-l-red-500">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Avg Risk Score</p>
-              <h3 className="text-3xl font-black text-slate-900">{metrics.avgRiskScore}%</h3>
+              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Avg Risk Score</p>
+              <h3 className="text-3xl font-black text-text-main">{metrics.avgRiskScore}%</h3>
             </div>
             <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center text-red-600 font-bold">
               <i className="fa-solid fa-triangle-exclamation"></i>
@@ -115,11 +115,11 @@ export default function DealHealthDashboard() {
       </div>
 
       {/* Stalled Deals & Anomaly Alerts Section (Spec Section B9) */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+      <div className="bg-white rounded-xl border border-surface-soft shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-surface-soft bg-slate-50 flex justify-between items-center">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Stalled Deals & Discount Anomaly Alerts</h2>
-            <p className="text-xs text-slate-500">Quotations inactive &gt; 5 days or exceeding rep historical averages</p>
+            <h2 className="text-base font-bold text-text-main">Stalled Deals & Discount Anomaly Alerts</h2>
+            <p className="text-xs text-text-muted">Quotations inactive &gt; 5 days or exceeding rep historical averages</p>
           </div>
           <span className="bg-red-100 text-red-800 text-xs font-bold px-2.5 py-1 rounded-full">
             {highRiskDeals.length} Alerts Active
@@ -130,7 +130,7 @@ export default function DealHealthDashboard() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="text-xs text-slate-500 font-semibold border-b border-slate-200 bg-slate-50/50">
+                <tr className="text-xs text-text-muted font-semibold border-b border-surface-soft bg-slate-50/50">
                   <th className="px-6 py-3">Quote ID</th>
                   <th className="px-6 py-3">Customer</th>
                   <th className="px-6 py-3">Assigned Rep</th>
@@ -148,7 +148,7 @@ export default function DealHealthDashboard() {
                   return (
                     <tr key={deal.id} className="hover:bg-slate-50">
                       <td className="px-6 py-4 font-mono font-bold text-primary-600">{dealId}</td>
-                      <td className="px-6 py-4 font-bold text-slate-900">{deal.customer_name}</td>
+                      <td className="px-6 py-4 font-bold text-text-main">{deal.customer_name}</td>
                       <td className="px-6 py-4 text-slate-600 font-medium">{deal.rep_name}</td>
                       <td className="px-6 py-4">
                         <span className="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[11px]">
@@ -170,15 +170,15 @@ export default function DealHealthDashboard() {
                           disabled={isNudged}
                           className={`px-3 py-1.5 rounded-lg font-bold text-[11px] transition-all ${
                             isNudged 
-                              ? 'bg-slate-200 text-slate-500 cursor-default' 
-                              : 'bg-primary-600 hover:bg-primary-700 text-white shadow-sm'
+                              ? 'bg-slate-200 text-text-muted cursor-default' 
+                              : 'bg-primary-600 hover:bg-primary-700 text-text-main shadow-sm'
                           }`}
                         >
                           {isNudged ? 'Nudged' : '⚡ Nudge Rep'}
                         </button>
                         <Link 
                           to="/app/approvals" 
-                          className="px-3 py-1.5 rounded-lg font-bold text-[11px] bg-slate-900 hover:bg-slate-800 text-white inline-block"
+                          className="px-3 py-1.5 rounded-lg font-bold text-[11px] bg-white hover:bg-surface-soft text-text-main inline-block"
                         >
                           Review
                         </Link>
@@ -191,7 +191,7 @@ export default function DealHealthDashboard() {
           </div>
         ) : (
           <div className="p-8 text-center">
-            <i className="fa-solid fa-shield-check text-emerald-500 text-4xl mb-3"></i>
+            <i className="fa-solid fa-shield-check text-emerald-status text-4xl mb-3"></i>
             <p className="text-slate-600 font-semibold text-sm">No stalled or high risk deals in pipeline.</p>
           </div>
         )}

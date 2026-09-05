@@ -88,8 +88,8 @@ export default function FulfillmentSplit() {
     <div className="min-h-screen bg-slate-50 p-6 md:p-8 space-y-6">
       <header className="flex flex-wrap justify-between items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Multi-Warehouse Fulfillment Split</h1>
-          <p className="text-sm text-slate-500">Live inventory availability & auto-split shipment optimizer</p>
+          <h1 className="text-2xl font-bold text-text-main tracking-tight">Multi-Warehouse Fulfillment Split</h1>
+          <p className="text-sm text-text-muted">Live inventory availability & auto-split shipment optimizer</p>
         </div>
         
         <div className="flex space-x-3">
@@ -130,7 +130,7 @@ export default function FulfillmentSplit() {
           className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
             backorderConsolidated 
               ? 'bg-amber-200 text-amber-800 cursor-default' 
-              : 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
+              : 'bg-amber-600 hover:bg-amber-700 text-text-main shadow-sm'
           }`}
         >
           {backorderConsolidated ? (
@@ -143,32 +143,32 @@ export default function FulfillmentSplit() {
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+        <div className="bg-white p-4 rounded-xl border border-surface-soft shadow-sm flex items-center space-x-3">
           <div className="w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center font-bold text-lg">
             <i className="fa-solid fa-warehouse"></i>
           </div>
           <div>
-            <p className="text-xs text-slate-500 font-medium">Warehouses Involved</p>
-            <p className="text-xl font-black text-slate-900">{Object.keys(warehouseGroups).length}</p>
+            <p className="text-xs text-text-muted font-medium">Warehouses Involved</p>
+            <p className="text-xl font-black text-text-main">{Object.keys(warehouseGroups).length}</p>
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+        <div className="bg-white p-4 rounded-xl border border-surface-soft shadow-sm flex items-center space-x-3">
           <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg">
             <i className="fa-solid fa-truck-fast"></i>
           </div>
           <div>
-            <p className="text-xs text-slate-500 font-medium">Est. Freight Cost</p>
-            <p className="text-xl font-black text-slate-900">${totalShipmentCost.toFixed(2)}</p>
+            <p className="text-xs text-text-muted font-medium">Est. Freight Cost</p>
+            <p className="text-xl font-black text-text-main">${totalShipmentCost.toFixed(2)}</p>
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-lg">
+        <div className="bg-white p-4 rounded-xl border border-surface-soft shadow-sm flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-lg bg-purple-50 text-primary flex items-center justify-center font-bold text-lg">
             <i className="fa-solid fa-[#check]"></i>
           </div>
           <div>
-            <p className="text-xs text-slate-500 font-medium">Auto-Split Status</p>
+            <p className="text-xs text-text-muted font-medium">Auto-Split Status</p>
             <p className="text-sm font-bold text-purple-700">Cost-Weighted Optimized</p>
           </div>
         </div>
@@ -177,11 +177,11 @@ export default function FulfillmentSplit() {
       {/* Warehouse Allocation Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {Object.entries(warehouseGroups).map(([warehouseId, group]) => (
-          <div key={warehouseId} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="bg-slate-100 px-5 py-3.5 border-b border-slate-200 flex justify-between items-center">
+          <div key={warehouseId} className="bg-white rounded-xl border border-surface-soft shadow-sm overflow-hidden">
+            <div className="bg-slate-100 px-5 py-3.5 border-b border-surface-soft flex justify-between items-center">
               <div className="flex items-center space-x-2.5">
                 <i className="fa-solid fa-building-flag text-primary-600"></i>
-                <h3 className="font-bold text-slate-900 text-sm">{group.name}</h3>
+                <h3 className="font-bold text-text-main text-sm">{group.name}</h3>
               </div>
               <span className="bg-slate-200 text-slate-700 text-xs font-mono font-bold px-2.5 py-0.5 rounded-full">
                 {group.items.length} shipment line(s)
@@ -189,7 +189,7 @@ export default function FulfillmentSplit() {
             </div>
             <div className="p-0">
               <table className="w-full text-xs text-left">
-                <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold">
+                <thead className="bg-slate-50 border-b border-slate-100 text-text-muted font-semibold">
                   <tr>
                     <th className="px-5 py-2.5">Product Name</th>
                     <th className="px-5 py-2.5 text-right">Fulfill Quantity</th>

@@ -147,7 +147,7 @@ export default function CustomerPortal() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-slate-900 text-white">
+      <div className="flex justify-center items-center h-screen bg-white text-text-main">
         <i className="fa-solid fa-spinner fa-spin text-primary-500 text-4xl"></i>
       </div>
     );
@@ -156,15 +156,15 @@ export default function CustomerPortal() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-12">
       {/* Customer Portal Banner */}
-      <header className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-10 shadow-md">
+      <header className="bg-white text-text-main border-b border-surface-soft sticky top-0 z-10 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 bg-primary-600 rounded-lg flex items-center justify-center font-bold text-lg text-white">
+            <div className="w-9 h-9 bg-primary-600 rounded-lg flex items-center justify-center font-bold text-lg text-text-main">
               {quotation.company_name.charAt(0)}
             </div>
             <div>
-              <span className="font-bold text-white text-base block leading-tight">{quotation.company_name} Customer Portal</span>
-              <span className="text-xs text-slate-400">Negotiable Digital Quotation #{quotation.id?.split('-')[0]}</span>
+              <span className="font-bold text-text-main text-base block leading-tight">{quotation.company_name} Customer Portal</span>
+              <span className="text-xs text-text-muted">Negotiable Digital Quotation #{quotation.id?.split('-')[0]}</span>
             </div>
           </div>
 
@@ -201,11 +201,11 @@ export default function CustomerPortal() {
           
           {/* Main Line Items & Counter Discount Proposal Tool */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-surface-soft overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                 <div>
                   <h2 className="text-lg font-bold text-slate-800">Proposal Lines & Counter Offer Tool</h2>
-                  <p className="text-xs text-slate-500">Propose counter discounts directly per line item</p>
+                  <p className="text-xs text-text-muted">Propose counter discounts directly per line item</p>
                 </div>
                 <span className="text-xs bg-slate-200 text-slate-700 px-2.5 py-1 rounded-md font-semibold">
                   Customer Tier: {quotation.customer_tier}
@@ -215,7 +215,7 @@ export default function CustomerPortal() {
               <div className="p-6">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="text-xs font-semibold text-slate-500 border-b border-slate-200">
+                    <tr className="text-xs font-semibold text-text-muted border-b border-surface-soft">
                       <th className="pb-3">Product / Service</th>
                       <th className="pb-3 text-right">Qty</th>
                       <th className="pb-3 text-right">Current Disc %</th>
@@ -232,10 +232,10 @@ export default function CustomerPortal() {
                         <tr key={line.id}>
                           <td className="py-4">
                             <p className="font-semibold text-slate-800 text-sm">{line.product_name}</p>
-                            <span className="text-[11px] text-slate-400">{line.category} ({line.line_type})</span>
+                            <span className="text-[11px] text-text-muted">{line.category} ({line.line_type})</span>
                           </td>
                           <td className="py-4 text-right text-slate-600 font-medium text-sm">{line.quantity}</td>
-                          <td className="py-4 text-right text-slate-500 text-sm font-mono">{line.discount_percent}%</td>
+                          <td className="py-4 text-right text-text-muted text-sm font-mono">{line.discount_percent}%</td>
                           <td className="py-4 text-right">
                             <input
                               type="number"
@@ -246,7 +246,7 @@ export default function CustomerPortal() {
                               onChange={(e) => handleCounterChange(line.id, e.target.value)}
                             />
                           </td>
-                          <td className="py-4 text-right font-bold text-slate-900 text-sm">
+                          <td className="py-4 text-right font-bold text-text-main text-sm">
                             ${(netPrice * line.quantity).toFixed(2)}
                           </td>
                         </tr>
@@ -256,10 +256,10 @@ export default function CustomerPortal() {
                 </table>
 
                 <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
-                  <span className="text-xs text-slate-500">Modify numbers above to counter proposal</span>
+                  <span className="text-xs text-text-muted">Modify numbers above to counter proposal</span>
                   <button 
                     onClick={submitCounterProposal}
-                    className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow transition-colors flex items-center"
+                    className="bg-primary-600 hover:bg-primary-700 text-text-main px-4 py-2 rounded-lg text-xs font-bold shadow transition-colors flex items-center"
                   >
                     <i className="fa-solid fa-calculator mr-2"></i> Submit Counter Proposal
                   </button>
@@ -268,13 +268,13 @@ export default function CustomerPortal() {
             </div>
 
             {/* Negotiation Chat */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[420px]">
+            <div className="bg-white rounded-xl shadow-sm border border-surface-soft overflow-hidden flex flex-col h-[420px]">
               <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                 <h3 className="font-bold text-slate-800 text-sm flex items-center">
                   <i className="fa-regular fa-comments mr-2 text-primary-600"></i>
                   Live Deal Discussion & Audit Thread
                 </h3>
-                <span className="text-[11px] text-slate-400">Encrypted Portal Session</span>
+                <span className="text-[11px] text-text-muted">Encrypted Portal Session</span>
               </div>
               
               <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/50">
@@ -282,11 +282,11 @@ export default function CustomerPortal() {
                   <div key={msg.id} className={`flex ${msg.sender_type === 'customer' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${
                       msg.sender_type === 'customer' 
-                        ? 'bg-primary-600 text-white rounded-tr-sm' 
-                        : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
+                        ? 'bg-primary-600 text-text-main rounded-tr-sm' 
+                        : 'bg-white border border-surface-soft text-slate-800 rounded-tl-sm'
                     }`}>
                       <p className="text-sm">{msg.content}</p>
-                      <p className={`text-[10px] mt-1 text-right ${msg.sender_type === 'customer' ? 'text-primary-200' : 'text-slate-400'}`}>
+                      <p className={`text-[10px] mt-1 text-right ${msg.sender_type === 'customer' ? 'text-primary-200' : 'text-text-muted'}`}>
                         {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </p>
                     </div>
@@ -303,7 +303,7 @@ export default function CustomerPortal() {
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                   />
-                  <button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg transition-colors">
+                  <button type="submit" className="bg-white hover:bg-surface-soft text-text-main px-4 py-2 rounded-lg transition-colors">
                     <i className="fa-solid fa-paper-plane"></i>
                   </button>
                 </form>
@@ -313,8 +313,8 @@ export default function CustomerPortal() {
 
           {/* Sidebar Summary & E-Sign Action */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sticky top-24 space-y-6">
-              <h3 className="text-lg font-bold text-slate-900">Financial Summary</h3>
+            <div className="bg-white rounded-xl shadow-sm border border-surface-soft p-6 sticky top-24 space-y-6">
+              <h3 className="text-lg font-bold text-text-main">Financial Summary</h3>
               
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between text-slate-600">
@@ -327,10 +327,10 @@ export default function CustomerPortal() {
                 </div>
               </div>
               
-              <div className="border-t border-slate-200 pt-4">
+              <div className="border-t border-surface-soft pt-4">
                 <div className="flex justify-between items-end">
                   <span className="font-bold text-slate-700 text-sm">Total Due Today</span>
-                  <span className="text-2xl font-black text-slate-900">$9,000.00</span>
+                  <span className="text-2xl font-black text-text-main">$9,000.00</span>
                 </div>
               </div>
 
@@ -338,14 +338,14 @@ export default function CustomerPortal() {
                 <div className="space-y-3">
                   <button 
                     onClick={() => setShowSignModal(true)}
-                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-md flex justify-center items-center text-sm"
+                    className="w-full bg-white hover:bg-surface-soft text-text-main font-bold py-3.5 px-4 rounded-xl transition-all shadow-md flex justify-center items-center text-sm"
                   >
                     <i className="fa-solid fa-pen-nib mr-2"></i> E-Sign & Accept Proposal
                   </button>
                 </div>
               ) : (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-                  <i className="fa-solid fa-circle-check text-emerald-500 text-3xl mb-2"></i>
+                  <i className="fa-solid fa-circle-check text-emerald-status text-3xl mb-2"></i>
                   <h4 className="font-bold text-emerald-800 text-sm">Quotation Accepted & E-Signed</h4>
                   <p className="text-xs text-emerald-700 mt-1">Confirmed contract terms saved into fulfillment queue.</p>
                 </div>
@@ -358,16 +358,16 @@ export default function CustomerPortal() {
 
       {/* E-Signature Modal */}
       {showSignModal && (
-        <div className="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-white bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-bold text-slate-900">Legal E-Signature</h3>
-              <button onClick={() => setShowSignModal(false)} className="text-slate-400 hover:text-slate-600">
+              <h3 className="text-xl font-bold text-text-main">Legal E-Signature</h3>
+              <button onClick={() => setShowSignModal(false)} className="text-text-muted hover:text-slate-600">
                 <i className="fa-solid fa-xmark text-lg"></i>
               </button>
             </div>
             
-            <p className="text-slate-500 text-xs">Draw your signature inside the box to accept terms for Quotation #{quotation.id?.split('-')[0]}.</p>
+            <p className="text-text-muted text-xs">Draw your signature inside the box to accept terms for Quotation #{quotation.id?.split('-')[0]}.</p>
             
             <div className="border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 overflow-hidden touch-none">
               <canvas 
@@ -386,7 +386,7 @@ export default function CustomerPortal() {
             </div>
             
             <div className="flex justify-between items-center pt-2">
-              <button onClick={clearSignature} className="text-slate-500 hover:text-slate-700 text-xs font-semibold">
+              <button onClick={clearSignature} className="text-text-muted hover:text-slate-700 text-xs font-semibold">
                 <i className="fa-solid fa-eraser mr-1"></i> Clear Canvas
               </button>
               <div className="space-x-2">

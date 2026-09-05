@@ -38,14 +38,14 @@ export default function Layout() {
   return (
     <div className="flex h-screen bg-slate-50 font-sans">
       {/* Main Sidebar */}
-      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col print:hidden shadow-lg border-r border-slate-800">
-        <div className="p-4 bg-slate-900 border-b border-slate-800 flex items-center space-x-3">
-          <div className="w-9 h-9 bg-primary-600 rounded-lg flex items-center justify-center text-white shadow-md font-bold text-lg">
+      <aside className="w-64 bg-white text-text-muted flex flex-col print:hidden shadow-lg border-r border-surface-soft">
+        <div className="p-4 bg-white border-b border-surface-soft flex items-center space-x-3">
+          <div className="w-9 h-9 bg-primary-600 rounded-lg flex items-center justify-center text-text-main shadow-md font-bold text-lg">
             DF
           </div>
           <div>
-            <span className="font-bold text-white text-base tracking-wide block leading-tight">DealFlow360</span>
-            <span className="text-[11px] text-slate-400 font-mono">Sales Operations Engine</span>
+            <span className="font-bold text-text-main text-base tracking-wide block leading-tight">DealFlow360</span>
+            <span className="text-[11px] text-text-muted font-mono">Sales Operations Engine</span>
           </div>
         </div>
         
@@ -58,8 +58,8 @@ export default function Layout() {
                 to={item.path}
                 className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all ${
                   isActive 
-                    ? 'bg-primary-600 text-white shadow-md font-semibold' 
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-primary-600 text-text-main shadow-md font-semibold' 
+                    : 'text-text-muted hover:bg-surface-soft hover:text-text-main'
                 }`}
               >
                 <i className={`fa-solid ${item.icon} w-5 text-center text-base`}></i>
@@ -69,19 +69,19 @@ export default function Layout() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-800 bg-slate-900/50">
+        <div className="p-4 border-t border-surface-soft bg-white/50">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-9 h-9 rounded-full bg-primary-900/80 border border-primary-500/30 flex items-center justify-center text-primary-300 font-bold">
               {user?.name ? user.name.charAt(0) : 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{user?.name || 'User'}</p>
-              <p className="text-xs text-slate-400 truncate capitalize">{user?.role?.replace('_', ' ') || 'Internal'}</p>
+              <p className="text-sm font-semibold text-text-main truncate">{user?.name || 'User'}</p>
+              <p className="text-xs text-text-muted truncate capitalize">{user?.role?.replace('_', ' ') || 'Internal'}</p>
             </div>
           </div>
           <button 
             onClick={handleLogout}
-            className="w-full flex items-center justify-center space-x-2 px-3 py-2 border border-slate-700 rounded-lg text-xs font-semibold text-slate-300 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-all"
+            className="w-full flex items-center justify-center space-x-2 px-3 py-2 border border-surface-soft rounded-lg text-xs font-semibold text-text-muted hover:bg-red-500/10 hover:text-rose-status hover:border-red-500/30 transition-all"
           >
             <i className="fa-solid fa-arrow-right-from-bracket"></i>
             <span>Sign out</span>

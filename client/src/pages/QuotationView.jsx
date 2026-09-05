@@ -72,7 +72,7 @@ export default function QuotationView() {
               {quotation.status}
             </span>
           </div>
-          <p className="text-slate-500">Prepared for <span className="font-semibold text-slate-700">{quotation.customer_name}</span></p>
+          <p className="text-text-muted">Prepared for <span className="font-semibold text-slate-700">{quotation.customer_name}</span></p>
         </div>
         <div className="flex space-x-3 print:hidden">
           <button onClick={() => window.print()} className="btn-secondary text-sm">
@@ -91,13 +91,13 @@ export default function QuotationView() {
           
           {/* One-Time Costs Section */}
           <section className="card p-0 overflow-hidden">
-            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
+            <div className="bg-slate-50 px-6 py-4 border-b border-surface-soft">
               <h2 className="text-lg font-semibold text-slate-800">One-Time Costs</h2>
-              <p className="text-sm text-slate-500">Hardware, setup, and implementation services</p>
+              <p className="text-sm text-text-muted">Hardware, setup, and implementation services</p>
             </div>
             <table className="w-full text-left">
               <thead>
-                <tr className="text-xs text-slate-500 border-b border-slate-100">
+                <tr className="text-xs text-text-muted border-b border-slate-100">
                   <th className="px-6 py-3 font-medium">Item</th>
                   <th className="px-6 py-3 font-medium text-right">Qty</th>
                   <th className="px-6 py-3 font-medium text-right">Unit Price</th>
@@ -110,7 +110,7 @@ export default function QuotationView() {
                   const netPrice = line.unit_price * (1 - line.discount_percent / 100);
                   return (
                     <tr key={line.id}>
-                      <td className="px-6 py-4 font-medium text-slate-800">{line.product_name} <span className="text-xs text-slate-400 font-normal block">{line.category}</span></td>
+                      <td className="px-6 py-4 font-medium text-slate-800">{line.product_name} <span className="text-xs text-text-muted font-normal block">{line.category}</span></td>
                       <td className="px-6 py-4 text-right text-slate-600">{line.quantity}</td>
                       <td className="px-6 py-4 text-right text-slate-600">${line.unit_price.toFixed(2)}</td>
                       <td className="px-6 py-4 text-right text-slate-600">{line.discount_percent}%</td>
@@ -130,7 +130,7 @@ export default function QuotationView() {
             </div>
             <table className="w-full text-left">
               <thead>
-                <tr className="text-xs text-slate-500 border-b border-slate-100">
+                <tr className="text-xs text-text-muted border-b border-slate-100">
                   <th className="px-6 py-3 font-medium">Item</th>
                   <th className="px-6 py-3 font-medium text-right">Qty</th>
                   <th className="px-6 py-3 font-medium text-right">Unit Price / Mo</th>
@@ -143,7 +143,7 @@ export default function QuotationView() {
                   const netPrice = line.unit_price * (1 - line.discount_percent / 100);
                   return (
                     <tr key={line.id}>
-                      <td className="px-6 py-4 font-medium text-slate-800">{line.product_name} <span className="text-xs text-slate-400 font-normal block">{line.category}</span></td>
+                      <td className="px-6 py-4 font-medium text-slate-800">{line.product_name} <span className="text-xs text-text-muted font-normal block">{line.category}</span></td>
                       <td className="px-6 py-4 text-right text-slate-600">{line.quantity}</td>
                       <td className="px-6 py-4 text-right text-slate-600">${line.unit_price.toFixed(2)}</td>
                       <td className="px-6 py-4 text-right text-slate-600">{line.discount_percent}%</td>
@@ -160,14 +160,14 @@ export default function QuotationView() {
         {/* Summary Sidebar */}
         <div className="lg:col-span-1">
           <div className="card p-6 sticky top-6">
-            <h3 className="text-lg font-bold text-slate-900 mb-6">Financial Summary</h3>
+            <h3 className="text-lg font-bold text-text-main mb-6">Financial Summary</h3>
             
-            <div className="space-y-4 border-b border-slate-200 pb-6 mb-6">
+            <div className="space-y-4 border-b border-surface-soft pb-6 mb-6">
               <div className="flex justify-between items-center">
                 <span className="text-slate-600 font-medium">Total Due Today</span>
-                <span className="text-xl font-bold text-slate-900">${oneTimeTotal.toFixed(2)}</span>
+                <span className="text-xl font-bold text-text-main">${oneTimeTotal.toFixed(2)}</span>
               </div>
-              <p className="text-xs text-slate-500">Includes all hardware, implementation, and setup fees.</p>
+              <p className="text-xs text-text-muted">Includes all hardware, implementation, and setup fees.</p>
             </div>
 
             <div className="space-y-4">
@@ -177,17 +177,17 @@ export default function QuotationView() {
                 </span>
                 <span className="text-xl font-bold text-primary-700">${recurringTotal.toFixed(2)}</span>
               </div>
-              <p className="text-xs text-slate-500">Billed on the 1st of every month starting after implementation.</p>
+              <p className="text-xs text-text-muted">Billed on the 1st of every month starting after implementation.</p>
             </div>
             
-            <div className="mt-8 pt-6 border-t border-slate-200">
+            <div className="mt-8 pt-6 border-t border-surface-soft">
               <div className="flex justify-between items-center">
-                <span className="text-slate-500 text-sm">Annual Contract Value (ACV)</span>
+                <span className="text-text-muted text-sm">Annual Contract Value (ACV)</span>
                 <span className="font-semibold text-slate-800">${(recurringTotal * 12).toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center mt-2">
-                <span className="text-slate-500 text-sm">Total Contract Value (1 Yr)</span>
-                <span className="font-bold text-slate-900">${(oneTimeTotal + (recurringTotal * 12)).toFixed(2)}</span>
+                <span className="text-text-muted text-sm">Total Contract Value (1 Yr)</span>
+                <span className="font-bold text-text-main">${(oneTimeTotal + (recurringTotal * 12)).toFixed(2)}</span>
               </div>
             </div>
             

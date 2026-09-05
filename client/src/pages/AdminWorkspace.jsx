@@ -189,17 +189,17 @@ export default function AdminWorkspace() {
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-8 space-y-6">
       {/* Header */}
-      <header className="flex flex-wrap justify-between items-center gap-4 bg-slate-900 text-white p-6 rounded-2xl shadow-md border border-slate-800">
+      <header className="flex flex-wrap justify-between items-center gap-4 bg-white text-text-main p-6 rounded-2xl shadow-md border border-surface-soft">
         <div>
           <div className="flex items-center space-x-3 mb-1">
-            <span className="w-9 h-9 rounded-xl bg-purple-600/30 border border-purple-500/40 text-purple-300 font-bold flex items-center justify-center text-lg">
+            <span className="w-9 h-9 rounded-xl bg-primary/30 border border-purple-500/40 text-purple-300 font-bold flex items-center justify-center text-lg">
               <i className="fa-solid fa-user-gear"></i>
             </span>
-            <h1 className="text-2xl font-extrabold tracking-tight text-white">
+            <h1 className="text-2xl font-extrabold tracking-tight text-text-main">
               Admin Operations Suite
             </h1>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-text-muted">
             Backend Governance: Product & Price Catalog, Discount Tier Configurations, Roles & Warehouse Logistics
           </p>
         </div>
@@ -210,12 +210,12 @@ export default function AdminWorkspace() {
       </header>
 
       {/* Tab Navigation */}
-      <div className="flex flex-wrap border-b border-slate-200 bg-white rounded-2xl p-1.5 shadow-sm gap-1">
+      <div className="flex flex-wrap border-b border-surface-soft bg-white rounded-2xl p-1.5 shadow-sm gap-1">
         <button
           onClick={() => setActiveTab('products')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
             activeTab === 'products'
-              ? 'bg-purple-600 text-white shadow'
+              ? 'bg-primary text-text-main shadow'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -227,7 +227,7 @@ export default function AdminWorkspace() {
           onClick={() => setActiveTab('tiers')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
             activeTab === 'tiers'
-              ? 'bg-purple-600 text-white shadow'
+              ? 'bg-primary text-text-main shadow'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -239,7 +239,7 @@ export default function AdminWorkspace() {
           onClick={() => setActiveTab('team')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
             activeTab === 'team'
-              ? 'bg-purple-600 text-white shadow'
+              ? 'bg-primary text-text-main shadow'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -251,7 +251,7 @@ export default function AdminWorkspace() {
           onClick={() => setActiveTab('warehouses')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
             activeTab === 'warehouses'
-              ? 'bg-purple-600 text-white shadow'
+              ? 'bg-primary text-text-main shadow'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -263,7 +263,7 @@ export default function AdminWorkspace() {
           onClick={() => setActiveTab('audit')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
             activeTab === 'audit'
-              ? 'bg-purple-600 text-white shadow'
+              ? 'bg-primary text-text-main shadow'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -276,17 +276,17 @@ export default function AdminWorkspace() {
       {activeTab === 'products' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Product Catalog List */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
             <div className="flex flex-wrap justify-between items-center gap-4">
               <div>
-                <h3 className="font-extrabold text-slate-900 text-base">Product & Price Catalog Listing</h3>
-                <p className="text-xs text-slate-500">Live inventory price list and floor margin boundaries for sales reps</p>
+                <h3 className="font-extrabold text-text-main text-base">Product & Price Catalog Listing</h3>
+                <p className="text-xs text-text-muted">Live inventory price list and floor margin boundaries for sales reps</p>
               </div>
 
               <input
                 type="text"
                 placeholder="Filter by product name, SKU..."
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 w-full sm:w-60 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="bg-slate-50 border border-surface-soft rounded-xl px-3 py-1.5 text-xs text-slate-800 w-full sm:w-60 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 value={prodSearch}
                 onChange={(e) => setProdSearch(e.target.value)}
               />
@@ -295,7 +295,7 @@ export default function AdminWorkspace() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 text-slate-500 font-bold bg-slate-50">
+                  <tr className="border-b border-surface-soft text-text-muted font-bold bg-slate-50">
                     <th className="p-3">SKU</th>
                     <th className="p-3">Product Name</th>
                     <th className="p-3">Category</th>
@@ -307,8 +307,8 @@ export default function AdminWorkspace() {
                 <tbody className="divide-y divide-slate-100">
                   {filteredProducts.map(p => (
                     <tr key={p.id} className="hover:bg-purple-50/40 transition-colors">
-                      <td className="p-3 font-mono font-bold text-slate-400">{p.sku || 'SKU-00' + p.id}</td>
-                      <td className="p-3 font-extrabold text-slate-900">{p.name}</td>
+                      <td className="p-3 font-mono font-bold text-text-muted">{p.sku || 'SKU-00' + p.id}</td>
+                      <td className="p-3 font-extrabold text-text-main">{p.name}</td>
                       <td className="p-3">
                         <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg text-[10px] font-bold">
                           {p.category}
@@ -316,7 +316,7 @@ export default function AdminWorkspace() {
                       </td>
                       <td className="p-3 text-right font-black text-purple-700">
                         ${typeof p.base_price === 'number' ? p.base_price.toLocaleString() : p.base_price}
-                        <span className="text-[10px] text-slate-400 font-normal block">/ {p.unit || 'unit'}</span>
+                        <span className="text-[10px] text-text-muted font-normal block">/ {p.unit || 'unit'}</span>
                       </td>
                       <td className="p-3 text-center">
                         <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px]">
@@ -336,10 +336,10 @@ export default function AdminWorkspace() {
           </div>
 
           {/* Add Product & Price Listing Form */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
             <div className="border-b border-slate-100 pb-3">
-              <h3 className="font-extrabold text-slate-900 text-base">Add New Product & Price</h3>
-              <p className="text-xs text-slate-500">Configure base selling price and margin floor</p>
+              <h3 className="font-extrabold text-text-main text-base">Add New Product & Price</h3>
+              <p className="text-xs text-text-muted">Configure base selling price and margin floor</p>
             </div>
 
             <form onSubmit={handleAddProduct} className="space-y-3 text-xs">
@@ -349,7 +349,7 @@ export default function AdminWorkspace() {
                   type="text"
                   required
                   placeholder="e.g. NextGen Firewall Appliance"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   value={newProdName}
                   onChange={(e) => setNewProdName(e.target.value)}
                 />
@@ -361,7 +361,7 @@ export default function AdminWorkspace() {
                   <input
                     type="text"
                     placeholder="e.g. HW-FW-09"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
                     value={newProdSku}
                     onChange={(e) => setNewProdSku(e.target.value)}
                   />
@@ -369,7 +369,7 @@ export default function AdminWorkspace() {
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Category</label>
                   <select
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
                     value={newProdCategory}
                     onChange={(e) => setNewProdCategory(e.target.value)}
                   >
@@ -388,7 +388,7 @@ export default function AdminWorkspace() {
                     type="number"
                     required
                     placeholder="2500"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
                     value={newProdPrice}
                     onChange={(e) => setNewProdPrice(e.target.value)}
                   />
@@ -398,7 +398,7 @@ export default function AdminWorkspace() {
                   <input
                     type="number"
                     placeholder="25"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
                     value={newProdMargin}
                     onChange={(e) => setNewProdMargin(e.target.value)}
                   />
@@ -408,7 +408,7 @@ export default function AdminWorkspace() {
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Unit Pricing Model</label>
                 <select
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
                   value={newProdUnit}
                   onChange={(e) => setNewProdUnit(e.target.value)}
                 >
@@ -421,7 +421,7 @@ export default function AdminWorkspace() {
 
               <button
                 type="submit"
-                className="w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2"
+                className="w-full py-2.5 px-4 bg-primary hover:bg-purple-500 text-text-main font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2"
               >
                 <i className="fa-solid fa-plus"></i>
                 <span>Add Product to Catalog</span>
@@ -435,11 +435,11 @@ export default function AdminWorkspace() {
       {activeTab === 'tiers' && (
         <div className="space-y-6">
           {/* Tier Governance Matrix */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="font-extrabold text-slate-900 text-base">Customer Level Discount Tiers</h3>
-                <p className="text-xs text-slate-500">Configure discount ceilings per tier level and approval escalation limits</p>
+                <h3 className="font-extrabold text-text-main text-base">Customer Level Discount Tiers</h3>
+                <p className="text-xs text-text-muted">Configure discount ceilings per tier level and approval escalation limits</p>
               </div>
               <span className="bg-purple-100 text-purple-800 text-xs font-mono font-bold px-3 py-1 rounded-xl">
                 Governance Rules Active
@@ -448,11 +448,11 @@ export default function AdminWorkspace() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {tiers.map(t => (
-                <div key={t.id || t.tier} className="bg-slate-50 rounded-2xl border border-slate-200 p-5 space-y-3 flex flex-col justify-between">
+                <div key={t.id || t.tier} className="bg-slate-50 rounded-2xl border border-surface-soft p-5 space-y-3 flex flex-col justify-between">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <h4 className="font-black text-slate-900 text-base">{t.tier} Tier</h4>
-                      <span className="bg-purple-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow">
+                      <h4 className="font-black text-text-main text-base">{t.tier} Tier</h4>
+                      <span className="bg-primary text-text-main text-[10px] font-black px-2.5 py-0.5 rounded-full shadow">
                         Max {t.maxDiscount}%
                       </span>
                     </div>
@@ -468,7 +468,7 @@ export default function AdminWorkspace() {
                       </div>
                       <div className="flex justify-between bg-white p-2 rounded-xl border border-slate-100">
                         <span>Escalation Approver:</span>
-                        <strong className="text-indigo-600">{t.approver}</strong>
+                        <strong className="text-primary">{t.approver}</strong>
                       </div>
                     </div>
                   </div>
@@ -480,8 +480,8 @@ export default function AdminWorkspace() {
           {/* Add New Tier Config Form & Category Ceilings */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Create Tier Form */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-              <h3 className="font-extrabold text-slate-900 text-base">Configure New Discount Tier</h3>
+            <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
+              <h3 className="font-extrabold text-text-main text-base">Configure New Discount Tier</h3>
               <form onSubmit={handleAddTier} className="space-y-3 text-xs">
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Tier Name</label>
@@ -489,7 +489,7 @@ export default function AdminWorkspace() {
                     type="text"
                     required
                     placeholder="e.g. VIP Enterprise"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
                     value={newTierName}
                     onChange={(e) => setNewTierName(e.target.value)}
                   />
@@ -502,7 +502,7 @@ export default function AdminWorkspace() {
                       type="number"
                       required
                       placeholder="18"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
                       value={newTierDiscount}
                       onChange={(e) => setNewTierDiscount(e.target.value)}
                     />
@@ -512,7 +512,7 @@ export default function AdminWorkspace() {
                     <input
                       type="number"
                       placeholder="20"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
                       value={newTierMargin}
                       onChange={(e) => setNewTierMargin(e.target.value)}
                     />
@@ -522,7 +522,7 @@ export default function AdminWorkspace() {
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Escalation Approver Required</label>
                   <select
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
                     value={newTierApprover}
                     onChange={(e) => setNewTierApprover(e.target.value)}
                   >
@@ -535,7 +535,7 @@ export default function AdminWorkspace() {
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2"
+                  className="w-full py-2.5 px-4 bg-primary hover:bg-purple-500 text-text-main font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2"
                 >
                   <i className="fa-solid fa-plus"></i>
                   <span>Save Discount Tier Config</span>
@@ -544,15 +544,15 @@ export default function AdminWorkspace() {
             </div>
 
             {/* Category Level Discount Rules */}
-            <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-              <h3 className="font-extrabold text-slate-900 text-base">Category-Level Discount Ceilings</h3>
-              <p className="text-xs text-slate-500">Override discount ceilings specifically by product category</p>
+            <div className="lg:col-span-2 bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
+              <h3 className="font-extrabold text-text-main text-base">Category-Level Discount Ceilings</h3>
+              <p className="text-xs text-text-muted">Override discount ceilings specifically by product category</p>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {categoryRules.map((c, idx) => (
-                  <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                  <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-surface-soft space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="font-extrabold text-slate-900 text-sm">{c.category}</span>
+                      <span className="font-extrabold text-text-main text-sm">{c.category}</span>
                       <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
                         Rule Active
                       </span>
@@ -572,12 +572,12 @@ export default function AdminWorkspace() {
       {/* TAB 3: Team & Role Provisioning */}
       {activeTab === 'team' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-            <h3 className="font-extrabold text-slate-900 text-base">Active Team Directory</h3>
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
+            <h3 className="font-extrabold text-text-main text-base">Active Team Directory</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 text-slate-500 font-bold bg-slate-50">
+                  <tr className="border-b border-surface-soft text-text-muted font-bold bg-slate-50">
                     <th className="p-3">Name</th>
                     <th className="p-3">Email</th>
                     <th className="p-3">Assigned Role</th>
@@ -588,7 +588,7 @@ export default function AdminWorkspace() {
                 <tbody className="divide-y divide-slate-100">
                   {team.map(m => (
                     <tr key={m.id} className="hover:bg-purple-50/40 transition-colors">
-                      <td className="p-3 font-bold text-slate-900">{m.name}</td>
+                      <td className="p-3 font-bold text-text-main">{m.name}</td>
                       <td className="p-3 text-slate-600 font-mono">{m.email}</td>
                       <td className="p-3">
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
@@ -613,8 +613,8 @@ export default function AdminWorkspace() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-            <h3 className="font-extrabold text-slate-900 text-base">Add New Team Member</h3>
+          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
+            <h3 className="font-extrabold text-text-main text-base">Add New Team Member</h3>
             <form onSubmit={handleAddTeamMember} className="space-y-3 text-xs">
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Full Name</label>
@@ -622,7 +622,7 @@ export default function AdminWorkspace() {
                   type="text"
                   required
                   placeholder="e.g. Michael Scott"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                 />
@@ -634,7 +634,7 @@ export default function AdminWorkspace() {
                   type="email"
                   required
                   placeholder="e.g. michael@cybercreatures.com"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                 />
@@ -643,7 +643,7 @@ export default function AdminWorkspace() {
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Select Role</label>
                 <select
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value)}
                 >
@@ -654,7 +654,7 @@ export default function AdminWorkspace() {
                 </select>
               </div>
 
-              <button type="submit" className="w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2">
+              <button type="submit" className="w-full py-2.5 px-4 bg-primary hover:bg-purple-500 text-text-main font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2">
                 <i className="fa-solid fa-user-plus"></i>
                 <span>Provision Team Member</span>
               </button>
@@ -666,19 +666,19 @@ export default function AdminWorkspace() {
       {/* TAB 4: Warehouses & Stock Rules */}
       {activeTab === 'warehouses' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-            <h3 className="font-extrabold text-slate-900 text-base">Configured Warehouses</h3>
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
+            <h3 className="font-extrabold text-text-main text-base">Configured Warehouses</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {warehouses.map(w => (
-                <div key={w.id} className="border border-slate-200 rounded-2xl p-4 bg-slate-50 space-y-2">
+                <div key={w.id} className="border border-surface-soft rounded-2xl p-4 bg-slate-50 space-y-2">
                   <div className="flex justify-between items-center">
-                    <h4 className="font-bold text-slate-900 text-sm">{w.name}</h4>
+                    <h4 className="font-bold text-text-main text-sm">{w.name}</h4>
                     <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
                       Active Depot
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500"><i className="fa-solid fa-location-dot mr-1"></i> {w.location}</p>
-                  <div className="pt-2 border-t border-slate-200 flex justify-between text-xs font-semibold text-slate-700">
+                  <p className="text-xs text-text-muted"><i className="fa-solid fa-location-dot mr-1"></i> {w.location}</p>
+                  <div className="pt-2 border-t border-surface-soft flex justify-between text-xs font-semibold text-slate-700">
                     <span>Stock Units: {w.stockCount}</span>
                     <span>Cost Weight: {w.shippingCostWeight}x</span>
                   </div>
@@ -687,8 +687,8 @@ export default function AdminWorkspace() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-            <h3 className="font-extrabold text-slate-900 text-base">Add Warehouse Depot</h3>
+          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
+            <h3 className="font-extrabold text-text-main text-base">Add Warehouse Depot</h3>
             <form onSubmit={handleAddWarehouse} className="space-y-3 text-xs">
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Warehouse Name</label>
@@ -696,7 +696,7 @@ export default function AdminWorkspace() {
                   type="text"
                   required
                   placeholder="e.g. West Coast Depot"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   value={newWhName}
                   onChange={(e) => setNewWhName(e.target.value)}
                 />
@@ -707,13 +707,13 @@ export default function AdminWorkspace() {
                 <input
                   type="text"
                   placeholder="e.g. Los Angeles, CA"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   value={newWhLoc}
                   onChange={(e) => setNewWhLoc(e.target.value)}
                 />
               </div>
 
-              <button type="submit" className="w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2">
+              <button type="submit" className="w-full py-2.5 px-4 bg-primary hover:bg-purple-500 text-text-main font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2">
                 <i className="fa-solid fa-plus"></i>
                 <span>Configure Depot</span>
               </button>
@@ -724,16 +724,16 @@ export default function AdminWorkspace() {
 
       {/* TAB 5: System Audit Trail */}
       {activeTab === 'audit' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+        <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="font-extrabold text-slate-900 text-base">System Audit Log</h3>
-            <span className="text-xs text-slate-500 font-mono">Immutable Compliance Log</span>
+            <h3 className="font-extrabold text-text-main text-base">System Audit Log</h3>
+            <span className="text-xs text-text-muted font-mono">Immutable Compliance Log</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 text-slate-500 font-bold bg-slate-50">
+                <tr className="border-b border-surface-soft text-text-muted font-bold bg-slate-50">
                   <th className="p-3">Log ID</th>
                   <th className="p-3">Action Event</th>
                   <th className="p-3">Target Entity</th>
@@ -745,11 +745,11 @@ export default function AdminWorkspace() {
               <tbody className="divide-y divide-slate-100">
                 {INITIAL_AUDIT_LOGS.map(log => (
                   <tr key={log.id} className="hover:bg-purple-50/40 transition-colors">
-                    <td className="p-3 font-mono font-bold text-slate-400">{log.id}</td>
+                    <td className="p-3 font-mono font-bold text-text-muted">{log.id}</td>
                     <td className="p-3 font-bold text-purple-700">{log.action}</td>
                     <td className="p-3 font-semibold text-slate-800">{log.entity}</td>
                     <td className="p-3 text-slate-700">{log.user} ({log.role})</td>
-                    <td className="p-3 text-slate-500 font-mono">{log.timestamp}</td>
+                    <td className="p-3 text-text-muted font-mono">{log.timestamp}</td>
                     <td className="p-3 text-slate-600">{log.details}</td>
                   </tr>
                 ))}

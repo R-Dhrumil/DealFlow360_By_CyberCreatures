@@ -11,7 +11,7 @@ const INITIAL_DEALS = [
 
 const STAGES = [
   { name: 'Draft', color: 'border-slate-300 bg-slate-100 text-slate-700' },
-  { name: 'Pending Approval', color: 'border-amber-400 bg-amber-50 text-amber-800' },
+  { name: 'Pending Approval', color: 'border-amber-status bg-amber-50 text-amber-800' },
   { name: 'Pending Finance', color: 'border-purple-400 bg-purple-50 text-purple-800' },
   { name: 'Approved', color: 'border-emerald-400 bg-emerald-50 text-emerald-800' },
   { name: 'Confirmed', color: 'border-blue-400 bg-blue-50 text-blue-800' }
@@ -31,17 +31,17 @@ export default function Pipeline() {
       {/* Top Header */}
       <div className="flex flex-wrap justify-between items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Deal Pipeline (Kanban)</h1>
-          <p className="text-sm text-slate-500">Self-Governing Deal Operations Stage Tracker</p>
+          <h1 className="text-2xl font-bold text-text-main tracking-tight">Deal Pipeline (Kanban)</h1>
+          <p className="text-sm text-text-muted">Self-Governing Deal Operations Stage Tracker</p>
         </div>
 
         <div className="flex items-center space-x-3">
           <div className="relative">
-            <i className="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+            <i className="fa-solid fa-magnifying-glass absolute left-3 top-3 text-text-muted text-sm"></i>
             <input
               type="text"
               placeholder="Search deals or customer..."
-              className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-64 shadow-sm"
+              className="pl-9 pr-4 py-2 bg-white border border-surface-soft rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-64 shadow-sm"
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
             />
@@ -60,16 +60,16 @@ export default function Pipeline() {
           const stageTotal = stageDeals.reduce((sum, d) => sum + d.amount, 0);
 
           return (
-            <div key={stage.name} className="bg-slate-100/70 border border-slate-200/80 rounded-xl p-3 flex flex-col min-h-[500px]">
+            <div key={stage.name} className="bg-slate-100/70 border border-surface-soft/80 rounded-xl p-3 flex flex-col min-h-[500px]">
               {/* Column Header */}
-              <div className="flex justify-between items-center pb-3 border-b border-slate-200 mb-3">
+              <div className="flex justify-between items-center pb-3 border-b border-surface-soft mb-3">
                 <div className="flex items-center space-x-2">
                   <span className={`px-2 py-0.5 rounded text-xs font-bold ${stage.color}`}>
                     {stageDeals.length}
                   </span>
                   <h3 className="font-bold text-slate-800 text-sm">{stage.name}</h3>
                 </div>
-                <span className="text-xs font-semibold text-slate-500">
+                <span className="text-xs font-semibold text-text-muted">
                   ${(stageTotal / 1000).toFixed(1)}k
                 </span>
               </div>
@@ -79,7 +79,7 @@ export default function Pipeline() {
                 {stageDeals.map(deal => (
                   <div 
                     key={deal.id}
-                    className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm hover:shadow-md hover:border-primary-400 transition-all cursor-pointer group"
+                    className="bg-white rounded-lg p-4 border border-surface-soft shadow-sm hover:shadow-md hover:border-primary-400 transition-all cursor-pointer group"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <span className="text-xs font-mono font-semibold text-primary-600 group-hover:underline">
@@ -96,22 +96,22 @@ export default function Pipeline() {
                       )}
                     </div>
 
-                    <h4 className="font-bold text-slate-900 text-sm mb-1">{deal.customer}</h4>
+                    <h4 className="font-bold text-text-main text-sm mb-1">{deal.customer}</h4>
                     <p className="text-lg font-black text-slate-800 mb-3">${deal.amount.toLocaleString()}</p>
 
-                    <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+                    <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-xs text-text-muted">
                       <span><i className="fa-solid fa-box mr-1"></i> {deal.linesCount} items</span>
                       <div className="flex space-x-1">
                         <Link 
                           to={`/app/quote/${deal.id}`}
-                          className="px-2 py-1 bg-slate-100 hover:bg-primary-600 hover:text-white rounded text-[11px] font-medium transition-colors"
+                          className="px-2 py-1 bg-slate-100 hover:bg-primary-600 hover:text-text-main rounded text-[11px] font-medium transition-colors"
                         >
                           View
                         </Link>
                         {deal.stage.includes('Approval') && (
                           <Link 
                             to="/app/approvals"
-                            className="px-2 py-1 bg-amber-500 text-white rounded text-[11px] font-semibold hover:bg-amber-600 transition-colors"
+                            className="px-2 py-1 bg-amber-500 text-text-main rounded text-[11px] font-semibold hover:bg-amber-600 transition-colors"
                           >
                             Review
                           </Link>
@@ -122,7 +122,7 @@ export default function Pipeline() {
                 ))}
 
                 {stageDeals.length === 0 && (
-                  <div className="h-32 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center text-xs text-slate-400">
+                  <div className="h-32 border-2 border-dashed border-surface-soft rounded-lg flex items-center justify-center text-xs text-text-muted">
                     No deals in {stage.name}
                   </div>
                 )}

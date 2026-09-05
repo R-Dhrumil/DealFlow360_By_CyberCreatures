@@ -26,21 +26,21 @@ export default function FinanceOperations() {
     <div className="min-h-screen bg-slate-50 p-6 md:p-8 space-y-6">
       <header className="flex flex-wrap justify-between items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Finance & Operations Control Center</h1>
-          <p className="text-sm text-slate-500">2nd-Level High-Risk Approvals, Billing Schedules, Proration & Credit Notes Reconciliation</p>
+          <h1 className="text-2xl font-bold text-text-main tracking-tight">Finance & Operations Control Center</h1>
+          <p className="text-sm text-text-muted">2nd-Level High-Risk Approvals, Billing Schedules, Proration & Credit Notes Reconciliation</p>
         </div>
 
-        <span className="bg-emerald-900 text-emerald-100 px-3 py-1 rounded-lg text-xs font-bold font-mono">
+        <span className="bg-emerald-status/20 text-emerald-100 px-3 py-1 rounded-lg text-xs font-bold font-mono">
           <i className="fa-solid fa-coins mr-1"></i> Finance Authority Active
         </span>
       </header>
 
       {/* 2nd Level High-Risk Approvals Section */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+      <div className="bg-white rounded-xl border border-surface-soft shadow-sm p-6 space-y-4">
         <div className="flex justify-between items-center border-b border-slate-100 pb-3">
           <div>
-            <h2 className="text-base font-bold text-slate-900">High-Risk 2nd-Level Approvals Queue</h2>
-            <p className="text-xs text-slate-500">Quotations with blended risk score exceeding 10% requiring Finance clearance</p>
+            <h2 className="text-base font-bold text-text-main">High-Risk 2nd-Level Approvals Queue</h2>
+            <p className="text-xs text-text-muted">Quotations with blended risk score exceeding 10% requiring Finance clearance</p>
           </div>
           <span className="bg-purple-100 text-purple-800 text-xs font-bold px-2.5 py-1 rounded-full">
             {approvals.length} Requiring Action
@@ -54,7 +54,7 @@ export default function FinanceOperations() {
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <span className="font-mono font-bold text-purple-700 text-sm">{app.id}</span>
-                    <span className="font-bold text-slate-900 text-sm">{app.customer}</span>
+                    <span className="font-bold text-text-main text-sm">{app.customer}</span>
                     <span className="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
                       Risk: {app.riskScore}%
                     </span>
@@ -66,13 +66,13 @@ export default function FinanceOperations() {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleFinanceAction(app.id, 'Approve')}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-text-main text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors"
                   >
                     <i className="fa-solid fa-check mr-1"></i> Authorize Discount
                   </button>
                   <button
                     onClick={() => handleFinanceAction(app.id, 'Reject')}
-                    className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors"
+                    className="bg-red-600 hover:bg-red-700 text-text-main text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors"
                   >
                     Reject
                   </button>
@@ -81,8 +81,8 @@ export default function FinanceOperations() {
             ))}
           </div>
         ) : (
-          <div className="p-8 text-center bg-slate-50 border border-dashed border-slate-200 rounded-xl">
-            <i className="fa-solid fa-circle-check text-emerald-500 text-3xl mb-2"></i>
+          <div className="p-8 text-center bg-slate-50 border border-dashed border-surface-soft rounded-xl">
+            <i className="fa-solid fa-circle-check text-emerald-status text-3xl mb-2"></i>
             <p className="text-slate-700 font-semibold text-sm">No high-risk 2nd-level approvals pending.</p>
           </div>
         )}
@@ -90,16 +90,16 @@ export default function FinanceOperations() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recurring Billing Schedule & Proration */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+        <div className="bg-white rounded-xl border border-surface-soft shadow-sm p-6 space-y-4">
           <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-            <h3 className="font-bold text-slate-900 text-sm">Recurring Billing & Proration Schedule</h3>
-            <span className="text-xs text-slate-400 font-mono">Automated Ledger</span>
+            <h3 className="font-bold text-text-main text-sm">Recurring Billing & Proration Schedule</h3>
+            <span className="text-xs text-text-muted font-mono">Automated Ledger</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50">
+                <tr className="border-b border-surface-soft text-text-muted font-semibold bg-slate-50">
                   <th className="p-2.5">Schedule ID</th>
                   <th className="p-2.5">Customer</th>
                   <th className="p-2.5">Billing Amount</th>
@@ -111,8 +111,8 @@ export default function FinanceOperations() {
                 {RECURRING_BILLING_SCHEDULES.map(s => (
                   <tr key={s.id} className="hover:bg-slate-50">
                     <td className="p-2.5 font-mono font-bold text-primary-600">{s.id}</td>
-                    <td className="p-2.5 font-bold text-slate-900">{s.customer}</td>
-                    <td className="p-2.5 font-black text-slate-900">${s.amount.toFixed(2)}</td>
+                    <td className="p-2.5 font-bold text-text-main">{s.customer}</td>
+                    <td className="p-2.5 font-black text-text-main">${s.amount.toFixed(2)}</td>
                     <td className="p-2.5"><span className="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded text-[10px]">{s.cycle}</span></td>
                     <td className="p-2.5 font-mono text-slate-600">{s.nextBillingDate}</td>
                   </tr>
@@ -123,16 +123,16 @@ export default function FinanceOperations() {
         </div>
 
         {/* Credit Notes Log */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+        <div className="bg-white rounded-xl border border-surface-soft shadow-sm p-6 space-y-4">
           <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-            <h3 className="font-bold text-slate-900 text-sm">Credit Notes & Adjustments Reconciler</h3>
-            <span className="text-xs text-slate-400 font-mono">Partial Refunds Log</span>
+            <h3 className="font-bold text-text-main text-sm">Credit Notes & Adjustments Reconciler</h3>
+            <span className="text-xs text-text-muted font-mono">Partial Refunds Log</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50">
+                <tr className="border-b border-surface-soft text-text-muted font-semibold bg-slate-50">
                   <th className="p-2.5">Note ID</th>
                   <th className="p-2.5">Customer</th>
                   <th className="p-2.5">Credit Amount</th>
@@ -144,10 +144,10 @@ export default function FinanceOperations() {
                 {CREDIT_NOTES_LOG.map(cn => (
                   <tr key={cn.id} className="hover:bg-slate-50">
                     <td className="p-2.5 font-mono font-bold text-emerald-600">{cn.id}</td>
-                    <td className="p-2.5 font-bold text-slate-900">{cn.customer}</td>
+                    <td className="p-2.5 font-bold text-text-main">{cn.customer}</td>
                     <td className="p-2.5 font-black text-emerald-700">${cn.amount.toFixed(2)}</td>
                     <td className="p-2.5 text-slate-600">{cn.reason}</td>
-                    <td className="p-2.5 font-mono text-slate-500">{cn.issuedDate}</td>
+                    <td className="p-2.5 font-mono text-text-muted">{cn.issuedDate}</td>
                   </tr>
                 ))}
               </tbody>

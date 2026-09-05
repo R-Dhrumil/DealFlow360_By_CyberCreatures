@@ -11,14 +11,14 @@ export default function Reporting() {
     <div className="p-6 md:p-12">
       <header className="mb-8">
         <h1 className="text-2xl font-bold text-slate-800">Sales Reporting</h1>
-        <p className="text-slate-500">Performance by sales representative.</p>
+        <p className="text-text-muted">Performance by sales representative.</p>
       </header>
 
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+              <tr className="bg-slate-50 text-text-muted text-xs uppercase tracking-wider border-b border-surface-soft">
                 <th className="px-6 py-4 font-medium">Sales Rep</th>
                 <th className="px-6 py-4 font-medium text-right">Deals Won</th>
                 <th className="px-6 py-4 font-medium text-right">Total Revenue</th>
@@ -30,7 +30,7 @@ export default function Reporting() {
                 <tr key={report.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 font-medium text-slate-800">
                     <div className="flex items-center">
-                      <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold mr-3">
+                      <div className="w-8 h-8 rounded-full bg-indigo-100 text-primary flex items-center justify-center font-bold mr-3">
                         {report.repName.charAt(0)}
                       </div>
                       {report.repName}

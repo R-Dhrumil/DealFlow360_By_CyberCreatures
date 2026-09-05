@@ -85,27 +85,27 @@ export default function CustomerDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
       {/* Customer Header */}
-      <header className="bg-slate-900 text-white border-b border-slate-800 shadow-md">
+      <header className="bg-white text-text-main border-b border-surface-soft shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center font-black text-xl text-white shadow-md">
+            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center font-black text-xl text-text-main shadow-md">
               {customer.name ? customer.name.charAt(0) : 'C'}
             </div>
             <div>
-              <span className="font-bold text-white text-base block leading-tight">{customer.company_name || 'Customer Portal'}</span>
-              <span className="text-xs text-slate-400">Authenticated Customer Workspace</span>
+              <span className="font-bold text-text-main text-base block leading-tight">{customer.company_name || 'Customer Portal'}</span>
+              <span className="text-xs text-text-muted">Authenticated Customer Workspace</span>
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
             <div className="text-right hidden sm:block">
-              <p className="text-xs font-semibold text-white">{customer.name}</p>
-              <p className="text-[11px] text-slate-400">{customer.email}</p>
+              <p className="text-xs font-semibold text-text-main">{customer.name}</p>
+              <p className="text-[11px] text-text-muted">{customer.email}</p>
             </div>
 
             <button
               onClick={handleLogout}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center"
+              className="bg-surface-soft hover:bg-slate-700 text-text-main border border-surface-soft px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center"
             >
               <i className="fa-solid fa-arrow-right-from-bracket mr-1.5"></i> Sign out
             </button>
@@ -117,13 +117,13 @@ export default function CustomerDashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
 
         {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-6 text-white shadow-lg border border-slate-700 flex flex-wrap justify-between items-center gap-4">
+        <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-6 text-text-main shadow-lg border border-surface-soft flex flex-wrap justify-between items-center gap-4">
           <div>
             <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-2 inline-block">
               Customer Account Active
             </span>
             <h1 className="text-2xl font-bold">Welcome back, {customer.name}!</h1>
-            <p className="text-sm text-slate-300 mt-1">Browse admin products catalog, request quote proposals, or negotiate custom discounts with your sales rep.</p>
+            <p className="text-sm text-text-muted mt-1">Browse admin products catalog, request quote proposals, or negotiate custom discounts with your sales rep.</p>
           </div>
 
           {/* FIRST TAB: Browse Product Catalog */}
@@ -132,8 +132,8 @@ export default function CustomerDashboard() {
               onClick={() => setActiveTab('products')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'products'
-                  ? 'bg-emerald-500 text-white shadow ring-2 ring-emerald-400/50'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
+                  : 'bg-surface-soft text-text-muted hover:bg-slate-700'
               }`}
             >
               <i className="fa-solid fa-boxes-stacked mr-1.5"></i> Browse Product Catalog
@@ -142,8 +142,8 @@ export default function CustomerDashboard() {
               onClick={() => setActiveTab('quotations')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'quotations'
-                  ? 'bg-emerald-500 text-white shadow ring-2 ring-emerald-400/50'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
+                  : 'bg-surface-soft text-text-muted hover:bg-slate-700'
               }`}
             >
               <i className="fa-solid fa-file-invoice mr-1.5"></i> My Proposals ({quotations.length})
@@ -152,8 +152,8 @@ export default function CustomerDashboard() {
               onClick={() => setActiveTab('profile')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'profile'
-                  ? 'bg-emerald-500 text-white shadow ring-2 ring-emerald-400/50'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
+                  : 'bg-surface-soft text-text-muted hover:bg-slate-700'
               }`}
             >
               <i className="fa-solid fa-id-card mr-1.5"></i> Personal Profile
@@ -171,17 +171,17 @@ export default function CustomerDashboard() {
         {/* TAB 1 (FIRST): Browse Admin Products Catalog */}
         {activeTab === 'products' && (
           <div className="space-y-6">
-            <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-6 rounded-2xl border border-surface-soft shadow-sm">
               <div>
-                <h2 className="text-lg font-extrabold text-slate-900">Admin Products Catalog & Price Listing</h2>
-                <p className="text-xs text-slate-500">Browse official company products configured by system administrators</p>
+                <h2 className="text-lg font-extrabold text-text-main">Admin Products Catalog & Price Listing</h2>
+                <p className="text-xs text-text-muted">Browse official company products configured by system administrators</p>
               </div>
 
               <div className="w-full sm:w-72">
                 <input
                   type="text"
                   placeholder="Search products by name or description..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -196,8 +196,8 @@ export default function CustomerDashboard() {
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                     selectedCategory === cat
-                      ? 'bg-emerald-600 text-white shadow'
-                      : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                      ? 'bg-emerald-600 text-text-main shadow'
+                      : 'bg-white text-slate-700 hover:bg-slate-100 border border-surface-soft'
                   }`}
                 >
                   {cat}
@@ -210,31 +210,31 @@ export default function CustomerDashboard() {
               {filteredProducts.map(p => (
                 <div 
                   key={p.id}
-                  className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all p-6 flex flex-col justify-between space-y-4"
+                  className="bg-white rounded-2xl border border-surface-soft shadow-sm hover:shadow-md hover:border-emerald-300 transition-all p-6 flex flex-col justify-between space-y-4"
                 >
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
                       <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                         {p.category}
                       </span>
-                      <span className="text-[11px] font-mono text-slate-400">{p.sku || 'SKU-00' + p.id}</span>
+                      <span className="text-[11px] font-mono text-text-muted">{p.sku || 'SKU-00' + p.id}</span>
                     </div>
 
-                    <h3 className="font-extrabold text-slate-900 text-base leading-snug">{p.name}</h3>
-                    <p className="text-xs text-slate-500 line-clamp-2">{p.description}</p>
+                    <h3 className="font-extrabold text-text-main text-base leading-snug">{p.name}</h3>
+                    <p className="text-xs text-text-muted line-clamp-2">{p.description}</p>
 
                     <div className="pt-2 border-t border-slate-100 flex justify-between items-baseline">
-                      <span className="text-xs text-slate-400 font-medium">List Price:</span>
+                      <span className="text-xs text-text-muted font-medium">List Price:</span>
                       <span className="text-xl font-black text-emerald-700">
                         ${typeof p.base_price === 'number' ? p.base_price.toLocaleString() : p.base_price}
-                        <span className="text-xs text-slate-400 font-normal"> / {p.unit || 'unit'}</span>
+                        <span className="text-xs text-text-muted font-normal"> / {p.unit || 'unit'}</span>
                       </span>
                     </div>
                   </div>
 
                   <button
                     onClick={() => handleRequestQuoteForProduct(p)}
-                    className="w-full bg-slate-900 hover:bg-emerald-600 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow transition-colors flex items-center justify-center space-x-2"
+                    className="w-full bg-white hover:bg-emerald-600 text-text-main text-xs font-bold py-2.5 px-4 rounded-xl shadow transition-colors flex items-center justify-center space-x-2"
                   >
                     <i className="fa-solid fa-paper-plane"></i>
                     <span>Request Quotation for Product</span>
@@ -248,13 +248,13 @@ export default function CustomerDashboard() {
         {/* TAB 2: My Proposals */}
         {activeTab === 'quotations' && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-slate-900">Active Proposals & Quotations</h2>
+            <h2 className="text-lg font-bold text-text-main">Active Proposals & Quotations</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {quotations.map(q => (
                 <div 
                   key={q.id}
-                  className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4 hover:shadow-md hover:border-emerald-300 transition-all flex flex-col justify-between"
+                  className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4 hover:shadow-md hover:border-emerald-300 transition-all flex flex-col justify-between"
                 >
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
@@ -270,19 +270,19 @@ export default function CustomerDashboard() {
                       </span>
                     </div>
 
-                    <h3 className="font-bold text-slate-900 text-base">{q.title}</h3>
-                    <p className="text-xs text-slate-500">Prepared by <strong>{q.sales_rep}</strong> &bull; {q.lines_count} line items</p>
+                    <h3 className="font-bold text-text-main text-base">{q.title}</h3>
+                    <p className="text-xs text-text-muted">Prepared by <strong>{q.sales_rep}</strong> &bull; {q.lines_count} line items</p>
 
                     <div className="pt-2 flex justify-between items-baseline border-t border-slate-100">
-                      <span className="text-xs text-slate-500 font-medium">Total Proposal Value:</span>
-                      <span className="text-2xl font-black text-slate-900">${q.totalAmount.toLocaleString()}</span>
+                      <span className="text-xs text-text-muted font-medium">Total Proposal Value:</span>
+                      <span className="text-2xl font-black text-text-main">${q.totalAmount.toLocaleString()}</span>
                     </div>
                   </div>
 
                   <div className="pt-4 flex space-x-3">
                     <Link
                       to={`/portal/${q.id}`}
-                      className="flex-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl text-center shadow transition-colors flex items-center justify-center"
+                      className="flex-1 bg-white hover:bg-surface-soft text-text-main text-xs font-bold py-2.5 px-4 rounded-xl text-center shadow transition-colors flex items-center justify-center"
                     >
                       <i className="fa-solid fa-pen-to-square mr-2"></i> View & Negotiate Proposal
                     </Link>
@@ -295,14 +295,14 @@ export default function CustomerDashboard() {
 
         {/* TAB 3: Personal Profile */}
         {activeTab === 'profile' && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8 space-y-6 max-w-3xl mx-auto">
+          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 md:p-8 space-y-6 max-w-3xl mx-auto">
             <div className="flex items-center space-x-4 pb-6 border-b border-slate-100">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-white font-black text-2xl flex items-center justify-center shadow-md">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-text-main font-black text-2xl flex items-center justify-center shadow-md">
                 {customer.name ? customer.name.charAt(0) : 'C'}
               </div>
               <div>
-                <h2 className="text-xl font-bold text-slate-900">{customer.name}</h2>
-                <p className="text-xs text-slate-500">{customer.email}</p>
+                <h2 className="text-xl font-bold text-text-main">{customer.name}</h2>
+                <p className="text-xs text-text-muted">{customer.email}</p>
                 <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded mt-1 inline-block">
                   Verified Customer Account
                 </span>
@@ -310,24 +310,24 @@ export default function CustomerDashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <span className="text-slate-500 font-semibold block mb-1">Company / Organization</span>
-                <span className="text-slate-900 font-bold text-sm">{customer.company_name || 'Acme Corporation'}</span>
+              <div className="bg-slate-50 p-4 rounded-xl border border-surface-soft">
+                <span className="text-text-muted font-semibold block mb-1">Company / Organization</span>
+                <span className="text-text-main font-bold text-sm">{customer.company_name || 'Acme Corporation'}</span>
               </div>
 
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <span className="text-slate-500 font-semibold block mb-1">Account Role</span>
-                <span className="text-slate-900 font-bold text-sm">Customer Portal User</span>
+              <div className="bg-slate-50 p-4 rounded-xl border border-surface-soft">
+                <span className="text-text-muted font-semibold block mb-1">Account Role</span>
+                <span className="text-text-main font-bold text-sm">Customer Portal User</span>
               </div>
 
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <span className="text-slate-500 font-semibold block mb-1">Customer Tier Status</span>
+              <div className="bg-slate-50 p-4 rounded-xl border border-surface-soft">
+                <span className="text-text-muted font-semibold block mb-1">Customer Tier Status</span>
                 <span className="text-emerald-700 font-bold text-sm">Gold Tier Customer</span>
               </div>
 
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <span className="text-slate-500 font-semibold block mb-1">Security Authentication</span>
-                <span className="text-slate-900 font-bold text-sm">Encrypted JWT Session</span>
+              <div className="bg-slate-50 p-4 rounded-xl border border-surface-soft">
+                <span className="text-text-muted font-semibold block mb-1">Security Authentication</span>
+                <span className="text-text-main font-bold text-sm">Encrypted JWT Session</span>
               </div>
             </div>
           </div>

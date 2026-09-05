@@ -122,16 +122,16 @@ export default function SuperAdminSettings() {
     <div className="p-6 md:p-12 max-w-5xl mx-auto">
       <header className="mb-8">
         <h1 className="text-2xl font-bold text-slate-800 flex items-center">
-          <i className="fa-solid fa-cogs text-slate-500 mr-3"></i>
+          <i className="fa-solid fa-cogs text-text-muted mr-3"></i>
           Global Site Settings
         </h1>
-        <p className="text-slate-500">Manage overarching platform branding, SEO, and security.</p>
+        <p className="text-text-muted">Manage overarching platform branding, SEO, and security.</p>
       </header>
 
       {message.text && (
         <div className={`p-4 rounded-md mb-6 ${message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
           <div className="flex">
-            <i className={`fa-solid ${message.type === 'success' ? 'fa-check-circle text-green-400' : 'fa-exclamation-circle text-red-400'} mt-0.5 mr-3`}></i>
+            <i className={`fa-solid ${message.type === 'success' ? 'fa-check-circle text-green-400' : 'fa-exclamation-circle text-rose-status'} mt-0.5 mr-3`}></i>
             <p className="text-sm font-medium">{message.text}</p>
           </div>
         </div>
@@ -292,7 +292,7 @@ export default function SuperAdminSettings() {
                 />
               </div>
               <div className="pt-2">
-                <button type="submit" disabled={savingPassword} className="w-full bg-slate-800 hover:bg-slate-900 text-white font-medium py-2 px-4 rounded transition-colors flex items-center justify-center">
+                <button type="submit" disabled={savingPassword} className="w-full bg-surface-soft hover:bg-white text-text-main font-medium py-2 px-4 rounded transition-colors flex items-center justify-center">
                   {savingPassword ? <i className="fa-solid fa-spinner fa-spin mr-2"></i> : <i className="fa-solid fa-lock mr-2"></i>}
                   Update Password
                 </button>

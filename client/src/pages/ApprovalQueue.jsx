@@ -53,20 +53,20 @@ export default function ApprovalQueue() {
     <div className="p-6 md:p-12">
       <header className="mb-8">
         <h1 className="text-2xl font-bold text-slate-800">Pending Approvals</h1>
-        <p className="text-slate-500">Review quotations that exceeded discount ceilings.</p>
+        <p className="text-text-muted">Review quotations that exceeded discount ceilings.</p>
       </header>
 
       {approvals.length === 0 ? (
         <div className="card p-12 text-center">
           <i className="fa-solid fa-check-circle text-green-500 text-5xl mb-4"></i>
           <h3 className="text-lg font-medium text-slate-800">All caught up!</h3>
-          <p className="text-slate-500 mt-2">There are no quotations pending your approval right now.</p>
+          <p className="text-text-muted mt-2">There are no quotations pending your approval right now.</p>
         </div>
       ) : (
         <div className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-slate-50 border-b border-surface-soft">
                 <tr className="text-sm font-medium text-slate-600">
                   <th className="px-6 py-4">Quotation ID</th>
                   <th className="px-6 py-4">Customer</th>
@@ -80,10 +80,10 @@ export default function ApprovalQueue() {
                 {approvals.map((approval) => (
                   <React.Fragment key={approval.id}>
                     <tr className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4 text-sm font-mono text-slate-500">{approval.id.split('-')[0]}</td>
+                      <td className="px-6 py-4 text-sm font-mono text-text-muted">{approval.id.split('-')[0]}</td>
                       <td className="px-6 py-4 font-medium text-slate-800">{approval.customer_name}</td>
                       <td className="px-6 py-4 text-slate-600">{approval.rep_name}</td>
-                      <td className="px-6 py-4 text-slate-500 text-sm">{new Date(approval.created_at).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 text-text-muted text-sm">{new Date(approval.created_at).toLocaleDateString()}</td>
                       <td className="px-6 py-4 text-center">
                         <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
                           <i className="fa-solid fa-triangle-exclamation"></i>
@@ -93,7 +93,7 @@ export default function ApprovalQueue() {
                       <td className="px-6 py-4 text-right">
                         <button 
                           onClick={() => setExpandedId(expandedId === approval.id ? null : approval.id)}
-                          className="text-slate-400 hover:text-primary-600 px-3 py-1"
+                          className="text-text-muted hover:text-primary-600 px-3 py-1"
                         >
                           {expandedId === approval.id ? 'Hide Details' : 'View Details'}
                         </button>
@@ -101,13 +101,13 @@ export default function ApprovalQueue() {
                     </tr>
                     
                     {expandedId === approval.id && (
-                      <tr className="bg-slate-50 border-b-2 border-slate-200">
+                      <tr className="bg-slate-50 border-b-2 border-surface-soft">
                         <td colSpan="6" className="px-6 py-6">
                           <h4 className="text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wider">Line Items Causing Risk</h4>
-                          <div className="bg-white rounded border border-slate-200 p-4 mb-4">
+                          <div className="bg-white rounded border border-surface-soft p-4 mb-4">
                             <table className="w-full text-sm text-left">
                               <thead>
-                                <tr className="text-slate-500 border-b border-slate-100">
+                                <tr className="text-text-muted border-b border-slate-100">
                                   <th className="pb-2">Product</th>
                                   <th className="pb-2">Qty</th>
                                   <th className="pb-2 text-right">Unit Price</th>
@@ -118,7 +118,7 @@ export default function ApprovalQueue() {
                               <tbody className="divide-y divide-slate-50">
                                 {approval.lines.map(line => (
                                   <tr key={line.id}>
-                                    <td className="py-2 font-medium text-slate-800">{line.product_name} <span className="text-xs font-normal text-slate-400 block">{line.category}</span></td>
+                                    <td className="py-2 font-medium text-slate-800">{line.product_name} <span className="text-xs font-normal text-text-muted block">{line.category}</span></td>
                                     <td className="py-2 text-slate-600">{line.quantity}</td>
                                     <td className="py-2 text-slate-600 text-right">${parseFloat(line.unit_price).toFixed(2)}</td>
                                     <td className="py-2 text-right">
@@ -137,7 +137,7 @@ export default function ApprovalQueue() {
                             </table>
                           </div>
                           
-                          <div className="flex flex-col md:flex-row gap-4 items-end justify-between border-t border-slate-200 pt-4 mt-2">
+                          <div className="flex flex-col md:flex-row gap-4 items-end justify-between border-t border-surface-soft pt-4 mt-2">
                             <div className="w-full md:w-1/2">
                               <label className="block text-sm font-medium text-slate-700 mb-1">Reason (required for Reject/Return)</label>
                               <textarea 
