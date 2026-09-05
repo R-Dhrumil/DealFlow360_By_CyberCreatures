@@ -218,6 +218,29 @@ class QuotationRepository {
       (sum, l) => sum + (parseFloat(l.unit_price) * parseInt(l.quantity, 10) * (1 - parseFloat(l.discount_percent || 0) / 100)),
       0
     );
+
+    // Check if there is a newer quotation for the same customer/account
+    try {
+      const newerRes = await db.query(
+        `SELECT id, created_at, status 
+         FROM quotations 
+         WHERE customer_id = $1 
+         ORDER BY created_at DESC 
+         LIMIT 1`,
+        [quote.customer_id]
+      );
+      if (newerRes.rows.length > 0) {
+        quote.latest_quotation_id = newerRes.rows[0].id;
+        quote.is_latest = (newerRes.rows[0].id === quote.id);
+      } else {
+        quote.latest_quotation_id = quote.id;
+        quote.is_latest = true;
+      }
+    } catch (e) {
+      quote.latest_quotation_id = quote.id;
+      quote.is_latest = true;
+    }
+
     return quote;
   }
 

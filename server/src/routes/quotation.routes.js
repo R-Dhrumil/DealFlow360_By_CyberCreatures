@@ -8,6 +8,8 @@ const checkRole = require('../middleware/checkRole');
 const asyncWrap = require('../utils/asyncWrap');
 
 // ── Public / Portal Routes (optional auth so customer portal works unauthenticated) ──
+router.get('/latest', optionalAuth, asyncWrap((req, res) => quotationController.getLatestQuotation(req, res)));
+router.get('/latest/discount', optionalAuth, asyncWrap((req, res) => quotationController.getLatestDiscount(req, res)));
 router.get('/:id/discount', optionalAuth, asyncWrap((req, res) => quotationController.getLatestDiscount(req, res)));
 router.get('/:id/latest-discount', optionalAuth, asyncWrap((req, res) => quotationController.getLatestDiscount(req, res)));
 router.get('/:id', optionalAuth, asyncWrap((req, res) => quotationController.getQuotationById(req, res)));

@@ -187,8 +187,58 @@ class QuotationController {
     return res.json(quotations.data);
   }
 
+  /** GET /quotations/latest */
+  async getLatestQuotation(req, res) {
+    const customerId = req.user?.customerId || req.user?.id || req.query.customerId;
+    const companyId = req.companyId || req.user?.companyId;
+
+    let targetQuoteId = null;
+
+    if (customerId) {
+      const custRes = await db.query(
+        'SELECT id FROM quotations WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 1',
+        [customerId]
+      );
+      if (custRes.rows.length > 0) {
+        targetQuoteId = custRes.rows[0].id;
+      }
+    }
+
+    if (!targetQuoteId && companyId) {
+      const compRes = await db.query(
+        'SELECT id FROM quotations WHERE company_id = $1 ORDER BY created_at DESC LIMIT 1',
+        [companyId]
+      );
+      if (compRes.rows.length > 0) {
+        targetQuoteId = compRes.rows[0].id;
+      }
+    }
+
+    if (!targetQuoteId) {
+      const anyRes = await db.query(
+        'SELECT id FROM quotations ORDER BY created_at DESC LIMIT 1'
+      );
+      if (anyRes.rows.length > 0) {
+        targetQuoteId = anyRes.rows[0].id;
+      }
+    }
+
+    if (!targetQuoteId) {
+      return res.status(404).json({ error: 'No quotation found in the system.' });
+    }
+
+    const quote = await quotationRepository.findDetailById(targetQuoteId);
+    if (!quote) {
+      return res.status(404).json({ error: 'Latest quotation not found' });
+    }
+    return res.json(quote);
+  }
+
   /** GET /quotations/:id */
   async getQuotationById(req, res) {
+    if (req.params.id === 'latest') {
+      return this.getLatestQuotation(req, res);
+    }
     const quote = await quotationRepository.findDetailById(req.params.id);
     if (!quote) {
       return res.status(404).json({ error: 'Quotation not found' });
@@ -198,7 +248,27 @@ class QuotationController {
 
   /** GET /quotations/:id/discount or /quotations/:id/latest-discount */
   async getLatestDiscount(req, res) {
-    const quotationId = req.params.id;
+    let quotationId = req.params.id;
+    if (quotationId === 'latest') {
+      const customerId = req.user?.customerId || req.user?.id || req.query.customerId;
+      if (customerId) {
+        const custRes = await db.query(
+          'SELECT id FROM quotations WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 1',
+          [customerId]
+        );
+        if (custRes.rows.length > 0) {
+          quotationId = custRes.rows[0].id;
+        }
+      }
+      if (!quotationId || quotationId === 'latest') {
+        const anyRes = await db.query(
+          'SELECT id FROM quotations ORDER BY created_at DESC LIMIT 1'
+        );
+        if (anyRes.rows.length > 0) {
+          quotationId = anyRes.rows[0].id;
+        }
+      }
+    }
     const quote = await quotationRepository.findDetailById(quotationId);
     if (!quote) {
       return res.status(404).json({ error: 'Quotation not found' });

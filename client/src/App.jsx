@@ -66,6 +66,8 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/portal" element={<CustomerPortal />} />
+            <Route path="/portal/latest" element={<CustomerPortal />} />
             <Route path="/portal/:id" element={<CustomerPortal />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Login defaultIsSignup={true} />} />
