@@ -95,54 +95,8 @@ export default function Layout() {
       </aside>
 
       {/* Main Page Area */}
-      <main className="flex-1 overflow-auto bg-border-soft flex flex-col">
-
-        {/* Top Header Bar */}
-        <header className="sticky top-0 z-20 bg-white border-b border-surface-soft shadow-sm print:hidden">
-          <div className="flex items-center justify-between px-6 py-3">
-
-            {/* Left: current page breadcrumb feel */}
-            <div className="flex items-center space-x-2 text-text-muted text-xs font-medium">
-              <i className="fa-solid fa-building text-primary"></i>
-              <span className="text-text-main font-semibold">{user?.companyName || 'DealFlow360'}</span>
-              <i className="fa-solid fa-chevron-right text-[10px]"></i>
-              <span className="capitalize">{user?.role?.replace(/_/g, ' ') || 'Internal'}</span>
-            </div>
-
-            {/* Right: Personal Profile button */}
-            <div className="flex items-center space-x-3">
-              {/* Notification bell */}
-              <button className="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:bg-surface-soft hover:text-text-main transition-all relative" title="Notifications">
-                <i className="fa-regular fa-bell text-base"></i>
-              </button>
-
-              {/* Personal Profile pill */}
-              <button
-                className="flex items-center space-x-2 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-semibold text-sm px-4 py-2 rounded-full shadow-md transition-all cursor-pointer"
-                title={`Logged in as ${user?.name || 'User'}`}
-              >
-                <i className="fa-solid fa-address-card text-base"></i>
-                <span>Personal Profile</span>
-              </button>
-
-              {/* Avatar with role */}
-              <div className="flex items-center space-x-2 pl-3 border-l border-surface-soft">
-                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold text-sm shadow">
-                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                </div>
-                <div className="hidden sm:block">
-                  <p className="text-xs font-semibold text-text-main leading-tight">{user?.name || 'User'}</p>
-                  <p className="text-[10px] text-text-muted capitalize">{user?.role?.replace(/_/g, ' ')}</p>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </header>
-
-        <div className="flex-1 overflow-auto">
-          <Outlet />
-        </div>
+      <main className="flex-1 overflow-auto bg-border-soft">
+        <Outlet />
       </main>
     </div>
   );
