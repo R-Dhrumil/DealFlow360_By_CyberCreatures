@@ -66,6 +66,8 @@ const UniversalDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState('');
   const [selectedStage, setSelectedStage] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const DEALS_PER_PAGE = 5;
 
   useEffect(() => {
     fetchDashboardData();
@@ -129,6 +131,44 @@ const UniversalDashboard = () => {
   });
 
   const totalFilteredAcv = filteredQuotations.reduce((sum, q) => sum + (Number(q.total_amount) || 0), 0);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredQuotations.length / DEALS_PER_PAGE));
+  const paginatedDeals = filteredQuotations.slice((currentPage - 1) * DEALS_PER_PAGE, currentPage * DEALS_PER_PAGE);
+
+  // Reset page when filters change
+  const handleFilterChange = (val) => { setFilterText(val); setCurrentPage(1); };
+  const handleStageChange = (stage) => { setSelectedStage(stage); setCurrentPage(1); };
+
+  // Analytics data derived from quotations
+  const statusGroups = [
+    { label: 'Draft',    color: '#94a3b8', count: quotations.filter(q => q.status === 'draft').length },
+    { label: 'Pending',  color: '#f59e0b', count: quotations.filter(q => q.status?.includes('pending')).length },
+    { label: 'Approved', color: '#10b981', count: quotations.filter(q => q.status === 'approved').length },
+    { label: 'Confirmed',color: '#6366f1', count: quotations.filter(q => q.status === 'confirmed').length },
+    { label: 'Rejected', color: '#f43f5e', count: quotations.filter(q => q.status === 'rejected').length },
+  ];
+  const maxGroupCount = Math.max(...statusGroups.map(g => g.count), 1);
+  const confirmedValue = quotations.filter(q => q.status === 'confirmed').reduce((s, q) => s + (Number(q.total_amount) || 0), 0);
+  const approvedValue  = quotations.filter(q => q.status === 'approved').reduce((s, q) => s + (Number(q.total_amount) || 0), 0);
+  const pendingValue2  = pendingDeals.reduce((s, q) => s + (Number(q.total_amount) || 0), 0);
+  const totalPipelineValue = openValue || 1;
+  // Donut segments: confirmed (indigo), approved (emerald), pending (amber), other (slate)
+  const donutData = [
+    { label: 'Confirmed', value: confirmedValue, color: '#6366f1' },
+    { label: 'Approved',  value: approvedValue,  color: '#10b981' },
+    { label: 'Pending',   value: pendingValue2,   color: '#f59e0b' },
+    { label: 'Other',     value: Math.max(0, totalPipelineValue - confirmedValue - approvedValue - pendingValue2), color: '#e2e8f0' },
+  ];
+  const DONUT_R = 54, DONUT_STROKE = 18, DONUT_CIRC = 2 * Math.PI * DONUT_R;
+  let donutOffset = 0;
+  const donutSegments = donutData.map(seg => {
+    const pct = totalPipelineValue > 0 ? seg.value / totalPipelineValue : 0;
+    const dash = pct * DONUT_CIRC;
+    const seg2 = { ...seg, pct, dash, offset: donutOffset };
+    donutOffset += dash;
+    return seg2;
+  });
 
   return (
     <div className="flex flex-col w-full min-h-screen px-8 py-8 bg-border-soft font-sans text-text-body">
@@ -297,7 +337,7 @@ const UniversalDashboard = () => {
                     placeholder="Filter pipeline..."
                     type="text"
                     value={filterText}
-                    onChange={(e) => setFilterText(e.target.value)}
+                    onChange={(e) => handleFilterChange(e.target.value)}
                   />
                   <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-sm pointer-events-none">search</span>
                 </div>
@@ -323,7 +363,7 @@ const UniversalDashboard = () => {
               </button>
 
               <button
-                onClick={() => setSelectedStage('draft')}
+                onClick={() => handleStageChange('draft')}
                 className={`stage-pill px-3.5 py-1.5 rounded-full font-semibold text-xs flex items-center gap-2 whitespace-nowrap transition-all ${
                   selectedStage === 'draft'
                     ? 'bg-primary text-on-primary shadow-sm'
@@ -335,7 +375,7 @@ const UniversalDashboard = () => {
               </button>
 
               <button
-                onClick={() => setSelectedStage('approval')}
+                onClick={() => handleStageChange('approval')}
                 className={`stage-pill px-3.5 py-1.5 rounded-full font-semibold text-xs flex items-center gap-2 whitespace-nowrap transition-all ${
                   selectedStage === 'approval'
                     ? 'bg-primary text-on-primary shadow-sm'
@@ -347,7 +387,7 @@ const UniversalDashboard = () => {
               </button>
 
               <button
-                onClick={() => setSelectedStage('approved')}
+                onClick={() => handleStageChange('approved')}
                 className={`stage-pill px-3.5 py-1.5 rounded-full font-semibold text-xs flex items-center gap-2 whitespace-nowrap transition-all ${
                   selectedStage === 'approved'
                     ? 'bg-primary text-on-primary shadow-sm'
@@ -374,7 +414,7 @@ const UniversalDashboard = () => {
                 No matching deals found. Try adjusting the filter.
               </div>
             ) : (
-              filteredQuotations.map((deal) => {
+              paginatedDeals.map((deal) => {
                 const riskVal = Number(deal.blended_risk_score) || 0;
                 const dealValue = Number(deal.total_amount) || 0;
                 // Estimate gross margin from risk score (inverse proxy)
@@ -506,15 +546,35 @@ const UniversalDashboard = () => {
               })
             )}
           </div>
-          <div className="p-4 bg-border-soft border-t border-surface-soft flex items-center justify-between text-xs text-text-muted">
+          {/* Pagination Footer */}
+          <div className="p-4 bg-border-soft border-t border-surface-soft flex flex-wrap items-center justify-between gap-3 text-xs text-text-muted">
             <div className="flex items-center gap-2 font-medium">
-              <span>Showing {filteredQuotations.length} of {quotations.length} active deals</span>
+              <span>Showing <strong className="text-text-main">{Math.min((currentPage - 1) * DEALS_PER_PAGE + 1, filteredQuotations.length)}–{Math.min(currentPage * DEALS_PER_PAGE, filteredQuotations.length)}</strong> of <strong className="text-text-main">{filteredQuotations.length}</strong> deals</span>
               <span>•</span>
-              <span className="text-primary font-bold">Total ACV: {formatCurrency(totalFilteredAcv)}</span>
+              <span className="text-primary font-bold">ACV: {formatCurrency(totalFilteredAcv)}</span>
             </div>
-            <Link to="/app/pipeline" className="text-primary font-bold hover:underline flex items-center gap-1 transition-colors">
-              View Complete Deal Desk <span className="material-symbols-outlined text-xs">chevron_right</span>
-            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 rounded-lg bg-white border border-surface-soft text-text-main font-bold hover:bg-border-soft transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+              >
+                <i className="fa-solid fa-chevron-left text-[10px]"></i> Prev
+              </button>
+              <span className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary font-bold border border-primary/20">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 rounded-lg bg-white border border-surface-soft text-text-main font-bold hover:bg-border-soft transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+              >
+                Next <i className="fa-solid fa-chevron-right text-[10px]"></i>
+              </button>
+              <Link to="/app/pipeline" className="ml-2 text-primary font-bold hover:underline flex items-center gap-1">
+                Full Pipeline <i className="fa-solid fa-arrow-right text-[10px]"></i>
+              </Link>
+            </div>
           </div>
         </div>
         
@@ -540,7 +600,7 @@ const UniversalDashboard = () => {
                   All deals currently within risk guardrails.
                 </div>
               ) : (
-                atRiskDeals.map((riskDeal) => (
+                atRiskDeals.slice(0, 5).map((riskDeal) => (
                   <div key={riskDeal.id} className="p-3 rounded-xl bg-border-soft border border-surface-soft flex flex-col gap-2 shadow-2xs overflow-hidden">
                     <div className="flex items-center justify-between gap-2 min-w-0">
                       <div className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -554,10 +614,13 @@ const UniversalDashboard = () => {
                       </span>
                     </div>
                     <p className="text-xs text-text-body leading-relaxed">
-                      Quote <strong className="text-text-main font-bold">QT-{riskDeal.id.slice(0, 8).toUpperCase()}</strong> ({formatCurrency(riskDeal.total_amount)}) flagged for threshold evaluation.
+                      Quote <strong className="text-text-main font-bold">{formatQuoteCode(riskDeal.id)}</strong> ({formatCurrency(riskDeal.total_amount)}) flagged for threshold evaluation.
                     </p>
                   </div>
                 ))
+              )}
+              {atRiskDeals.length > 5 && (
+                <p className="text-[10px] text-center text-text-muted font-semibold pt-1">+{atRiskDeals.length - 5} more at-risk deals</p>
               )}
             </div>
           </div>
@@ -582,6 +645,139 @@ const UniversalDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* ━━━━━━━━━━━━━━━━━━━━ ANALYTICS SECTION ━━━━━━━━━━━━━━━━━━━━ */}
+      <div className="pb-8">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="text-lg font-extrabold text-text-main tracking-tight">Pipeline Analytics</h2>
+            <p className="text-xs text-text-muted">Real-time deal distribution, value breakdown, and conversion metrics</p>
+          </div>
+          <span className="text-[11px] bg-primary/10 text-primary font-bold px-3 py-1 rounded-full border border-primary/20">
+            {quotations.length} Total Records
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+          {/* Chart 1: Status Distribution Bar Chart */}
+          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-primary/10 text-primary"><i className="fa-solid fa-chart-bar"></i></span>
+              <div>
+                <h3 className="text-sm font-bold text-text-main">Deal Status Distribution</h3>
+                <p className="text-[10px] text-text-muted">Count by pipeline stage</p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3">
+              {statusGroups.map(g => (
+                <div key={g.label} className="flex items-center gap-3">
+                  <span className="text-[11px] font-bold text-text-muted w-16 shrink-0">{g.label}</span>
+                  <div className="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${(g.count / maxGroupCount) * 100}%`, backgroundColor: g.color }}
+                    ></div>
+                  </div>
+                  <span className="text-xs font-extrabold text-text-main w-6 text-right">{g.count}</span>
+                </div>
+              ))}
+            </div>
+            <div className="pt-2 border-t border-slate-100 flex justify-between text-[11px] text-text-muted">
+              <span>Total Deals</span>
+              <span className="font-bold text-text-main">{quotations.length}</span>
+            </div>
+          </div>
+
+          {/* Chart 2: Pipeline Value Donut */}
+          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-indigo-100 text-indigo-600"><i className="fa-solid fa-chart-pie"></i></span>
+              <div>
+                <h3 className="text-sm font-bold text-text-main">Pipeline Value Breakdown</h3>
+                <p className="text-[10px] text-text-muted">ACV split by deal stage</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              {/* SVG Donut */}
+              <div className="relative shrink-0">
+                <svg width="130" height="130" viewBox="0 0 130 130">
+                  {donutSegments.map((seg, i) => (
+                    <circle
+                      key={i}
+                      cx="65" cy="65"
+                      r={DONUT_R}
+                      fill="none"
+                      stroke={seg.color}
+                      strokeWidth={DONUT_STROKE}
+                      strokeDasharray={`${seg.dash} ${DONUT_CIRC - seg.dash}`}
+                      strokeDashoffset={-seg.offset}
+                      style={{ transform: 'rotate(-90deg)', transformOrigin: '65px 65px' }}
+                    />
+                  ))}
+                  <text x="65" y="60" textAnchor="middle" className="fill-slate-900" style={{ fontSize: 11, fontWeight: 800 }}>
+                    {formatCurrency(totalPipelineValue)}
+                  </text>
+                  <text x="65" y="74" textAnchor="middle" style={{ fontSize: 8, fill: '#94a3b8', fontWeight: 600 }}>PIPELINE</text>
+                </svg>
+              </div>
+              {/* Legend */}
+              <div className="flex flex-col gap-2 flex-1">
+                {donutData.map(seg => (
+                  <div key={seg.label} className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: seg.color }}></span>
+                      <span className="text-[11px] font-semibold text-text-muted">{seg.label}</span>
+                    </div>
+                    <span className="text-[11px] font-extrabold text-text-main">{formatCurrency(seg.value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Chart 3: Conversion Funnel Stats */}
+          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-emerald-100 text-emerald-600"><i className="fa-solid fa-filter"></i></span>
+              <div>
+                <h3 className="text-sm font-bold text-text-main">Conversion Funnel</h3>
+                <p className="text-[10px] text-text-muted">Stage-to-stage progression rates</p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3">
+              {[
+                { label: 'Total Created',  val: quotations.length,                                                                    pct: 100,  color: 'bg-slate-400' },
+                { label: 'Submitted',      val: quotations.filter(q => q.status !== 'draft').length,                                  pct: quotations.length ? Math.round(quotations.filter(q => q.status !== 'draft').length / quotations.length * 100) : 0, color: 'bg-blue-400' },
+                { label: 'In Approval',    val: pendingDeals.length,                                                                  pct: quotations.length ? Math.round(pendingDeals.length / quotations.length * 100) : 0,    color: 'bg-amber-400' },
+                { label: 'Approved',       val: quotations.filter(q => q.status === 'approved' || q.status === 'confirmed').length,   pct: quotations.length ? Math.round(quotations.filter(q => q.status === 'approved' || q.status === 'confirmed').length / quotations.length * 100) : 0, color: 'bg-emerald-500' },
+                { label: 'Won / Confirmed',val: quotations.filter(q => q.status === 'confirmed').length,                              pct: quotations.length ? Math.round(quotations.filter(q => q.status === 'confirmed').length / quotations.length * 100) : 0, color: 'bg-indigo-500' },
+              ].map((row, i, arr) => (
+                <div key={row.label}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-bold text-text-muted">{row.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-extrabold text-text-main">{row.val}</span>
+                      <span className="text-[10px] font-semibold text-text-muted">({row.pct}%)</span>
+                    </div>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div className={`${row.color} h-full rounded-full transition-all duration-700`} style={{ width: `${row.pct}%` }}></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="pt-2 border-t border-slate-100 flex justify-between text-[11px]">
+              <span className="text-text-muted">Win Rate</span>
+              <span className="font-extrabold text-emerald-600">
+                {quotations.length > 0 ? ((quotations.filter(q => q.status === 'confirmed').length / quotations.length) * 100).toFixed(1) : 0}%
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
     </div>
   );
 };
