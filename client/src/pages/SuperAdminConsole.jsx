@@ -4,12 +4,19 @@ import api from '../api/client';
 
 export default function SuperAdminConsole({ defaultTab }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') || defaultTab || 'tenants';
+  const currentTabFromUrl = searchParams.get('tab') || defaultTab || 'tenants';
 
-  const [activeTab, setActiveTab] = useState(initialTab); // 'tenants' | 'settings' | 'users'
+  const [activeTab, setActiveTab] = useState(currentTabFromUrl); // 'tenants' | 'settings' | 'users'
   const [companies, setCompanies] = useState([]);
   const [tenantUsers, setTenantUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Sync tab state when URL search parameters change (e.g., sidebar links clicked)
+  useEffect(() => {
+    if (currentTabFromUrl && currentTabFromUrl !== activeTab) {
+      setActiveTab(currentTabFromUrl);
+    }
+  }, [currentTabFromUrl]);
 
   // User Modal State
   const [selectedUser, setSelectedUser] = useState(null);
@@ -182,64 +189,6 @@ export default function SuperAdminConsole({ defaultTab }) {
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Super Admin Top Header */}
-      <header className="flex flex-wrap justify-between items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <div>
-          <div className="flex items-center space-x-3 mb-1">
-            <span className="w-10 h-10 rounded-xl bg-purple-100 border border-purple-200 text-purple-700 font-black flex items-center justify-center text-xl shadow-xs">
-              👑
-            </span>
-            <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900">
-                Super Admin Console
-              </h1>
-              <p className="text-xs text-slate-500 font-medium">
-                Global Tenants Governance, Platform Settings & User Directory
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Focused 3-Section Navigation Bar */}
-        <div className="flex items-center space-x-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
-          <button
-            onClick={() => switchTab('tenants')}
-            className={`px-4 py-2 rounded-lg text-xs font-extrabold transition-all flex items-center space-x-2 ${
-              activeTab === 'tenants'
-                ? 'bg-purple-600 text-white shadow-md'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-            }`}
-          >
-            <i className="fa-solid fa-globe"></i>
-            <span>Global Tenants</span>
-          </button>
-
-          <button
-            onClick={() => switchTab('settings')}
-            className={`px-4 py-2 rounded-lg text-xs font-extrabold transition-all flex items-center space-x-2 ${
-              activeTab === 'settings'
-                ? 'bg-purple-600 text-white shadow-md'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-            }`}
-          >
-            <i className="fa-solid fa-sliders"></i>
-            <span>Platform Settings</span>
-          </button>
-
-          <button
-            onClick={() => switchTab('users')}
-            className={`px-4 py-2 rounded-lg text-xs font-extrabold transition-all flex items-center space-x-2 ${
-              activeTab === 'users'
-                ? 'bg-purple-600 text-white shadow-md'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-            }`}
-          >
-            <i className="fa-solid fa-users"></i>
-            <span>Details of Users ({tenantUsers.length})</span>
-          </button>
-        </div>
-      </header>
-
       {/* Global Notifications Alert */}
       {message.text && (
         <div className={`p-4 rounded-xl shadow-xs border flex items-center justify-between ${
@@ -257,56 +206,43 @@ export default function SuperAdminConsole({ defaultTab }) {
         </div>
       )}
 
-      {/* KPI Overview Summary Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div 
-          onClick={() => switchTab('tenants')}
-          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-purple-300 cursor-pointer transition-all border-l-4 border-l-purple-600"
-        >
-          <div className="flex justify-between items-center mb-1">
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Global Tenants</p>
-            <i className="fa-solid fa-building text-purple-500 text-sm"></i>
-          </div>
-          <h3 className="text-2xl font-black text-slate-900">{companies.length} Organizations</h3>
-          <p className="text-[11px] text-slate-400 mt-1">Multi-tenant accounts across platform</p>
-        </div>
-
-        <div 
-          onClick={() => switchTab('settings')}
-          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-indigo-300 cursor-pointer transition-all border-l-4 border-l-indigo-600"
-        >
-          <div className="flex justify-between items-center mb-1">
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Platform Status</p>
-            <i className="fa-solid fa-gears text-indigo-500 text-sm"></i>
-          </div>
-          <h3 className="text-2xl font-black text-slate-900">{settings.site_name || 'DealFlow360'}</h3>
-          <p className="text-[11px] text-slate-400 mt-1">Branding, SEO & Security configured</p>
-        </div>
-
-        <div 
-          onClick={() => switchTab('users')}
-          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-emerald-300 cursor-pointer transition-all border-l-4 border-l-emerald-600"
-        >
-          <div className="flex justify-between items-center mb-1">
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Registered Users</p>
-            <i className="fa-solid fa-users text-emerald-500 text-sm"></i>
-          </div>
-          <h3 className="text-2xl font-black text-slate-900">{totalUsers} Active Accounts</h3>
-          <p className="text-[11px] text-slate-400 mt-1">Across all tenant businesses</p>
-        </div>
-      </div>
-
       {/* SECTION 1: GLOBAL TENANTS */}
       {activeTab === 'tenants' && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-            <div>
-              <h2 className="text-base font-extrabold text-slate-900">Global Tenants Directory</h2>
-              <p className="text-xs text-slate-500">Overview of registered organization tenants, domain slugs, and activity</p>
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Tab Specific Dynamic Header */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap justify-between items-center gap-4">
+            <div className="flex items-center space-x-3">
+              <span className="w-10 h-10 rounded-xl bg-purple-100 border border-purple-200 text-purple-700 font-black flex items-center justify-center text-xl shadow-xs">
+                🌐
+              </span>
+              <div>
+                <h1 className="text-2xl font-black tracking-tight text-slate-900">
+                  Global Tenants
+                </h1>
+                <p className="text-xs text-slate-500 font-medium">
+                  Overview of registered organization tenants, domain slugs, user counts, and deal performance
+                </p>
+              </div>
             </div>
-            <span className="bg-purple-50 text-purple-700 text-xs font-bold px-3 py-1 rounded-full border border-purple-200">
-              {companies.length} Registered Tenants
+            <span className="bg-purple-100 text-purple-800 text-xs font-extrabold px-3.5 py-1.5 rounded-full border border-purple-200">
+              {companies.length} Active Organizations
             </span>
+          </div>
+
+          {/* Tenants KPI Bar */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs border-l-4 border-l-purple-600">
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Registered Organizations</p>
+              <h3 className="text-2xl font-black text-slate-900">{companies.length} Tenants</h3>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs border-l-4 border-l-indigo-600">
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Quotations Processed</p>
+              <h3 className="text-2xl font-black text-slate-900">{totalQuotes} Deals</h3>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs border-l-4 border-l-emerald-600">
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Active Members</p>
+              <h3 className="text-2xl font-black text-slate-900">{totalUsers} Users</h3>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -386,17 +322,38 @@ export default function SuperAdminConsole({ defaultTab }) {
 
       {/* SECTION 2: PLATFORM SETTINGS */}
       {activeTab === 'settings' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            {/* Branding Settings Card */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-5">
-              <div className="border-b border-slate-100 pb-3">
-                <h2 className="text-base font-extrabold text-slate-900 flex items-center space-x-2">
-                  <i className="fa-solid fa-brush text-purple-600"></i>
-                  <span>Platform Branding & Identity</span>
-                </h2>
-                <p className="text-xs text-slate-500">Configure global website title, tagline, logo, and icons</p>
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Tab Specific Dynamic Header */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap justify-between items-center gap-4">
+            <div className="flex items-center space-x-3">
+              <span className="w-10 h-10 rounded-xl bg-indigo-100 border border-indigo-200 text-indigo-700 font-black flex items-center justify-center text-xl shadow-xs">
+                ⚙️
+              </span>
+              <div>
+                <h1 className="text-2xl font-black tracking-tight text-slate-900">
+                  Platform Settings
+                </h1>
+                <p className="text-xs text-slate-500 font-medium">
+                  Overarching site branding, logo & favicon uploads, marketing analytics integrations & root security
+                </p>
               </div>
+            </div>
+            <span className="bg-indigo-100 text-indigo-800 text-xs font-extrabold px-3.5 py-1.5 rounded-full border border-indigo-200">
+              System Configuration
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              {/* Branding Settings Card */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-5">
+                <div className="border-b border-slate-100 pb-3">
+                  <h2 className="text-base font-extrabold text-slate-900 flex items-center space-x-2">
+                    <i className="fa-solid fa-brush text-purple-600"></i>
+                    <span>Platform Branding & Identity</span>
+                  </h2>
+                  <p className="text-xs text-slate-500">Configure global website title, tagline, logo, and icons</p>
+                </div>
 
               <form onSubmit={handleSettingsSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -583,11 +540,33 @@ export default function SuperAdminConsole({ defaultTab }) {
             </div>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* SECTION 3: DETAILS OF THE USER */}
       {activeTab === 'users' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-5">
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Tab Specific Dynamic Header */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap justify-between items-center gap-4">
+            <div className="flex items-center space-x-3">
+              <span className="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-200 text-emerald-700 font-black flex items-center justify-center text-xl shadow-xs">
+                👥
+              </span>
+              <div>
+                <h1 className="text-2xl font-black tracking-tight text-slate-900">
+                  Details of Users
+                </h1>
+                <p className="text-xs text-slate-500 font-medium">
+                  Comprehensive directory of registered user credentials, roles, and business affiliations
+                </p>
+              </div>
+            </div>
+            <span className="bg-emerald-100 text-emerald-800 text-xs font-extrabold px-3.5 py-1.5 rounded-full border border-emerald-200">
+              {tenantUsers.length} Total Registered Users
+            </span>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-5">
           <div className="flex flex-wrap justify-between items-center gap-4 border-b border-slate-100 pb-4">
             <div>
               <h2 className="text-base font-extrabold text-slate-900">Details of Users Across Tenants</h2>
@@ -704,7 +683,8 @@ export default function SuperAdminConsole({ defaultTab }) {
             </table>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* MODAL 1: Individual User Details Modal */}
       {selectedUser && (
