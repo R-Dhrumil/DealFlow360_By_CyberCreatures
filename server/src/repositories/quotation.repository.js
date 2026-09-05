@@ -40,6 +40,8 @@ class QuotationRepository {
          u.name as sales_rep_name,
          COALESCE(STRING_AGG(DISTINCT p.name, ', '), 'Custom Proposal') as product_summary,
          COALESCE(SUM(ql.unit_price * ql.quantity * (1 - ql.discount_percent/100)), 0) as total_amount,
+         COALESCE(SUM(ql.unit_price * ql.quantity), 0) as base_amount,
+         COALESCE(SUM(ql.unit_price * ql.quantity * (ql.discount_percent/100)), 0) as total_discount,
          COUNT(ql.id) as lines_count
        FROM quotations q
        LEFT JOIN customers c ON q.customer_id = c.id
@@ -66,6 +68,8 @@ class QuotationRepository {
          u.name as sales_rep_name,
          COALESCE(STRING_AGG(DISTINCT p.name, ', '), 'Custom Proposal') as product_summary,
          COALESCE(SUM(ql.unit_price * ql.quantity * (1 - ql.discount_percent/100)), 0) as total_amount,
+         COALESCE(SUM(ql.unit_price * ql.quantity), 0) as base_amount,
+         COALESCE(SUM(ql.unit_price * ql.quantity * (ql.discount_percent/100)), 0) as total_discount,
          COUNT(ql.id) as lines_count
        FROM quotations q
        LEFT JOIN customers c ON q.customer_id = c.id
@@ -106,6 +110,8 @@ class QuotationRepository {
          u.name as sales_rep_name,
          COALESCE(STRING_AGG(DISTINCT p.name, ', '), 'Custom Proposal') as product_summary,
          COALESCE(SUM(ql.unit_price * ql.quantity * (1 - ql.discount_percent/100)), 0) as total_amount,
+         COALESCE(SUM(ql.unit_price * ql.quantity), 0) as base_amount,
+         COALESCE(SUM(ql.unit_price * ql.quantity * (ql.discount_percent/100)), 0) as total_discount,
          COUNT(ql.id) as lines_count
        FROM quotations q
        LEFT JOIN customers c ON q.customer_id = c.id
@@ -124,6 +130,8 @@ class QuotationRepository {
          'Pending Assignment' as sales_rep_name,
          p.name as product_summary,
          (p.base_price * i.quantity) as total_amount,
+         (p.base_price * i.quantity) as base_amount,
+         0 as total_discount,
          1 as lines_count
        FROM inquiries i
        LEFT JOIN customers c ON i.customer_id = c.id
@@ -151,6 +159,8 @@ class QuotationRepository {
          comp.name as company_name,
          COALESCE(STRING_AGG(DISTINCT p.name, ', '), 'Custom Proposal') as product_summary,
          COALESCE(SUM(ql.unit_price * ql.quantity * (1 - ql.discount_percent/100)), 0) as total_amount,
+         COALESCE(SUM(ql.unit_price * ql.quantity), 0) as base_amount,
+         COALESCE(SUM(ql.unit_price * ql.quantity * (ql.discount_percent/100)), 0) as total_discount,
          COUNT(ql.id) as lines_count
        FROM quotations q
        LEFT JOIN customers c ON q.customer_id = c.id

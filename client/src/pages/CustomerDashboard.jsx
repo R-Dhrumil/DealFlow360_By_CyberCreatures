@@ -369,6 +369,9 @@ export default function CustomerDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {quotations.map(q => {
                   const totalVal = Number(q.total_amount || q.totalAmount || 0);
+                  const baseVal = Number(q.base_amount || q.baseAmount || totalVal);
+                  const discountVal = Number(q.total_discount || q.totalDiscount || Math.max(0, baseVal - totalVal));
+                  const discountPercent = baseVal > 0 && discountVal > 0 ? Math.round((discountVal / baseVal) * 100) : 0;
                   const quoteCode = formatQuoteCode(q.id);
                   const stage = getQuoteStageInfo(q.status);
 
@@ -407,20 +410,44 @@ export default function CustomerDashboard() {
                           </p>
                         </div>
 
-                        <div className="pt-2 flex justify-between items-baseline border-t border-slate-100">
-                          <div>
-                            <span className={`text-xs ${q.status === 'approved' ? 'text-emerald-950 font-bold' : 'text-text-muted font-medium'}`}>
-                              {q.status === 'approved' ? 'Total Payable Amount:' : 'Total Proposal Value:'}
-                            </span>
-                            {q.status === 'approved' && (
-                              <span className="block text-[10px] text-emerald-600 font-bold uppercase tracking-wider">
-                                Approved &bull; Discount Locked
-                              </span>
-                            )}
+                        {/* Financial Breakdown: Base Subtotal, - Discount, Total Payable Amount */}
+                        <div className="pt-3 border-t border-slate-100 space-y-1.5">
+                          <div className="flex justify-between items-center text-xs text-slate-500">
+                            <span>Base Subtotal:</span>
+                            <span className="font-mono font-semibold text-slate-700">{formatMoney(baseVal)}</span>
                           </div>
-                          <span className={`text-2xl font-black ${q.status === 'approved' ? 'text-emerald-700' : 'text-slate-800'}`}>
-                            {formatMoney(totalVal)}
-                          </span>
+
+                          <div className="flex justify-between items-center text-xs text-emerald-700 font-medium">
+                            <span className="flex items-center gap-1">
+                              <i className="fa-solid fa-tag text-[10px]"></i> Discount:
+                            </span>
+                            <span className="font-mono font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
+                              - {formatMoney(discountVal)} {discountPercent > 0 ? `(-${discountPercent}%)` : ''}
+                            </span>
+                          </div>
+
+                          <div className="pt-2 border-t border-slate-200/80 flex justify-between items-baseline">
+                            <div>
+                              <span className={`text-xs ${q.status === 'approved' ? 'text-emerald-950 font-black' : 'text-slate-700 font-bold'}`}>
+                                {q.status === 'approved' ? 'Total Payable Amount:' : 'Total Proposal Value:'}
+                              </span>
+                              {q.status === 'approved' && (
+                                <span className="block text-[10px] text-emerald-600 font-bold uppercase tracking-wider">
+                                  Approved &bull; Discount Locked
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <span className={`text-2xl font-black font-mono ${q.status === 'approved' ? 'text-emerald-700' : 'text-slate-800'}`}>
+                                {formatMoney(totalVal)}
+                              </span>
+                              {q.status === 'approved' && (
+                                <span className="block text-[9px] font-bold text-emerald-600 uppercase tracking-wider">
+                                  Net Payable
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
 
