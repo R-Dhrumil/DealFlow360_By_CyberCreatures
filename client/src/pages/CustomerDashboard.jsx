@@ -454,11 +454,10 @@ export default function CustomerDashboard() {
                       <div className="pt-4 flex space-x-3">
                         <Link
                           to={`/portal/${q.id}`}
-                          className={`flex-1 text-white text-xs font-bold py-2.5 px-4 rounded-xl text-center shadow transition-colors flex items-center justify-center space-x-2 ${
-                            stage.canAccept
-                              ? 'bg-emerald-600 hover:bg-emerald-700'
-                              : 'bg-slate-800 hover:bg-slate-900'
-                          }`}
+                          className={`flex-1 text-white text-xs font-bold py-2.5 px-4 rounded-xl text-center shadow transition-colors flex items-center justify-center space-x-2 ${stage.canAccept
+                            ? 'bg-emerald-600 hover:bg-emerald-700'
+                            : 'bg-slate-800 hover:bg-slate-900'
+                            }`}
                         >
                           <i className={stage.canAccept ? 'fa-solid fa-check-double' : 'fa-solid fa-eye'}></i>
                           <span>{stage.canAccept ? 'Review & Accept Proposal' : 'View Proposal Details'}</span>
