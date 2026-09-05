@@ -13,6 +13,19 @@ class QuotationService {
     const client = await db.pool.connect();
     try {
       await client.query('BEGIN');
+
+      // FIX: Price Manipulation Vulnerability
+      const productIds = lines.map(l => l.productId);
+      const productsRes = await client.query(
+        'SELECT id, base_price FROM products WHERE id = ANY($1::varchar[]) AND company_id = $2',
+        [productIds, companyId]
+      );
+
+      const securePrices = {};
+      productsRes.rows.forEach(p => {
+        securePrices[p.id] = parseFloat(p.base_price);
+      });
+
       const quotation = await quotationRepository.createQuotation(
         companyId,
         customerId,
@@ -22,12 +35,20 @@ class QuotationService {
       );
 
       for (const line of lines) {
+        const truePrice = securePrices[line.productId];
+        if (truePrice === undefined) {
+          throw ApiError.badRequest(`Product ID ${line.productId} is invalid or does not belong to your company.`);
+        }
+
+        // Clamp discount between 0 and 100 to prevent negative discounts (which would increase price)
+        const safeDiscount = Math.max(0, Math.min(100, parseFloat(line.discountPercent || 0)));
+
         await quotationRepository.createQuotationLine(
           quotation.id,
           line.productId,
           line.quantity,
-          line.unitPrice,
-          line.discountPercent || 0,
+          truePrice,
+          safeDiscount,
           line.lineType || 'one_time',
           client
         );
@@ -99,6 +120,96 @@ class QuotationService {
       blendedScore: riskResult.blendedScore,
       requiredApproval: riskResult.requiredApproval
     };
+  }
+
+  async approveQuotation(companyId, quotationId, userRole) {
+    const client = await db.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
+      if (!quotation) throw ApiError.notFound('Quotation not found');
+
+      if (quotation.status === 'pending_finance_approval' && userRole !== 'finance' && userRole !== 'admin') {
+        throw ApiError.forbidden('Only Finance can approve this high-risk quotation');
+      }
+      if (quotation.status !== 'pending_approval' && quotation.status !== 'pending_finance_approval') {
+        throw ApiError.conflict(`Cannot approve a quotation with status: ${quotation.status}`);
+      }
+
+      await quotationRepository.updateQuotationStatusAndScore(
+        quotationId,
+        'approved',
+        quotation.blended_risk_score,
+        client
+      );
+
+      await client.query('COMMIT');
+      return { quotationId, status: 'approved' };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async rejectQuotation(companyId, quotationId, userRole) {
+    const client = await db.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
+      if (!quotation) throw ApiError.notFound('Quotation not found');
+
+      if (quotation.status === 'pending_finance_approval' && userRole !== 'finance' && userRole !== 'admin') {
+        throw ApiError.forbidden('Only Finance can reject this high-risk quotation');
+      }
+      if (quotation.status !== 'pending_approval' && quotation.status !== 'pending_finance_approval') {
+        throw ApiError.conflict(`Cannot reject a quotation with status: ${quotation.status}`);
+      }
+
+      await quotationRepository.updateQuotationStatusAndScore(
+        quotationId,
+        'rejected',
+        quotation.blended_risk_score,
+        client
+      );
+
+      await client.query('COMMIT');
+      return { quotationId, status: 'rejected' };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async confirmQuotation(companyId, quotationId) {
+    const client = await db.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
+      if (!quotation) throw ApiError.notFound('Quotation not found');
+
+      if (quotation.status !== 'approved') {
+        throw ApiError.conflict(`Cannot confirm quotation. It must be approved first. Current status: ${quotation.status}`);
+      }
+
+      await quotationRepository.updateQuotationStatusAndScore(
+        quotationId,
+        'confirmed',
+        quotation.blended_risk_score,
+        client
+      );
+
+      await client.query('COMMIT');
+      return { quotationId, status: 'confirmed' };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 }
 

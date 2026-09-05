@@ -22,16 +22,17 @@ export default function Layout() {
   };
 
   const navItems = [
-    { name: 'Pipeline', path: '/app/pipeline', icon: 'fa-diagram-project', roles: ['sales_rep', 'sales_manager', 'finance', 'admin', 'super_admin'] },
-    { name: 'Dashboard', path: '/app/dashboard', icon: 'fa-chart-pie', roles: ['sales_rep', 'sales_manager', 'admin', 'super_admin'] },
+    { name: 'Pipeline', path: '/app/pipeline', icon: 'fa-diagram-project', roles: ['sales_rep', 'sales_manager', 'finance', 'admin'] },
+    { name: 'Dashboard', path: '/app/dashboard', icon: 'fa-chart-pie', roles: ['sales_rep', 'sales_manager', 'admin'] },
     { name: 'Quotation Builder', path: '/app/quote', icon: 'fa-file-invoice-dollar', roles: ['sales_rep', 'sales_manager', 'admin'] },
     { name: 'Approvals', path: '/app/approvals', icon: 'fa-check-double', roles: ['sales_manager', 'admin', 'finance', 'sales_rep'] },
-    { name: 'Operations Hub', path: '/app/operations', icon: 'fa-boxes-packing', roles: ['operations', 'admin', 'super_admin'] },
+    { name: 'Operations Hub', path: '/app/operations', icon: 'fa-boxes-packing', roles: ['operations', 'admin'] },
     { name: 'Finance Hub', path: '/app/finance', icon: 'fa-coins', roles: ['finance', 'admin', 'sales_manager'] },
-    { name: 'Admin Operations', path: '/app/admin', icon: 'fa-user-gear', roles: ['admin', 'super_admin'] },
-    { name: 'Reporting', path: '/app/reporting', icon: 'fa-chart-bar', roles: ['sales_manager', 'admin', 'super_admin'] },
-    { name: 'Global Tenants', path: '/app/superadmin', icon: 'fa-globe', roles: ['super_admin', 'admin'] },
-    { name: 'Platform Settings', path: '/app/settings', icon: 'fa-gear', roles: ['super_admin', 'admin'] },
+    { name: 'Admin Operations', path: '/app/admin', icon: 'fa-user-gear', roles: ['admin'] },
+    { name: 'Reporting', path: '/app/reporting', icon: 'fa-chart-bar', roles: ['sales_manager', 'admin'] },
+    { name: 'Global Tenants', path: '/app/superadmin', search: '?tab=tenants', icon: 'fa-globe', roles: ['super_admin'] },
+    { name: 'Platform Settings', path: '/app/superadmin', search: '?tab=settings', icon: 'fa-gear', roles: ['super_admin'] },
+    { name: 'Details of Users', path: '/app/superadmin', search: '?tab=users', icon: 'fa-users', roles: ['super_admin'] },
   ];
 
 
@@ -51,14 +52,18 @@ export default function Layout() {
         
         <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
           {navItems.filter(item => user && item.roles.includes(user.role)).map(item => {
-            const isActive = location.pathname.startsWith(item.path);
+            const fullTarget = item.search ? `${item.path}${item.search}` : item.path;
+            const isActive = item.search 
+              ? location.pathname === item.path && (location.search === item.search || (!location.search && item.search === '?tab=tenants'))
+              : location.pathname.startsWith(item.path);
+
             return (
               <Link
-                key={item.path}
-                to={item.path}
+                key={fullTarget}
+                to={fullTarget}
                 className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all ${
                   isActive 
-                    ? 'bg-primary-600 text-text-main shadow-md font-semibold' 
+                    ? 'bg-purple-600 text-white shadow-md font-semibold' 
                     : 'text-text-muted hover:bg-surface-soft hover:text-text-main'
                 }`}
               >

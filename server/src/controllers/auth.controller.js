@@ -12,6 +12,15 @@ class AuthController {
     const result = await authService.unifiedSignup(accountType, name, email, password, companyName);
     return res.status(201).json(result);
   }
+
+  async logout(req, res) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      await authService.logout(token);
+    }
+    return res.json({ success: true, message: 'Logged out successfully' });
+  }
 }
 
 module.exports = new AuthController();

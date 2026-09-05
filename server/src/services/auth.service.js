@@ -169,6 +169,18 @@ class AuthService {
       }
     }
   }
+
+  async logout(token) {
+    if (!token) return;
+    try {
+      await db.query(
+        'INSERT INTO jwt_blocklist (token) VALUES ($1) ON CONFLICT (token) DO NOTHING',
+        [token]
+      );
+    } catch (err) {
+      console.error('Failed to add token to blocklist:', err);
+    }
+  }
 }
 
 module.exports = new AuthService();
