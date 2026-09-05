@@ -1,6 +1,7 @@
 const approvalRepository = require('../repositories/approval.repository');
 const quotationRepository = require('../repositories/quotation.repository');
 const ApiError = require('../utils/apiError');
+const { emitUserNotification, emitRoleNotification } = require('./socket.service');
 
 class ApprovalService {
   async getPendingApprovals(companyId, role) {
@@ -25,10 +26,10 @@ class ApprovalService {
 
     await approvalRepository.logApprovalAction(quotationId, userId, action, reason);
 
+    const quotation = await quotationRepository.findByIdAndCompany(quotationId, companyId);
     let newStatus = '';
 
     if (action === 'approve') {
-      const quotation = await quotationRepository.findByIdAndCompany(quotationId, companyId);
       if (!quotation) {
         throw ApiError.notFound('Quotation not found');
       }
@@ -55,6 +56,58 @@ class ApprovalService {
     }
 
     await approvalRepository.updateQuotationStatus(quotationId, newStatus);
+
+    // Emit Real-time Toast Notifications
+    if (quotation) {
+      const salesRepId = quotation.sales_rep_id;
+      if (newStatus === 'approved') {
+        emitUserNotification(salesRepId, {
+          type: 'success',
+          title: 'Quotation Approved',
+          message: `Quote #${quotationId} has been approved by ${userRole.replace('_', ' ')}.`,
+          link: `/app/quote/${quotationId}`
+        });
+        emitRoleNotification(['admin', 'sales_manager'], {
+          type: 'success',
+          title: 'Quotation Approved',
+          message: `Quote #${quotationId} was approved.`,
+          link: `/app/quote/${quotationId}`
+        });
+      } else if (newStatus === 'pending_finance_approval') {
+        emitUserNotification(salesRepId, {
+          type: 'info',
+          title: 'Finance Review Required',
+          message: `Quote #${quotationId} passed Manager review and is now pending Finance approval.`,
+          link: `/app/quote/${quotationId}`
+        });
+        emitRoleNotification(['finance', 'admin'], {
+          type: 'warning',
+          title: 'Finance Approval Needed',
+          message: `Quote #${quotationId} requires finance team review and approval.`,
+          link: `/app/approvals`
+        });
+      } else if (newStatus === 'rejected') {
+        emitUserNotification(salesRepId, {
+          type: 'error',
+          title: 'Quotation Rejected',
+          message: `Quote #${quotationId} was rejected. ${reason ? `Reason: ${reason}` : ''}`,
+          link: `/app/quote/${quotationId}`
+        });
+        emitRoleNotification(['admin'], {
+          type: 'error',
+          title: 'Quotation Rejected',
+          message: `Quote #${quotationId} was rejected by ${userRole.replace('_', ' ')}.`,
+          link: `/app/approvals`
+        });
+      } else if (newStatus === 'draft') {
+        emitUserNotification(salesRepId, {
+          type: 'warning',
+          title: 'Quotation Returned',
+          message: `Quote #${quotationId} was returned to draft for revision. ${reason ? `Reason: ${reason}` : ''}`,
+          link: `/app/quote/${quotationId}`
+        });
+      }
+    }
 
     return { quotationId, newStatus };
   }

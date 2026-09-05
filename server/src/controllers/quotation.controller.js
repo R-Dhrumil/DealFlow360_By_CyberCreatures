@@ -3,6 +3,7 @@ const quotationRepository = require('../repositories/quotation.repository');
 const db = require('../config/db');
 const crypto = require('crypto');
 const { logAction } = require('../services/audit.service');
+const { emitRoleNotification, emitUserNotification } = require('../services/socket.service');
 
 class QuotationController {
   async create(req, res) {
@@ -63,6 +64,20 @@ class QuotationController {
     await logAction('quotation', newQuote.id, salesRepId, 'customer_requested', {
       product_name: product.name,
       base_price: product.base_price
+    });
+
+    // Notify admin & assigned sales rep of customer quote request
+    emitRoleNotification(['admin', 'sales_manager'], {
+      type: 'info',
+      title: '🛒 New Customer Request',
+      message: `Customer requested quotation for ${product.name} (Qty: ${qty}) [Quote #${newQuote.id}]`,
+      link: `/app/approvals`
+    });
+    emitUserNotification(salesRepId, {
+      type: 'info',
+      title: '🛒 New Lead / Quote Request',
+      message: `Customer requested a quote for ${product.name} [Quote #${newQuote.id}]`,
+      link: `/app/quote/${newQuote.id}`
     });
 
     return res.status(201).json({
@@ -181,6 +196,22 @@ class QuotationController {
       status,
       15.00
     );
+
+    if (quote) {
+      emitUserNotification(quote.sales_rep_id, {
+        type: 'warning',
+        title: '💬 Counter Offer Submitted',
+        message: `Customer requested counter offer on Quote #${quotationId}.`,
+        link: `/app/quote/${quotationId}`
+      });
+      emitRoleNotification(['admin', 'sales_manager'], {
+        type: 'warning',
+        title: '💬 Counter Offer Received',
+        message: `Counter offer submitted for Quote #${quotationId}.`,
+        link: `/app/approvals`
+      });
+    }
+
     return res.json({ success: true, quotation: updated });
   }
 
@@ -204,6 +235,33 @@ class QuotationController {
       msgText,
       counter_discount || null
     );
+
+    const quote = await quotationRepository.findDetailById(quotationId);
+    if (quote) {
+      if (senderType === 'customer') {
+        emitUserNotification(quote.sales_rep_id, {
+          type: 'info',
+          title: '💬 New Customer Message',
+          message: `Customer message on Quote #${quotationId}: "${msgText.substring(0, 40)}..."`,
+          link: `/app/quote/${quotationId}`
+        });
+        emitRoleNotification(['admin'], {
+          type: 'info',
+          title: '💬 Customer Negotiation Message',
+          message: `Quote #${quotationId}: "${msgText.substring(0, 40)}..."`,
+          link: `/app/quote/${quotationId}`
+        });
+      } else {
+        // From Rep / Manager
+        emitRoleNotification(['admin'], {
+          type: 'info',
+          title: '💬 Sales Team Message',
+          message: `Quote #${quotationId} message posted by sales rep.`,
+          link: `/app/quote/${quotationId}`
+        });
+      }
+    }
+
     return res.status(201).json(newMsg);
   }
 }

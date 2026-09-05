@@ -3,6 +3,7 @@ const approvalRepository = require('../repositories/approval.repository');
 const db = require('../config/db');
 const { computeBlendedRiskScore } = require('./riskScore.service');
 const ApiError = require('../utils/apiError');
+const { emitRoleNotification, emitUserNotification } = require('./socket.service');
 
 class QuotationService {
   async createQuotation(companyId, salesRepId, customerId, lines) {
@@ -55,6 +56,15 @@ class QuotationService {
       }
 
       await client.query('COMMIT');
+
+      // Emit Notification for quote draft creation
+      emitRoleNotification(['sales_manager', 'admin'], {
+        type: 'info',
+        title: 'New Quotation Draft',
+        message: `Quotation #${quotation.id} created by Sales Rep.`,
+        link: `/app/quote/${quotation.id}`
+      });
+
       return { quotationId: quotation.id };
     } catch (error) {
       await client.query('ROLLBACK');
@@ -67,12 +77,13 @@ class QuotationService {
   async submitQuotation(companyId, quotationId) {
     const client = await db.pool.connect();
     let riskResult;
+    let quotation;
 
     try {
       await client.query('BEGIN');
 
       // 1. Lock the row to prevent race conditions
-      const quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
+      quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
       if (!quotation) {
         throw ApiError.notFound('Quotation not found');
       }
@@ -114,6 +125,39 @@ class QuotationService {
       client.release();
     }
 
+    // Real-time notifications on submit
+    if (quotation) {
+      const salesRepId = quotation.sales_rep_id;
+      if (riskResult.status === 'approved') {
+        emitUserNotification(salesRepId, {
+          type: 'success',
+          title: 'Quote Auto-Approved',
+          message: `Quote #${quotationId} met discount threshold rules and was auto-approved!`,
+          link: `/app/quote/${quotationId}`
+        });
+      } else if (riskResult.status === 'pending_approval') {
+        emitRoleNotification(['sales_manager', 'admin'], {
+          type: 'warning',
+          title: 'Approval Request',
+          message: `Quote #${quotationId} requires management discount approval.`,
+          link: `/app/approvals`
+        });
+        emitUserNotification(salesRepId, {
+          type: 'info',
+          title: 'Submitted for Approval',
+          message: `Quote #${quotationId} submitted to Sales Manager for review.`,
+          link: `/app/quote/${quotationId}`
+        });
+      } else if (riskResult.status === 'pending_finance_approval') {
+        emitRoleNotification(['finance', 'admin'], {
+          type: 'warning',
+          title: 'High-Risk Finance Review',
+          message: `Quote #${quotationId} requires finance approval.`,
+          link: `/app/approvals`
+        });
+      }
+    }
+
     return {
       quotationId,
       status: riskResult.status,
@@ -124,9 +168,10 @@ class QuotationService {
 
   async approveQuotation(companyId, quotationId, userRole) {
     const client = await db.pool.connect();
+    let quotation;
     try {
       await client.query('BEGIN');
-      const quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
+      quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
       if (!quotation) throw ApiError.notFound('Quotation not found');
 
       if (quotation.status === 'pending_finance_approval' && userRole !== 'finance' && userRole !== 'admin') {
@@ -144,20 +189,37 @@ class QuotationService {
       );
 
       await client.query('COMMIT');
-      return { quotationId, status: 'approved' };
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
     } finally {
       client.release();
     }
+
+    if (quotation) {
+      emitUserNotification(quotation.sales_rep_id, {
+        type: 'success',
+        title: 'Quotation Approved',
+        message: `Quote #${quotationId} has been approved.`,
+        link: `/app/quote/${quotationId}`
+      });
+      emitRoleNotification(['admin', 'sales_manager'], {
+        type: 'success',
+        title: 'Quotation Approved',
+        message: `Quote #${quotationId} approved by ${userRole.replace('_', ' ')}.`,
+        link: `/app/quote/${quotationId}`
+      });
+    }
+
+    return { quotationId, status: 'approved' };
   }
 
   async rejectQuotation(companyId, quotationId, userRole) {
     const client = await db.pool.connect();
+    let quotation;
     try {
       await client.query('BEGIN');
-      const quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
+      quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
       if (!quotation) throw ApiError.notFound('Quotation not found');
 
       if (quotation.status === 'pending_finance_approval' && userRole !== 'finance' && userRole !== 'admin') {
@@ -175,21 +237,32 @@ class QuotationService {
       );
 
       await client.query('COMMIT');
-      return { quotationId, status: 'rejected' };
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
     } finally {
       client.release();
     }
+
+    if (quotation) {
+      emitUserNotification(quotation.sales_rep_id, {
+        type: 'error',
+        title: 'Quotation Rejected',
+        message: `Quote #${quotationId} was rejected by ${userRole.replace('_', ' ')}.`,
+        link: `/app/quote/${quotationId}`
+      });
+    }
+
+    return { quotationId, status: 'rejected' };
   }
 
   async confirmQuotation(companyId, quotationId) {
     const client = await db.pool.connect();
+    let quotation;
     try {
       await client.query('BEGIN');
       // companyId may be null for customer role — repository handles both cases
-      const quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId || null, client);
+      quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId || null, client);
       if (!quotation) throw ApiError.notFound('Quotation not found');
 
       // Terminal states that cannot be re-confirmed
@@ -206,13 +279,29 @@ class QuotationService {
       );
 
       await client.query('COMMIT');
-      return { quotationId, status: 'confirmed' };
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
     } finally {
       client.release();
     }
+
+    if (quotation) {
+      emitRoleNotification(['admin', 'sales_manager', 'operations'], {
+        type: 'success',
+        title: '🎉 Deal Confirmed!',
+        message: `Quotation #${quotationId} was accepted & confirmed! Operations hub notified.`,
+        link: `/app/operations`
+      });
+      emitUserNotification(quotation.sales_rep_id, {
+        type: 'success',
+        title: '🎉 Deal Confirmed!',
+        message: `Your Quote #${quotationId} was accepted & confirmed by the customer!`,
+        link: `/app/quote/${quotationId}`
+      });
+    }
+
+    return { quotationId, status: 'confirmed' };
   }
 }
 

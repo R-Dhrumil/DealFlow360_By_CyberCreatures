@@ -2,6 +2,7 @@ const warehouseRepository = require('../repositories/warehouse.repository');
 const quotationRepository = require('../repositories/quotation.repository');
 const { calculateFulfillmentSplits } = require('../services/fulfillment.service');
 const ApiError = require('../utils/apiError');
+const { emitRoleNotification } = require('../services/socket.service');
 
 class WarehouseController {
   async suggestSplit(req, res) {
@@ -31,6 +32,14 @@ class WarehouseController {
     }
 
     await warehouseRepository.saveFulfillmentSplit(quotationId, splits);
+
+    emitRoleNotification(['operations', 'admin', 'sales_manager'], {
+      type: 'success',
+      title: '📦 Fulfillment Allocated',
+      message: `Fulfillment split saved for Quote #${quotationId}. Stock allocated.`,
+      link: `/app/fulfillment/${quotationId}`
+    });
+
     return res.json({ success: true });
   }
 }
