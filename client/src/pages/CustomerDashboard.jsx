@@ -124,12 +124,16 @@ export default function CustomerDashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const userStr = localStorage.getItem('user');
-  const customer = userStr ? JSON.parse(userStr) : {
-    name: 'Acme Procurement Team',
-    email: 'purchasing@acmecorp.com',
-    role: 'customer',
-    company_name: 'Acme Corporation'
-  };
+  const loggedInUser = userStr ? JSON.parse(userStr) : null;
+  const customer = (loggedInUser && loggedInUser.role === 'customer') 
+    ? loggedInUser 
+    : {
+        id: 'cust1',
+        name: 'Acme Procurement Team',
+        email: 'purchasing@acmecorp.com',
+        role: 'customer',
+        company_name: 'Acme Corporation'
+      };
 
   const activeTab = searchParams.get('tab') || localStorage.getItem('customerActiveTab') || 'products';
   const [products, setProducts] = useState([]);
@@ -168,7 +172,7 @@ export default function CustomerDashboard() {
 
   const fetchQuotations = async () => {
     try {
-      const res = await api.get('/quotations');
+      const res = await api.get('/quotations' + (customer.id ? `?customerId=${customer.id}` : ''));
       setQuotations(res.data || []);
     } catch (err) {
       console.error('Failed to fetch customer quotations:', err);
@@ -189,7 +193,8 @@ export default function CustomerDashboard() {
         productId: product.id,
         quantity,
         customerEmail: customer.email,
-        customerName: customer.name
+        customerName: customer.name,
+        customerId: customer.id
       });
       const newQuote = res.data?.quotation;
       const quoteCode = newQuote ? formatQuoteCode(newQuote.id) : (res.data?.inquiry?.id ? `INQ-${res.data.inquiry.id}` : 'QT-Proposal');

@@ -41,7 +41,7 @@ class QuotationController {
     const product = prodRes.rows[0];
     const companyId = product.company_id || 'c1';
 
-    let customerId = req.user?.customerId || req.user?.id || null;
+    let customerId = req.body.customerId || req.user?.customerId || req.user?.id || null;
     const emailToUse = customerEmail || req.user?.email || null;
     const nameToUse = customerName || req.user?.name || (emailToUse ? emailToUse.split('@')[0] : 'Customer');
 
@@ -153,6 +153,13 @@ class QuotationController {
     const limit = parseInt(req.query.limit, 10) || 50;
     const page = parseInt(req.query.page, 10) || 1;
     const offset = (page - 1) * limit;
+
+    // Explicit filter by customerId
+    if (req.query.customerId) {
+      const customerQuotes = await quotationRepository.findByCustomer(req.query.customerId, null, null, limit, offset);
+      res.set('X-Total-Count', customerQuotes ? customerQuotes.totalCount : 0);
+      return res.json(customerQuotes ? customerQuotes.data : []);
+    }
 
     // Customer: only see their own quotations
     if (req.user && req.user.role === 'customer') {
