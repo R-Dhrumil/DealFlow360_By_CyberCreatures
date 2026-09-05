@@ -189,7 +189,7 @@ export default function AdminWorkspace() {
   ];
 
   // Products State
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState([]);
   const [prodSearch, setProdSearch] = useState('');
   const [newProdName, setNewProdName] = useState('');
   const [newProdSku, setNewProdSku] = useState('');
@@ -234,13 +234,16 @@ export default function AdminWorkspace() {
   const [newRole, setNewRole] = useState('sales_rep');
 
   // Warehouses State
-  const [warehouses, setWarehouses] = useState([
-    { id: 'wh-1', name: 'CyberCreatures East Coast Distribution', location: 'New York, NY', shippingCostWeight: 1.0, stockCount: 160 },
-    { id: 'wh-2', name: 'CyberCreatures West Coast Depot', location: 'San Jose, CA', shippingCostWeight: 1.15, stockCount: 105 },
-    { id: 'wh-3', name: 'CyberCreatures EMEA Logistics Depot', location: 'London, UK', shippingCostWeight: 1.50, stockCount: 40 }
-  ]);
+  const [warehouses, setWarehouses] = useState([]);
   const [newWhName, setNewWhName] = useState('');
   const [newWhLoc, setNewWhLoc] = useState('');
+  const [newWhCostWeight, setNewWhCostWeight] = useState('1.0');
+  const [newWhStock, setNewWhStock] = useState('100');
+  const [newWhStatus, setNewWhStatus] = useState('Active');
+
+  // Edit Warehouse Modal State
+  const [editingWarehouse, setEditingWarehouse] = useState(null);
+  const [isEditWarehouseModalOpen, setIsEditWarehouseModalOpen] = useState(false);
 
   // Audit Logs State
   const [auditLogs, setAuditLogs] = useState([
@@ -253,7 +256,7 @@ export default function AdminWorkspace() {
   const fetchProducts = async () => {
     try {
       const res = await api.get('/products');
-      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+      if (res.data && Array.isArray(res.data)) {
         setProducts(res.data.map(p => ({
           ...p,
           base_price: parseFloat(p.base_price) || 0,
@@ -264,6 +267,7 @@ export default function AdminWorkspace() {
       }
     } catch (err) {
       console.error('Failed to fetch products:', err);
+      setProducts(INITIAL_PRODUCTS);
     }
   };
 
@@ -314,10 +318,27 @@ export default function AdminWorkspace() {
     }
   };
 
+  const fetchWarehouses = async () => {
+    try {
+      const res = await api.get('/warehouses');
+      if (res.data && Array.isArray(res.data)) {
+        setWarehouses(res.data.map(w => ({
+          ...w,
+          shippingCostWeight: parseFloat(w.shippingCostWeight || w.shipping_cost_weight) || 1.0,
+          stockCount: parseInt(w.stockCount !== undefined ? w.stockCount : w.stock_count, 10) || 0,
+          status: w.status || 'Active'
+        })));
+      }
+    } catch (err) {
+      console.warn('Failed to fetch warehouses from API:', err);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchTeam();
     fetchTiers();
+    fetchWarehouses();
   }, []);
 
   const handleAddProduct = async (e) => {
@@ -655,22 +676,149 @@ export default function AdminWorkspace() {
     ]);
   };
 
-  const handleAddWarehouse = (e) => {
+  const handleAddWarehouse = async (e) => {
     e.preventDefault();
     if (!newWhName.trim()) return;
 
-    const newWh = {
-      id: 'wh-' + Date.now(),
-      name: newWhName,
-      location: newWhLoc || 'Main Center',
-      shippingCostWeight: 1.0,
-      stockCount: 500
+    const payload = {
+      name: newWhName.trim(),
+      location: newWhLoc.trim() || 'Main Depot',
+      shippingCostWeight: parseFloat(newWhCostWeight) || 1.0,
+      stockCount: parseInt(newWhStock, 10) || 100,
+      status: newWhStatus || 'Active'
     };
 
-    setWarehouses([...warehouses, newWh]);
+    let createdWh = {
+      id: 'wh-' + Date.now(),
+      ...payload
+    };
+
+    try {
+      const res = await api.post('/warehouses', payload);
+      if (res.data && res.data.id) {
+        createdWh = {
+          ...createdWh,
+          ...res.data,
+          shippingCostWeight: parseFloat(res.data.shippingCostWeight || res.data.shipping_cost_weight) || payload.shippingCostWeight,
+          stockCount: parseInt(res.data.stockCount !== undefined ? res.data.stockCount : res.data.stock_count, 10) || payload.stockCount
+        };
+      }
+    } catch (err) {
+      console.warn('Warehouse created locally:', err);
+    }
+
+    setWarehouses(prev => [...prev, createdWh]);
+
+    // Audit log
+    setAuditLogs(prev => [
+      {
+        id: 'LOG-' + Date.now().toString().slice(-4),
+        action: 'WAREHOUSE_CREATED',
+        entity: createdWh.name,
+        user: 'CyberCreatures Admin',
+        role: 'admin',
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
+        details: `Configured depot in ${createdWh.location} (weight: ${createdWh.shippingCostWeight}x, stock: ${createdWh.stockCount})`
+      },
+      ...prev
+    ]);
+
     setNewWhName('');
     setNewWhLoc('');
-    showNotification('success', `Warehouse '${newWh.name}' configured!`);
+    setNewWhCostWeight('1.0');
+    setNewWhStock('100');
+    setNewWhStatus('Active');
+    showNotification('success', `Warehouse '${createdWh.name}' configured successfully!`);
+  };
+
+  const handleEditWarehouse = (wh) => {
+    setEditingWarehouse({
+      id: wh.id,
+      name: wh.name,
+      location: wh.location || '',
+      shippingCostWeight: wh.shippingCostWeight !== undefined ? wh.shippingCostWeight : 1.0,
+      stockCount: wh.stockCount !== undefined ? wh.stockCount : 0,
+      status: wh.status || 'Active'
+    });
+    setIsEditWarehouseModalOpen(true);
+  };
+
+  const handleSaveEditedWarehouse = async (e) => {
+    e.preventDefault();
+    if (!editingWarehouse || !editingWarehouse.name.trim()) return;
+
+    const updatedWh = {
+      ...editingWarehouse,
+      name: editingWarehouse.name.trim(),
+      location: editingWarehouse.location?.trim() || 'Main Depot',
+      shippingCostWeight: parseFloat(editingWarehouse.shippingCostWeight) || 1.0,
+      stockCount: parseInt(editingWarehouse.stockCount, 10) || 0,
+      status: editingWarehouse.status || 'Active'
+    };
+
+    try {
+      await api.put(`/warehouses/${editingWarehouse.id}`, {
+        name: updatedWh.name,
+        location: updatedWh.location,
+        shippingCostWeight: updatedWh.shippingCostWeight,
+        stockCount: updatedWh.stockCount,
+        status: updatedWh.status
+      });
+    } catch (err) {
+      console.warn('Warehouse updated locally:', err);
+    }
+
+    setWarehouses(prev => prev.map(w => w.id === editingWarehouse.id ? updatedWh : w));
+
+    setAuditLogs(prev => [
+      {
+        id: 'LOG-' + Date.now().toString().slice(-4),
+        action: 'WAREHOUSE_UPDATED',
+        entity: updatedWh.name,
+        user: 'CyberCreatures Admin',
+        role: 'admin',
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
+        details: `Updated parameters: location "${updatedWh.location}", weight ${updatedWh.shippingCostWeight}x, stock ${updatedWh.stockCount}`
+      },
+      ...prev
+    ]);
+
+    setIsEditWarehouseModalOpen(false);
+    setEditingWarehouse(null);
+    showNotification('success', `Warehouse '${updatedWh.name}' updated successfully!`);
+  };
+
+  const handleDeleteWarehouse = (wh) => {
+    showAlert(
+      'Delete Warehouse Depot',
+      `Are you sure you want to delete warehouse "${wh.name}" (${wh.location || 'Main Depot'})? Any quotation stock fulfillment routes assigned to this depot will be removed.`,
+      'warning',
+      async () => {
+        try {
+          await api.delete(`/warehouses/${wh.id}`);
+        } catch (err) {
+          console.warn('Deleted warehouse locally:', err);
+        }
+
+        setWarehouses(prev => prev.filter(w => w.id !== wh.id));
+
+        setAuditLogs(prev => [
+          {
+            id: 'LOG-' + Date.now().toString().slice(-4),
+            action: 'WAREHOUSE_DELETED',
+            entity: wh.name,
+            user: 'CyberCreatures Admin',
+            role: 'admin',
+            timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
+            details: `Removed warehouse depot "${wh.name}" (${wh.id}) from catalog`
+          },
+          ...prev
+        ]);
+
+        showNotification('success', `Warehouse '${wh.name}' was removed.`);
+      },
+      () => { } // Cancelled
+    );
   };
 
   const filteredProducts = products.filter(p =>
@@ -1356,43 +1504,117 @@ export default function AdminWorkspace() {
       {activeTab === 'warehouses' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
-            <h3 className="font-extrabold text-text-main text-base">Configured Warehouses</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {warehouses.map(w => (
-                <div key={w.id} className="border border-surface-soft rounded-2xl p-4 bg-slate-50 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <h4 className="font-bold text-text-main text-sm">{w.name}</h4>
-                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      Active Depot
-                    </span>
-                  </div>
-                  <p className="text-xs text-text-muted"><i className="fa-solid fa-location-dot mr-1"></i> {w.location}</p>
-                  <div className="pt-2 border-t border-surface-soft flex justify-between text-xs font-semibold text-slate-700">
-                    <span>Stock Units: {w.stockCount}</span>
-                    <span>Cost Weight: {w.shippingCostWeight}x</span>
-                  </div>
-                </div>
-              ))}
+            <div className="flex flex-wrap justify-between items-center gap-2 border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-extrabold text-text-main text-base flex items-center gap-2">
+                  <span>Configured Warehouses</span>
+                  <span className="bg-primary/10 text-primary text-xs font-black px-2.5 py-0.5 rounded-full">
+                    {warehouses.length}
+                  </span>
+                </h3>
+                <p className="text-xs text-text-muted">
+                  Logistics nodes, regional distribution depots, and quotation fulfillment routing
+                </p>
+              </div>
             </div>
+
+            {warehouses.length === 0 ? (
+              <div className="text-center py-12 px-4 border-2 border-dashed border-slate-200 rounded-2xl space-y-3 bg-slate-50/50">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-purple-50 border border-purple-200 flex items-center justify-center text-primary text-2xl shadow-xs">
+                  <i className="fa-solid fa-warehouse"></i>
+                </div>
+                <h4 className="font-bold text-slate-800 text-sm">No Warehouses Configured</h4>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Add your first depot or regional distribution center using the form on the right to configure inventory allocation and automatic fulfillment splits.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {warehouses.map(w => (
+                  <div
+                    key={w.id}
+                    className="border border-surface-soft rounded-2xl p-4 bg-slate-50 hover:bg-white hover:shadow-md transition-all duration-200 space-y-3 relative group"
+                  >
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="space-y-0.5">
+                        <h4 className="font-bold text-text-main text-sm leading-snug">{w.name}</h4>
+                        <p className="text-xs text-text-muted flex items-center gap-1.5">
+                          <i className="fa-solid fa-location-dot text-rose-500 text-[11px]"></i>
+                          <span>{w.location || 'Main Depot'}</span>
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-1 shrink-0">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          w.status === 'Inactive' || w.status === 'Decommissioned'
+                            ? 'bg-slate-200 text-slate-700'
+                            : w.status === 'Maintenance'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {w.status || 'Active Depot'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleEditWarehouse(w)}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-purple-100 transition-colors"
+                          title="Edit Warehouse & Stock Rules"
+                        >
+                          <i className="fa-solid fa-pen-to-square text-xs"></i>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteWarehouse(w)}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="Delete Warehouse Depot"
+                        >
+                          <i className="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="pt-2.5 border-t border-surface-soft grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-white/80 rounded-xl p-2.5 border border-slate-200/60 shadow-2xs">
+                        <span className="text-[10px] text-text-muted block font-semibold">Available Units</span>
+                        <span className="font-bold text-slate-800 flex items-center gap-1.5 mt-0.5">
+                          <i className="fa-solid fa-boxes-stacked text-[11px] text-primary"></i>
+                          <span>{w.stockCount !== undefined ? w.stockCount : 0} units</span>
+                        </span>
+                      </div>
+                      <div className="bg-white/80 rounded-xl p-2.5 border border-slate-200/60 shadow-2xs">
+                        <span className="text-[10px] text-text-muted block font-semibold">Logistics Weight</span>
+                        <span className="font-bold text-slate-800 flex items-center gap-1.5 mt-0.5">
+                          <i className="fa-solid fa-truck-fast text-[11px] text-blue-600"></i>
+                          <span>{w.shippingCostWeight}x rate</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
-            <h3 className="font-extrabold text-text-main text-base">Add Warehouse Depot</h3>
+            <div className="border-b border-slate-100 pb-3">
+              <h3 className="font-extrabold text-text-main text-base">Add Warehouse Depot</h3>
+              <p className="text-xs text-text-muted">Register a new physical or virtual depot for fulfillment splits</p>
+            </div>
+
             <form onSubmit={handleAddWarehouse} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Warehouse Name</label>
+                <label className="block font-bold text-slate-700 mb-1">Warehouse Name *</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. West Coast Depot"
-                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="e.g. West Coast Distribution Hub"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary font-medium"
                   value={newWhName}
                   onChange={(e) => setNewWhName(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Location</label>
+                <label className="block font-bold text-slate-700 mb-1">Location / Hub City</label>
                 <input
                   type="text"
                   placeholder="e.g. Los Angeles, CA"
@@ -1402,7 +1624,49 @@ export default function AdminWorkspace() {
                 />
               </div>
 
-              <button type="submit" className="w-full py-2.5 px-4 bg-primary text-white text-text-main font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Shipping Cost Weight</label>
+                  <input
+                    type="number"
+                    step="0.05"
+                    min="0.1"
+                    placeholder="1.0"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={newWhCostWeight}
+                    onChange={(e) => setNewWhCostWeight(e.target.value)}
+                  />
+                  <p className="text-[10px] text-slate-400 mt-0.5">1.0 = standard</p>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Initial Stock Units</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="100"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={newWhStock}
+                    onChange={(e) => setNewWhStock(e.target.value)}
+                  />
+                  <p className="text-[10px] text-slate-400 mt-0.5">Depot inventory</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Depot Status</label>
+                <select
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={newWhStatus}
+                  onChange={(e) => setNewWhStatus(e.target.value)}
+                >
+                  <option value="Active">Active Depot (Available for Split Routing)</option>
+                  <option value="Maintenance">Maintenance Mode</option>
+                  <option value="Inactive">Inactive / Decommissioned</option>
+                </select>
+              </div>
+
+              <button type="submit" className="w-full py-2.5 px-4 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2">
                 <i className="fa-solid fa-plus"></i>
                 <span>Configure Depot</span>
               </button>
@@ -1613,6 +1877,113 @@ export default function AdminWorkspace() {
                 <button
                   type="button"
                   onClick={() => { setIsEditModalOpen(false); setEditingProduct(null); }}
+                  className="px-4 py-2 rounded-xl border border-surface-soft text-slate-600 font-bold hover:bg-slate-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-primary text-white font-bold hover:bg-primary-dark transition-colors shadow-sm flex items-center space-x-1.5"
+                >
+                  <i className="fa-solid fa-check text-xs"></i>
+                  <span>Save Changes</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Warehouse Modal */}
+      {isEditWarehouseModalOpen && editingWarehouse && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-surface-soft shadow-2xl max-w-lg w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-100 text-primary flex items-center justify-center font-bold">
+                  <i className="fa-solid fa-warehouse text-sm"></i>
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-text-main text-base">Edit Warehouse Depot</h3>
+                  <p className="text-xs text-text-muted">Update location, logistics weight multiplier, and stock parameters</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setIsEditWarehouseModalOpen(false); setEditingWarehouse(null); }}
+                className="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors"
+              >
+                <i className="fa-solid fa-xmark text-sm"></i>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditedWarehouse} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Warehouse Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={editingWarehouse.name}
+                  onChange={(e) => setEditingWarehouse({ ...editingWarehouse, name: e.target.value })}
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Physical Location / Hub City</label>
+                <input
+                  type="text"
+                  value={editingWarehouse.location || ''}
+                  onChange={(e) => setEditingWarehouse({ ...editingWarehouse, location: e.target.value })}
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="e.g. Frankfurt, Germany"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Shipping Cost Multiplier</label>
+                  <input
+                    type="number"
+                    step="0.05"
+                    min="0.1"
+                    required
+                    value={editingWarehouse.shippingCostWeight}
+                    onChange={(e) => setEditingWarehouse({ ...editingWarehouse, shippingCostWeight: e.target.value })}
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-0.5">1.0 = baseline freight cost</p>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Stock Units Available</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editingWarehouse.stockCount}
+                    onChange={(e) => setEditingWarehouse({ ...editingWarehouse, stockCount: Math.max(0, parseInt(e.target.value, 10) || 0) })}
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-0.5">Capacity across product SKUs</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Depot Operational Status</label>
+                <select
+                  value={editingWarehouse.status || 'Active'}
+                  onChange={(e) => setEditingWarehouse({ ...editingWarehouse, status: e.target.value })}
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="Active">Active Depot (Available for Split Routing)</option>
+                  <option value="Maintenance">Maintenance Mode (Temporary Hold)</option>
+                  <option value="Inactive">Inactive / Decommissioned</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => { setIsEditWarehouseModalOpen(false); setEditingWarehouse(null); }}
                   className="px-4 py-2 rounded-xl border border-surface-soft text-slate-600 font-bold hover:bg-slate-100 transition-colors"
                 >
                   Cancel

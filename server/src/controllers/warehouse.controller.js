@@ -5,6 +5,50 @@ const ApiError = require('../utils/apiError');
 const { emitRoleNotification } = require('../services/socket.service');
 
 class WarehouseController {
+  async getCompanyWarehouses(req, res) {
+    const warehouses = await warehouseRepository.findByCompany(req.companyId);
+    return res.json(warehouses);
+  }
+
+  async createWarehouse(req, res) {
+    const { name, location, shippingCostWeight, stockCount } = req.body;
+    if (!name || !name.trim()) {
+      throw ApiError.badRequest('Warehouse name is required');
+    }
+    const created = await warehouseRepository.create(req.companyId, {
+      name: name.trim(),
+      location: location ? location.trim() : 'Main Depot',
+      shippingCostWeight: parseFloat(shippingCostWeight) || 1.0,
+      stockCount: parseInt(stockCount, 10) || 0
+    });
+    return res.status(201).json(created);
+  }
+
+  async updateWarehouse(req, res) {
+    const { id } = req.params;
+    const { name, location, shippingCostWeight, stockCount, status } = req.body;
+    const updated = await warehouseRepository.update(req.companyId, id, {
+      name: name !== undefined ? name.trim() : undefined,
+      location: location !== undefined ? location.trim() : undefined,
+      shippingCostWeight: shippingCostWeight !== undefined ? parseFloat(shippingCostWeight) : undefined,
+      stockCount: stockCount !== undefined ? parseInt(stockCount, 10) : undefined,
+      status
+    });
+    if (!updated) {
+      throw ApiError.notFound('Warehouse not found or access denied');
+    }
+    return res.json(updated);
+  }
+
+  async deleteWarehouse(req, res) {
+    const { id } = req.params;
+    const deleted = await warehouseRepository.delete(req.companyId, id);
+    if (!deleted) {
+      throw ApiError.notFound('Warehouse not found or access denied');
+    }
+    return res.json({ success: true, message: 'Warehouse deleted successfully', id });
+  }
+
   async suggestSplit(req, res) {
     const quotationId = req.params.id;
     const lines = await quotationRepository.findQuotationLinesWithCategory(quotationId);
