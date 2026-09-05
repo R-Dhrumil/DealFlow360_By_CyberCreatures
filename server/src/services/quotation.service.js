@@ -13,14 +13,14 @@ class QuotationService {
     const client = await db.pool.connect();
     try {
       await client.query('BEGIN');
-      
-      // 🚨 FIX: Price Manipulation Vulnerability
+
+      // FIX: Price Manipulation Vulnerability
       const productIds = lines.map(l => l.productId);
       const productsRes = await client.query(
-        'SELECT id, base_price FROM products WHERE id = ANY($1::varchar[]) AND company_id = $2', 
+        'SELECT id, base_price FROM products WHERE id = ANY($1::varchar[]) AND company_id = $2',
         [productIds, companyId]
       );
-      
+
       const securePrices = {};
       productsRes.rows.forEach(p => {
         securePrices[p.id] = parseFloat(p.base_price);
