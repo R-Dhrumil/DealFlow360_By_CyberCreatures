@@ -11,8 +11,10 @@
   --color-on-primary: #f6f6f6;
   --color-on-primary-container: #f6f6f6;
   --color-secondary: #006877;
-  --color-border-soft: #e2d0f5;
-  --color-surface-soft: #faf2ff;
+  --color-border-soft: #faf2ff;
+  /*light purple, bacground color(faf2ff) */
+  --color-surface-soft: #e2d0f5;
+  /*light purple, container color (e2d0f5)*/
   --color-text-main: #110d1a;
   --color-text-muted: #6b6278;
   --color-text-body: #4b4356;
