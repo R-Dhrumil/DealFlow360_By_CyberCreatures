@@ -2,11 +2,35 @@ const app = require('./src/app');
 const config = require('./src/config/environment');
 const { pool } = require('./src/config/db');
 const logger = require('./src/utils/logger');
+const os = require('os');
 
 const PORT = config.port;
+const HOST = '0.0.0.0';
 
-const server = app.listen(PORT, () => {
-  logger.info(`DealFlow360 Server running on port ${PORT} [${config.env}]`);
+function getLocalIpAddresses() {
+  const interfaces = os.networkInterfaces();
+  const addresses = [];
+  for (const name of Object.keys(interfaces)) {
+    for (const net of interfaces[name]) {
+      // IPv4 and not internal (127.0.0.1)
+      if ((net.family === 'IPv4' || net.family === 4) && !net.internal) {
+        addresses.push(net.address);
+      }
+    }
+  }
+  return addresses;
+}
+
+const server = app.listen(PORT, HOST, () => {
+  logger.info(`DealFlow360 Server running locally at http://localhost:${PORT}`);
+  
+  const localIps = getLocalIpAddresses();
+  if (localIps.length > 0) {
+    logger.info(`Network/Wi-Fi access enabled for teammates:`);
+    localIps.forEach(ip => {
+      logger.info(`  ➜ API URL: http://${ip}:${PORT}/api`);
+    });
+  }
 });
 
 // Graceful Shutdown
