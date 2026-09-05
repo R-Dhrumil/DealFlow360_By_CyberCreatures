@@ -215,6 +215,13 @@ export default function AdminWorkspace() {
   const [newTierMargin, setNewTierMargin] = useState('');
   const [newTierApprover, setNewTierApprover] = useState('Sales Manager');
 
+  // Category-Level Discount Ceiling Rules
+  const [categoryRules] = useState([
+    { category: 'Hardware', maxDiscount: 12.0, defaultMargin: 35.0 },
+    { category: 'Software', maxDiscount: 18.0, defaultMargin: 80.0 },
+    { category: 'Services', maxDiscount: 10.0, defaultMargin: 60.0 },
+  ]);
+
   // Fallback Team Directory
   const INITIAL_TEAM = [
     { id: 'u-1', name: 'Super Admin', email: 'superadmin@dealflow360.com', role: 'super_admin', status: 'Active', dealsCount: 0 },
