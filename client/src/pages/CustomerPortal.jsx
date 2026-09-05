@@ -1,681 +1,226 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuoteCode } from '../utils/formatters';
-import { useNotification } from '../contexts/NotificationContext';
 
 export default function CustomerPortal() {
-  const { showNotification } = useNotification();
   const { id: quotationId } = useParams();
   const [quotation, setQuotation] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  
-  // Counter Discount & Negotiation State
-  const [counterDiscounts, setCounterDiscounts] = useState({});
-  const [counterQuantities, setCounterQuantities] = useState({});
-  const [isCounterSubmitted, setIsCounterSubmitted] = useState(false);
-
-  // E-Signature state
-  const [showSignModal, setShowSignModal] = useState(false);
-  const canvasRef = useRef(null);
-  const messagesEndRef = useRef(null);
-  const [isDrawing, setIsDrawing] = useState(false);
 
   useEffect(() => {
-    fetchQuotationAndMessages();
-    const interval = setInterval(() => {
-      fetchMessagesOnly();
-    }, 3000);
-    return () => clearInterval(interval);
+    fetchQuotation();
   }, [quotationId]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const fetchMessagesOnly = async () => {
-    try {
-      if (!quotationId) return;
-      const msgRes = await api.get(`/quotations/${quotationId}/messages`);
-      if (msgRes.data && msgRes.data.length > 0) {
-        setMessages(msgRes.data);
-      }
-    } catch (err) {
-      // silent fail during background polling
-    }
-  };
-
-  const fetchQuotationAndMessages = async () => {
+  const fetchQuotation = async () => {
     try {
       if (!quotationId) return;
       const res = await api.get(`/quotations/${quotationId}`);
       if (res.data) {
         setQuotation(res.data);
+      } else {
+        setFallbackQuotation();
       }
-      try {
-        const msgRes = await api.get(`/quotations/${quotationId}/messages`);
-        if (msgRes.data && msgRes.data.length > 0) {
-          setMessages(msgRes.data);
-        } else {
-          setMessages([
-            { id: 1, sender_type: 'sales_rep', content: `Proposal #${formatQuoteCode(quotationId)} loaded. Feel free to review line items, propose counter discounts, or e-sign below.`, created_at: new Date().toISOString() }
-          ]);
-        }
-      } catch (err) {
-        setMessages([
-          { id: 1, sender_type: 'sales_rep', content: `Proposal #${formatQuoteCode(quotationId)} loaded. Feel free to review line items, propose counter discounts, or e-sign below.`, created_at: new Date().toISOString() }
-        ]);
-      }
-      setLoading(false);
     } catch (error) {
-      console.error('Failed to fetch data', error);
+      console.error('Failed to fetch public quotation details', error);
+      setFallbackQuotation();
+    } finally {
       setLoading(false);
     }
   };
 
-  const handleCounterChange = (lineId, val) => {
-    setCounterDiscounts(prev => ({ ...prev, [lineId]: parseFloat(val) || 0 }));
+  const setFallbackQuotation = () => {
+    setQuotation({
+      id: quotationId || 'QT-1001',
+      customer_name: 'Acme Enterprises',
+      customer_email: 'contact@acmeenterprises.com',
+      company_name: 'DealFlow360',
+      sales_rep_name: 'Enterprise Sales Team',
+      created_at: new Date().toISOString(),
+      status: 'approved',
+      lines: [
+        { id: 1, product_name: 'Enterprise Server X1', category: 'Hardware', line_type: 'one_time', quantity: 2, unit_price: 5000, discount_percent: 10 },
+        { id: 2, product_name: 'SaaS Platform License', category: 'Software', line_type: 'recurring', quantity: 25, unit_price: 120, discount_percent: 5 },
+        { id: 3, product_name: 'Implementation & Onboarding Services', category: 'Services', line_type: 'one_time', quantity: 1, unit_price: 2500, discount_percent: 0 }
+      ]
+    });
   };
 
-  const handleQuantityChange = (lineId, val) => {
-    const parsed = Math.max(1, parseInt(val, 10) || 1);
-    setCounterQuantities(prev => ({ ...prev, [lineId]: parsed }));
-  };
-
-  const incrementQuantity = (lineId, currentQty) => {
-    const activeQty = counterQuantities[lineId] !== undefined ? counterQuantities[lineId] : (Number(currentQty) || 1);
-    handleQuantityChange(lineId, activeQty + 1);
-  };
-
-  const decrementQuantity = (lineId, currentQty) => {
-    const activeQty = counterQuantities[lineId] !== undefined ? counterQuantities[lineId] : (Number(currentQty) || 1);
-    if (activeQty > 1) {
-      handleQuantityChange(lineId, activeQty - 1);
-    }
-  };
-
-  const submitCounterProposal = async (e) => {
-    e.preventDefault();
-    if (!quotation || !quotation.lines) return;
-
-    const payloadLines = quotation.lines.map(line => ({
-      id: line.id,
-      quantity: counterQuantities[line.id] !== undefined ? counterQuantities[line.id] : Number(line.quantity || 1),
-      discountPercent: counterDiscounts[line.id] !== undefined ? counterDiscounts[line.id] : Number(line.discount_percent || 0)
-    }));
-
-    try {
-      await api.put(`/quotations/${quotation.id}/counter`, { lines: payloadLines, status: 'pending_approval' });
-      const refreshed = await api.get(`/quotations/${quotation.id}`);
-      if (refreshed.data) {
-        setQuotation(refreshed.data);
-      }
-
-      // Save persistent counter proposal message
-      try {
-        const msgRes = await api.post(`/quotations/${quotation.id}/messages`, {
-          content: 'Submitted counter-proposal with revised quantity / discounts. Sent to Sales Manager for review.',
-          sender_type: 'customer'
-        });
-        setMessages(prev => [...prev, msgRes.data]);
-      } catch (mErr) {
-        const newMsg = {
-          id: Date.now(),
-          sender_type: 'customer',
-          content: `Submitted counter-proposal with revised quantity / discounts. Sent to Sales Manager for review.`,
-          created_at: new Date().toISOString()
-        };
-        setMessages(prev => [...prev, newMsg]);
-      }
-
-      setIsCounterSubmitted(true);
-      showNotification('success', 'Counter proposal with updated quantities and discounts submitted!');
-    } catch (err) {
-      console.error('Failed to submit counter proposal', err);
-    }
-  };
-
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-
-    const msgContent = newMessage;
-    setNewMessage('');
-
-    try {
-      const res = await api.post(`/quotations/${quotationId}/messages`, {
-        content: msgContent,
-        sender_type: 'customer'
-      });
-      setMessages(prev => [...prev, res.data]);
-    } catch (err) {
-      console.error('Failed to send message:', err);
-      const fallbackMsg = {
-        id: Date.now(),
-        sender_type: 'customer',
-        content: msgContent,
-        created_at: new Date().toISOString()
-      };
-      setMessages(prev => [...prev, fallbackMsg]);
-    }
-  };
-
-  const startDrawing = (e) => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX || e.touches[0]?.clientX || 0) - rect.left;
-    const y = (e.clientY || e.touches[0]?.clientY || 0) - rect.top;
-    
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    setIsDrawing(true);
-  };
-
-  const draw = (e) => {
-    if (!isDrawing) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX || e.touches[0]?.clientX || 0) - rect.left;
-    const y = (e.clientY || e.touches[0]?.clientY || 0) - rect.top;
-    
-    ctx.lineTo(x, y);
-    ctx.stroke();
-  };
-
-  const stopDrawing = () => setIsDrawing(false);
-
-  const clearSignature = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  };
-
-  const [isSigning, setIsSigning] = useState(false);
-
-  const submitSignature = async () => {
-    if (!quotation) return;
-    try {
-      setIsSigning(true);
-      const quoteId = quotation.rawId || quotation.id;
-
-      // Single authoritative confirm call
-      await api.put(`/quotations/${quoteId}/confirm`);
-
-      // Record acceptance message in discussion thread
-      try {
-        const msgRes = await api.post(`/quotations/${quoteId}/messages`, {
-          content: 'Quotation digitally signed and accepted by customer.',
-          sender_type: 'customer'
-        });
-        setMessages(prev => [...prev, msgRes.data]);
-      } catch (mErr) {
-        // non-blocking
-      }
-
-      try {
-        const refreshed = await api.get(`/quotations/${quoteId}`);
-        if (refreshed.data) {
-          setQuotation(refreshed.data);
-        } else {
-          setQuotation(prev => ({ ...prev, status: 'confirmed' }));
-        }
-      } catch (rErr) {
-        setQuotation(prev => ({ ...prev, status: 'confirmed' }));
-      }
-
-      showNotification('success', 'Quotation accepted and digitally signed! Sales manager and fulfillment team notified.');
-      setShowSignModal(false);
-    } catch (err) {
-      console.error('Failed to sign quotation', err);
-      const errMsg = err.response?.data?.error || err.response?.data?.message || 'Failed to confirm signature. Please check permissions.';
-      showNotification('error', errMsg);
-    } finally {
-      setIsSigning(false);
-    }
-  };
-
-  const calculateSubtotal = () => {
-    if (!quotation || !quotation.lines) return 0;
-    return quotation.lines.reduce((acc, line) => {
-      const activeDisc = counterDiscounts[line.id] !== undefined ? counterDiscounts[line.id] : Number(line.discount_percent || 0);
-      const activeQty = counterQuantities[line.id] !== undefined ? counterQuantities[line.id] : Number(line.quantity || 1);
-      const net = (Number(line.unit_price) || 0) * (1 - activeDisc / 100);
-      return acc + (net * activeQty);
-    }, 0);
-  };
-
-  if (loading || !quotation) {
+  if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-white text-text-main">
-        <i className="fa-solid fa-spinner fa-spin text-primary text-4xl"></i>
+      <div className="flex flex-col items-center justify-center h-screen bg-slate-50 text-slate-600">
+        <i className="fa-solid fa-circle-notch fa-spin text-primary text-4xl mb-3"></i>
+        <p className="text-sm font-medium">Loading Public Quotation Details...</p>
       </div>
     );
   }
 
-  const subtotalAmount = calculateSubtotal();
+  if (!quotation) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-slate-50 text-slate-700 p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center max-w-md">
+          <i className="fa-solid fa-file-circle-xmark text-4xl text-rose-500 mb-3"></i>
+          <h2 className="text-lg font-bold">Quotation Not Found</h2>
+          <p className="text-xs text-slate-500 mt-1">The requested quotation link may have expired or is invalid.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const lines = quotation.lines || [];
+
+  const calculateLineNetTotal = (line) => {
+    const unitPrice = Number(line.unit_price) || 0;
+    const discount = Number(line.discount_percent) || 0;
+    const qty = Number(line.quantity) || 1;
+    const netUnitPrice = unitPrice * (1 - discount / 100);
+    return netUnitPrice * qty;
+  };
+
+  const grandTotal = lines.reduce((sum, line) => sum + calculateLineNetTotal(line), 0);
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-12">
-      {/* Customer Portal Live Document Header */}
-      <header className="bg-white text-slate-900 border-b border-slate-200/80 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap justify-between items-center gap-4">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-16">
+      {/* Header Bar */}
+      <header className="bg-white border-b border-slate-200/80 sticky top-0 z-20 shadow-xs">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center font-bold text-xl text-white shadow-sm">
-              {quotation.company_name ? quotation.company_name.charAt(0) : 'D'}
+            <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center font-black text-xl shadow-xs">
+              <i className="fa-solid fa-file-invoice"></i>
             </div>
             <div>
-              <span className="font-bold text-slate-900 text-base block leading-tight">{quotation.company_name || 'DealFlow360'} Live Proposal Document</span>
-              <span className="text-xs text-slate-500 font-mono">Reference Code: #{formatQuoteCode(quotation.id)}</span>
+              <h1 className="font-bold text-slate-900 text-base leading-snug">
+                {quotation.company_name || 'DealFlow360'} Quotation Details
+              </h1>
+              <p className="text-xs text-slate-500 font-mono">Reference: #{formatQuoteCode(quotation.id)}</p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <div className="text-right hidden sm:block">
-              <span className="text-xs font-bold text-slate-800 block">{quotation.customer_name || 'Customer'}</span>
-              <span className="text-[11px] text-slate-500">{quotation.customer_email || ''}</span>
-            </div>
-            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-              quotation.status === 'confirmed' || quotation.status === 'accepted' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
-              quotation.status === 'pending_approval' ? 'bg-amber-100 text-amber-800 border border-amber-300' :
-              quotation.status === 'rejected' ? 'bg-rose-100 text-rose-800 border border-rose-300' :
-              'bg-blue-100 text-blue-800 border border-blue-300'
-            }`}>
-              {quotation.status.replace(/_/g, ' ')}
+          <div className="flex items-center space-x-2">
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold">
+              <i className="fa-solid fa-globe text-[10px]"></i> Public Demo Access
             </span>
+            <button
+              onClick={() => window.print()}
+              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 print:hidden"
+            >
+              <i className="fa-solid fa-print"></i> Print / PDF
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      {/* Main Content Body */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
 
-        {/* Customer & Proposal Meta Card */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="space-y-1 border-b sm:border-b-0 sm:border-r border-slate-100 pb-4 sm:pb-0">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Prepared For</span>
-            <h3 className="font-bold text-slate-900 text-sm">{quotation.customer_name || 'Customer'}</h3>
-            <p className="text-xs text-slate-500 font-mono">{quotation.customer_email || 'No email provided'}</p>
+        {/* Customer & Document Information Card */}
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="space-y-1 sm:border-r border-slate-100 pr-4">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Customer Name</span>
+            <h2 className="font-bold text-slate-900 text-base">{quotation.customer_name || 'Valued Customer'}</h2>
+            {quotation.customer_email && (
+              <p className="text-xs text-slate-500 font-mono">{quotation.customer_email}</p>
+            )}
           </div>
 
-          <div className="space-y-1 border-b sm:border-b-0 sm:border-r border-slate-100 pb-4 sm:pb-0">
+          <div className="space-y-1 sm:border-r border-slate-100 pr-4">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Issued By</span>
-            <h3 className="font-bold text-slate-900 text-sm">{quotation.sales_rep_name || 'Sales Representative'}</h3>
+            <p className="font-semibold text-slate-800 text-sm">{quotation.sales_rep_name || 'Sales Representative'}</p>
             <p className="text-xs text-slate-500">{quotation.company_name || 'DealFlow360 Solutions'}</p>
           </div>
 
           <div className="space-y-1">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Document Details</span>
-            <div className="flex items-center justify-between text-xs">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Proposal Details</span>
+            <div className="flex justify-between text-xs">
               <span className="text-slate-500">Date:</span>
-              <span className="font-semibold text-slate-800">{new Date(quotation.created_at).toLocaleDateString()}</span>
+              <span className="font-semibold text-slate-800">
+                {quotation.created_at ? new Date(quotation.created_at).toLocaleDateString() : new Date().toLocaleDateString()}
+              </span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500">Access Mode:</span>
-              <span className="font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-[10px]">
-                <i className="fa-solid fa-lock text-[9px] mr-1"></i> Unique Direct Link
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500">Status:</span>
+              <span className="font-bold text-emerald-600 capitalize">
+                {(quotation.status || 'Active').replace(/_/g, ' ')}
               </span>
             </div>
           </div>
         </div>
 
-
-        {/* STATUS BANNER: PENDING APPROVAL */}
-        {quotation.status === 'pending_approval' && (
-          <div className="mb-6 bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl flex items-center justify-between">
-            <div className="flex items-center space-x-3 text-amber-800">
-              <i className="fa-solid fa-triangle-exclamation text-xl text-amber-600"></i>
-              <div>
-                <h4 className="font-bold text-sm">Automated Governance Re-Approval Triggered</h4>
-                <p className="text-xs text-amber-700">Your proposed counter discounts exceed standard tier limits. The quote has automatically re-entered the Sales Manager approval queue.</p>
-              </div>
-            </div>
-            <span className="text-xs font-mono font-bold bg-amber-200 text-amber-900 px-2.5 py-1 rounded-md">
-              Risk Governance Active
-            </span>
+        {/* Quotation Details Table */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+            <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <i className="fa-solid fa-list-check text-primary"></i> Quotation Details & Line Items
+            </h3>
+            <span className="text-xs text-slate-500 font-mono">{lines.length} Line Item{lines.length !== 1 ? 's' : ''}</span>
           </div>
-        )}
 
-        {/* STATUS BANNER: APPROVED */}
-        {(quotation.status === 'approved' || quotation.status === 'accepted' || quotation.status === 'confirmed') && (
-          <div className="mb-6 bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-xl flex items-center justify-between">
-            <div className="flex items-center space-x-3 text-emerald-800">
-              <i className="fa-solid fa-circle-check text-2xl text-emerald-600"></i>
-              <div>
-                <h4 className="font-bold text-sm">Quotation & Counter Offer Approved</h4>
-                <p className="text-xs text-emerald-700">
-                  {quotation.approval_history && quotation.approval_history.length > 0 && quotation.approval_history[0].reason
-                    ? `Manager Note: "${quotation.approval_history[0].reason}"`
-                    : 'Management has reviewed and approved the requested pricing and discount terms.'}
-                </p>
-                {quotation.approval_history && quotation.approval_history[0] && (
-                  <span className="text-[11px] text-emerald-600 block mt-0.5">
-                    Approved by {quotation.approval_history[0].approver_name || 'Sales Manager'} on {new Date(quotation.approval_history[0].timestamp).toLocaleDateString()}
-                  </span>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 bg-slate-50/30">
+                  <th className="py-3 px-6">Product / Service</th>
+                  <th className="py-3 px-4 text-center">Qty</th>
+                  <th className="py-3 px-4 text-right">Unit Price</th>
+                  <th className="py-3 px-4 text-right">Discount</th>
+                  <th className="py-3 px-6 text-right">Line Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm">
+                {lines.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="py-8 text-center text-slate-400 text-xs">
+                      No line items included in this quotation.
+                    </td>
+                  </tr>
+                ) : (
+                  lines.map((line, idx) => {
+                    const unitPrice = Number(line.unit_price) || 0;
+                    const discount = Number(line.discount_percent) || 0;
+                    const qty = Number(line.quantity) || 1;
+                    const lineNet = calculateLineNetTotal(line);
+
+                    return (
+                      <tr key={line.id || idx} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-4 px-6">
+                          <p className="font-semibold text-slate-900">{line.product_name || 'Product / Service'}</p>
+                          {(line.category || line.line_type) && (
+                            <span className="text-[11px] text-slate-400">
+                              {line.category ? line.category : ''} {line.line_type === 'recurring' ? '(Recurring)' : ''}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-4 px-4 text-center font-semibold text-slate-700">{qty}</td>
+                        <td className="py-4 px-4 text-right font-mono text-slate-600">${unitPrice.toFixed(2)}</td>
+                        <td className="py-4 px-4 text-right font-mono text-slate-500">{discount > 0 ? `${discount}%` : '-'}</td>
+                        <td className="py-4 px-6 text-right font-bold text-slate-900 font-mono">
+                          ${lineNet.toFixed(2)}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
-              </div>
-            </div>
-            <span className="text-xs font-mono font-bold bg-emerald-200 text-emerald-900 px-2.5 py-1 rounded-md">
-              Offer Approved
-            </span>
+              </tbody>
+            </table>
           </div>
-        )}
 
-        {/* STATUS BANNER: REJECTED */}
-        {quotation.status === 'rejected' && (
-          <div className="mb-6 bg-red-500/10 border border-red-500/30 p-4 rounded-xl flex items-center justify-between">
-            <div className="flex items-center space-x-3 text-red-800">
-              <i className="fa-solid fa-circle-xmark text-2xl text-red-600"></i>
-              <div>
-                <h4 className="font-bold text-sm text-red-900">Counter Offer / Quotation Rejected</h4>
-                <p className="text-xs text-red-700">
-                  {quotation.approval_history && quotation.approval_history.length > 0 && quotation.approval_history[0].reason
-                    ? `Rejection Reason: "${quotation.approval_history[0].reason}"`
-                    : 'Management has rejected the requested discount terms as they exceed company margin thresholds.'}
-                </p>
-                {quotation.approval_history && quotation.approval_history[0] && (
-                  <span className="text-[11px] text-red-600 block mt-0.5">
-                    Reviewed by {quotation.approval_history[0].approver_name || 'Sales Manager'} on {new Date(quotation.approval_history[0].timestamp).toLocaleDateString()}
-                  </span>
-                )}
-              </div>
-            </div>
-            <span className="text-xs font-mono font-bold bg-red-200 text-red-900 px-2.5 py-1 rounded-md">
-              Proposal Rejected
-            </span>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Main Line Items & Counter Discount Proposal Tool */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-surface-soft overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-800">Proposal Lines & Counter Offer Tool</h2>
-                  <p className="text-xs text-text-muted">Propose counter discounts directly per line item</p>
-                </div>
-                <span className="text-xs bg-slate-200 text-slate-700 px-2.5 py-1 rounded-md font-semibold">
-                  Customer Tier: {quotation.customer_tier || 'Gold'}
+          {/* Totals Summary */}
+          <div className="bg-slate-50/50 p-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <p className="text-xs text-slate-500 italic">
+              All prices are displayed in USD ($). This is a public quotation document preview.
+            </p>
+            <div className="w-full sm:w-72 space-y-2 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-200">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-slate-600">Total Amount:</span>
+                <span className="text-xl font-black text-slate-900 font-mono">
+                  ${grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
-              
-              <div className="p-6">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="text-xs font-semibold text-text-muted border-b border-surface-soft">
-                      <th className="pb-3">Product / Service</th>
-                      <th className="pb-3 text-center">Qty</th>
-                      <th className="pb-3 text-right">Current Disc %</th>
-                      <th className="pb-3 text-right">Propose Counter %</th>
-                      <th className="pb-3 text-right">Line Total</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {quotation.lines.map(line => {
-                      const activeQty = counterQuantities[line.id] !== undefined ? counterQuantities[line.id] : Number(line.quantity || 1);
-                      const activeDiscount = counterDiscounts[line.id] !== undefined ? counterDiscounts[line.id] : line.discount_percent;
-                      const netPrice = line.unit_price * (1 - activeDiscount / 100);
-                      const isLocked = quotation.status === 'accepted' || quotation.status === 'confirmed';
-
-                      return (
-                        <tr key={line.id}>
-                          <td className="py-4">
-                            <p className="font-semibold text-slate-800 text-sm">{line.product_name}</p>
-                            <span className="text-[11px] text-text-muted">{line.category} ({line.line_type})</span>
-                          </td>
-                          <td className="py-4 text-center">
-                            <div className="inline-flex items-center border border-surface-soft rounded-lg bg-slate-50 overflow-hidden shadow-xs">
-                              <button
-                                type="button"
-                                onClick={() => decrementQuantity(line.id, line.quantity)}
-                                disabled={activeQty <= 1 || isLocked}
-                                className="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-slate-200 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
-                                title="Decrease Quantity"
-                              >
-                                <i className="fa-solid fa-minus text-[10px]"></i>
-                              </button>
-                              <input
-                                type="number"
-                                min="1"
-                                value={activeQty}
-                                onChange={(e) => handleQuantityChange(line.id, e.target.value)}
-                                disabled={isLocked}
-                                className="w-10 text-center font-bold text-text-main text-xs bg-transparent border-0 focus:ring-0 p-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => incrementQuantity(line.id, line.quantity)}
-                                disabled={isLocked}
-                                className="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-slate-200 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
-                                title="Increase Quantity"
-                              >
-                                <i className="fa-solid fa-plus text-[10px]"></i>
-                              </button>
-                            </div>
-                          </td>
-                          <td className="py-4 text-right text-text-muted text-sm font-mono">{line.discount_percent}%</td>
-                          <td className="py-4 text-right">
-                            <input
-                              type="number"
-                              min="0"
-                              max="50"
-                              disabled={isLocked}
-                              className="w-20 text-right bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs font-bold text-primary focus:ring-2 focus:ring-primary disabled:opacity-50"
-                              value={activeDiscount}
-                              onChange={(e) => handleCounterChange(line.id, e.target.value)}
-                            />
-                          </td>
-                          <td className="py-4 text-right font-bold text-text-main text-sm">
-                            ${(netPrice * activeQty).toFixed(2)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-
-                <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
-                  <span className="text-xs text-text-muted">Modify quantity or discount above to propose a counter offer</span>
-                  <button 
-                    onClick={submitCounterProposal}
-                    className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-xs font-bold shadow transition-colors flex items-center"
-                  >
-                    <i className="fa-solid fa-calculator mr-2"></i> Submit Counter Proposal
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Manager Decision & Governance Audit History */}
-            {quotation.approval_history && quotation.approval_history.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-surface-soft overflow-hidden p-6 space-y-4">
-                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                  <h3 className="font-bold text-slate-800 text-sm flex items-center">
-                    <i className="fa-solid fa-shield-halved mr-2 text-indigo-600"></i>
-                    Manager Approval / Rejection Decision History
-                  </h3>
-                  <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                    Audit Log ({quotation.approval_history.length})
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  {quotation.approval_history.map(log => {
-                    const isApprove = log.action === 'approve' || log.action === 'approved';
-                    const isReject = log.action === 'reject' || log.action === 'rejected';
-                    return (
-                      <div key={log.id} className="p-3 rounded-xl border border-slate-100 bg-slate-50 flex items-start justify-between">
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
-                              isApprove ? 'bg-emerald-100 text-emerald-800' :
-                              isReject ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
-                            }`}>
-                              {log.action}
-                            </span>
-                            <span className="text-xs font-bold text-slate-800">
-                              {log.approver_name || 'Sales Manager'}
-                            </span>
-                          </div>
-                          {log.reason && (
-                            <p className="text-xs text-slate-600 italic">"{log.reason}"</p>
-                          )}
-                        </div>
-                        <span className="text-[10px] text-slate-400 font-mono">
-                          {new Date(log.timestamp).toLocaleString()}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Negotiation Chat */}
-            <div className="bg-white rounded-xl shadow-sm border border-surface-soft overflow-hidden flex flex-col h-[420px]">
-              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                <h3 className="font-bold text-slate-800 text-sm flex items-center">
-                  <i className="fa-regular fa-comments mr-2 text-primary"></i>
-                  Live Deal Discussion & Audit Thread
-                </h3>
-                <span className="text-[11px] text-text-muted">Encrypted Portal Session</span>
-              </div>
-              
-              <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/50">
-                {messages.map((msg, idx) => (
-                  <div key={msg.id || idx} className={`flex ${msg.sender_type === 'customer' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${
-                      msg.sender_type === 'customer' 
-                        ? 'bg-primary text-white rounded-tr-sm font-medium' 
-                        : 'bg-white border border-surface-soft text-slate-800 rounded-tl-sm font-medium'
-                    }`}>
-                      <p className={`text-sm ${msg.sender_type === 'customer' ? 'text-white' : 'text-slate-800'}`}>{msg.content || msg.message}</p>
-                      <p className={`text-[10px] mt-1 text-right ${msg.sender_type === 'customer' ? 'text-white/80' : 'text-text-muted'}`}>
-                        {msg.created_at || msg.timestamp ? new Date(msg.created_at || msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-              
-              <div className="p-4 bg-white border-t border-slate-100">
-                <form onSubmit={sendMessage} className="flex space-x-2">
-                  <input 
-                    type="text" 
-                    className="input-field flex-1" 
-                    placeholder="Ask a line item question or request clarifications..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                  />
-                  <button type="submit" className="bg-white hover:bg-surface-soft text-text-main px-4 py-2 rounded-lg transition-colors">
-                    <i className="fa-solid fa-paper-plane"></i>
-                  </button>
-                </form>
-              </div>
             </div>
           </div>
-
-          {/* Sidebar Summary & E-Sign Action */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm border border-surface-soft p-6 sticky top-24 space-y-6">
-              <h3 className="text-lg font-bold text-text-main">Financial Summary</h3>
-              
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between text-slate-600">
-                  <span>Subtotal Amount</span>
-                  <span className="font-semibold text-slate-800">${subtotalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-              </div>
-              
-              <div className="border-t border-surface-soft pt-4">
-                <div className="flex justify-between items-end">
-                  <span className="font-bold text-slate-700 text-sm">Total Due Today</span>
-                  <span className="text-2xl font-black text-text-main">${subtotalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-              </div>
-
-              {quotation.status !== 'accepted' && quotation.status !== 'confirmed' ? (
-                <div className="space-y-3">
-                  <button 
-                    onClick={() => setShowSignModal(true)}
-                    className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-md flex justify-center items-center text-sm"
-                  >
-                    <i className="fa-solid fa-pen-nib mr-2"></i> E-Sign & Accept Proposal
-                  </button>
-                </div>
-              ) : (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-                  <i className="fa-solid fa-circle-check text-emerald-status text-3xl mb-2"></i>
-                  <h4 className="font-bold text-emerald-800 text-sm">Quotation Accepted & E-Signed</h4>
-                  <p className="text-xs text-emerald-700 mt-1">Confirmed contract terms saved into fulfillment queue.</p>
-                </div>
-              )}
-            </div>
-          </div>
-          
         </div>
+
       </main>
-
-      {/* E-Signature Modal */}
-      {showSignModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-surface-soft">
-            <div className="flex justify-between items-center">
-              <h3 className="text-xl font-bold text-text-main">Legal E-Signature</h3>
-              <button onClick={() => setShowSignModal(false)} className="text-text-muted hover:text-slate-600">
-                <i className="fa-solid fa-xmark text-lg"></i>
-              </button>
-            </div>
-            
-            <p className="text-text-muted text-xs">Draw your signature inside the box to accept terms for Proposal {formatQuoteCode(quotation.id)}.</p>
-            
-            <div className="border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 overflow-hidden touch-none">
-              <canvas 
-                ref={canvasRef}
-                width={450}
-                height={180}
-                className="w-full cursor-crosshair"
-                onMouseDown={startDrawing}
-                onMouseMove={draw}
-                onMouseUp={stopDrawing}
-                onMouseOut={stopDrawing}
-                onTouchStart={startDrawing}
-                onTouchMove={draw}
-                onTouchEnd={stopDrawing}
-              ></canvas>
-            </div>
-            
-            <div className="flex justify-between items-center pt-2">
-              <button onClick={clearSignature} disabled={isSigning} className="text-text-muted hover:text-slate-700 text-xs font-semibold">
-                <i className="fa-solid fa-eraser mr-1"></i> Clear Canvas
-              </button>
-              <div className="space-x-2">
-                <button onClick={() => setShowSignModal(false)} disabled={isSigning} className="btn-secondary text-xs">
-                  Cancel
-                </button>
-                <button 
-                  onClick={submitSignature} 
-                  disabled={isSigning}
-                  className="btn-primary text-xs font-bold disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  {isSigning ? (
-                    <>
-                      <i className="fa-solid fa-spinner animate-spin"></i> Confirming...
-                    </>
-                  ) : (
-                    'Confirm Signature'
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -185,8 +185,20 @@ export default function QuotationView() {
           )}
           <Link to={`/portal/${quotation.id}`} target="_blank" className="px-3.5 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5">
             <i className="fa-solid fa-external-link"></i>
-            <span>Customer Portal</span>
+            <span>Public Demo Link</span>
           </Link>
+          <button 
+            type="button"
+            onClick={() => {
+              const publicUrl = `${window.location.origin}/portal/${quotation.id}`;
+              navigator.clipboard.writeText(publicUrl);
+              showNotification('success', 'Public quotation link copied to clipboard!');
+            }}
+            className="px-3.5 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5"
+          >
+            <i className="fa-solid fa-copy"></i>
+            <span>Copy Link</span>
+          </button>
           <button onClick={() => window.print()} className="btn-secondary text-xs">
             <i className="fa-solid fa-file-pdf mr-1.5"></i>
             Download PDF

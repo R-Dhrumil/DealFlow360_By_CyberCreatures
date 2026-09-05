@@ -21,13 +21,19 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor: automatically log out user and redirect to login if unauthorized (401)
+// Response interceptor: automatically log out user and redirect to login if unauthorized (401), except on public routes
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
       const isAuthEndpoint = error.config?.url?.includes('/auth/login') || error.config?.url?.includes('/auth/signup');
-      if (!isAuthEndpoint) {
+      const isPublicRoute = typeof window !== 'undefined' && (
+        window.location.pathname.startsWith('/portal/') ||
+        window.location.pathname === '/' ||
+        window.location.pathname === '/marketplace'
+      );
+
+      if (!isAuthEndpoint && !isPublicRoute) {
         console.warn('Unauthorized 401 detected — logging out user and clearing local session.');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -41,3 +47,4 @@ api.interceptors.response.use(
 );
 
 export default api;
+
