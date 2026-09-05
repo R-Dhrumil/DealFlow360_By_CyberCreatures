@@ -20,8 +20,8 @@ function initSocket(httpServer) {
   io.on('connection', (socket) => {
     logger.info(`⚡ [Socket.io] Client connected: ${socket.id}`);
 
-    // Register user ID and role to join respective rooms
-    socket.on('register_user', ({ userId, role }) => {
+    // Register user ID, role, and company ID to join respective rooms
+    socket.on('register_user', ({ userId, role, companyId }) => {
       if (userId) {
         socket.join(`user_${userId}`);
         logger.info(`⚡ [Socket.io] ${socket.id} joined user room: user_${userId}`);
@@ -29,6 +29,14 @@ function initSocket(httpServer) {
       if (role) {
         socket.join(`role_${role}`);
         logger.info(`⚡ [Socket.io] ${socket.id} joined role room: role_${role}`);
+      }
+      if (companyId) {
+        socket.join(`company_${companyId}`);
+        logger.info(`⚡ [Socket.io] ${socket.id} joined company room: company_${companyId}`);
+        if (role) {
+          socket.join(`company_${companyId}_role_${role}`);
+          logger.info(`⚡ [Socket.io] ${socket.id} joined scoped room: company_${companyId}_role_${role}`);
+        }
       }
     });
 
@@ -86,7 +94,7 @@ function broadcastEvent(event, payload) {
   }
 }
 
-function emitNotification(userId, notification) {
+function emitUserNotification(userId, notification) {
   if (io) {
     io.to(`user_${userId}`).emit('notification', {
       ...notification,
@@ -97,11 +105,12 @@ function emitNotification(userId, notification) {
 }
 
 /**
- * Broadcast notification to one or multiple roles
- * @param {string|string[]} roles - Role name or array of role names (e.g. 'admin', ['sales_manager', 'admin'])
+ * Broadcast notification to company-scoped roles (or global fallback)
+ * @param {string} companyId - Target company ID
+ * @param {string|string[]} roles - Target role(s) (e.g. 'admin', ['admin', 'sales_manager'])
  * @param {object} notification - Notification payload { type, title, message, link }
  */
-function emitRoleNotification(roles, notification) {
+function emitCompanyRoleNotification(companyId, roles, notification) {
   if (!io) return;
   const roleArray = Array.isArray(roles) ? roles : [roles];
   const payload = {
@@ -111,8 +120,35 @@ function emitRoleNotification(roles, notification) {
   };
 
   roleArray.forEach((role) => {
-    io.to(`role_${role}`).emit('notification', payload);
+    if (companyId) {
+      // Send to dedicated company admin/role
+      io.to(`company_${companyId}_role_${role}`).emit('notification', payload);
+    } else {
+      // Global fallback
+      io.to(`role_${role}`).emit('notification', payload);
+    }
   });
+}
+
+function emitRoleNotification(roles, notification) {
+  emitCompanyRoleNotification(null, roles, notification);
+}
+
+/**
+ * Broadcast live pipeline Kanban state update to all connected clients in company
+ * @param {string} companyId 
+ * @param {object} data 
+ */
+function broadcastPipelineUpdate(companyId, data) {
+  if (!io) return;
+  const payload = {
+    ...data,
+    timestamp: new Date(),
+  };
+  if (companyId) {
+    io.to(`company_${companyId}`).emit('pipeline_updated', payload);
+  }
+  io.emit('pipeline_updated', payload);
 }
 
 module.exports = {
@@ -120,6 +156,8 @@ module.exports = {
   getIo,
   emitToRoom,
   broadcastEvent,
-  emitNotification,
+  emitUserNotification,
   emitRoleNotification,
+  emitCompanyRoleNotification,
+  broadcastPipelineUpdate,
 };

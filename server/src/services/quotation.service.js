@@ -3,7 +3,7 @@ const approvalRepository = require('../repositories/approval.repository');
 const db = require('../config/db');
 const { computeBlendedRiskScore } = require('./riskScore.service');
 const ApiError = require('../utils/apiError');
-const { emitRoleNotification, emitUserNotification } = require('./socket.service');
+const { emitCompanyRoleNotification, emitUserNotification, broadcastPipelineUpdate } = require('./socket.service');
 
 class QuotationService {
   async createQuotation(companyId, salesRepId, customerId, lines) {
@@ -57,13 +57,14 @@ class QuotationService {
 
       await client.query('COMMIT');
 
-      // Emit Notification for quote draft creation
-      emitRoleNotification(['sales_manager', 'admin'], {
+      // Emit Notification for quote draft creation & pipeline refresh
+      emitCompanyRoleNotification(companyId, ['sales_manager', 'admin'], {
         type: 'info',
         title: 'New Quotation Draft',
         message: `Quotation #${quotation.id} created by Sales Rep.`,
         link: `/app/quote/${quotation.id}`
       });
+      broadcastPipelineUpdate(companyId, { quotationId: quotation.id, newStatus: 'draft' });
 
       return { quotationId: quotation.id };
     } catch (error) {
@@ -125,6 +126,9 @@ class QuotationService {
       client.release();
     }
 
+    // Broadcast live pipeline move across all clients
+    broadcastPipelineUpdate(companyId, { quotationId, newStatus: riskResult.status });
+
     // Real-time notifications on submit
     if (quotation) {
       const salesRepId = quotation.sales_rep_id;
@@ -136,7 +140,7 @@ class QuotationService {
           link: `/app/quote/${quotationId}`
         });
       } else if (riskResult.status === 'pending_approval') {
-        emitRoleNotification(['sales_manager', 'admin'], {
+        emitCompanyRoleNotification(companyId, ['sales_manager', 'admin'], {
           type: 'warning',
           title: 'Approval Request',
           message: `Quote #${quotationId} requires management discount approval.`,
@@ -149,7 +153,7 @@ class QuotationService {
           link: `/app/quote/${quotationId}`
         });
       } else if (riskResult.status === 'pending_finance_approval') {
-        emitRoleNotification(['finance', 'admin'], {
+        emitCompanyRoleNotification(companyId, ['finance', 'admin'], {
           type: 'warning',
           title: 'High-Risk Finance Review',
           message: `Quote #${quotationId} requires finance approval.`,
@@ -196,6 +200,8 @@ class QuotationService {
       client.release();
     }
 
+    broadcastPipelineUpdate(companyId, { quotationId, newStatus: 'approved' });
+
     if (quotation) {
       emitUserNotification(quotation.sales_rep_id, {
         type: 'success',
@@ -203,7 +209,7 @@ class QuotationService {
         message: `Quote #${quotationId} has been approved.`,
         link: `/app/quote/${quotationId}`
       });
-      emitRoleNotification(['admin', 'sales_manager'], {
+      emitCompanyRoleNotification(companyId, ['admin', 'sales_manager'], {
         type: 'success',
         title: 'Quotation Approved',
         message: `Quote #${quotationId} approved by ${userRole.replace('_', ' ')}.`,
@@ -243,6 +249,8 @@ class QuotationService {
     } finally {
       client.release();
     }
+
+    broadcastPipelineUpdate(companyId, { quotationId, newStatus: 'rejected' });
 
     if (quotation) {
       emitUserNotification(quotation.sales_rep_id, {
@@ -286,8 +294,11 @@ class QuotationService {
       client.release();
     }
 
+    const effectiveCompanyId = companyId || quotation.company_id;
+    broadcastPipelineUpdate(effectiveCompanyId, { quotationId, newStatus: 'confirmed' });
+
     if (quotation) {
-      emitRoleNotification(['admin', 'sales_manager', 'operations'], {
+      emitCompanyRoleNotification(effectiveCompanyId, ['admin', 'sales_manager', 'operations'], {
         type: 'success',
         title: '🎉 Deal Confirmed!',
         message: `Quotation #${quotationId} was accepted & confirmed! Operations hub notified.`,

@@ -42,6 +42,7 @@ export const NotificationProvider = ({ children }) => {
         socket.emit('register_user', {
           userId: user.id || user.userId,
           role: user.role,
+          companyId: user.company_id || user.companyId || 'c1',
         });
       }
     });
