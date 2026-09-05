@@ -151,6 +151,7 @@ export default function CustomerDashboard() {
             <h1 className="text-2xl text-white font-bold">Welcome back, {customer.name}!</h1>
             <p className="text-sm text-text-muted mt-1">Browse admin products catalog, request quote proposals, or negotiate custom discounts with your sales rep.</p>
           </div>
+          <br></br>
 
           {/* FIRST TAB: Browse Product Catalog */}
           <div className="flex flex-wrap gap-2">
