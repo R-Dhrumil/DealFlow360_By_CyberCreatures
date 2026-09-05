@@ -240,12 +240,15 @@ class QuotationService {
       // 5. NEW — Floor price check
       const floorCheck = await checkFloorPrice(quotationId);
 
-      // 6. Determine final status (most restrictive wins)
-      finalStatus = riskResult.status; // default from risk score
-
-      if (authorityCheck.exceedsAuthority || floorCheck.belowFloor) {
-        // Force manager approval if either check fails
-        if (finalStatus === 'approved') finalStatus = 'pending_approval';
+      // 6. Determine final status per workflow hierarchy:
+      // SALESPERSON QUOTATION:
+      //  ├─ Within authority + above floor => CUSTOMER (status = 'approved')
+      //  └─ Requires escalation => MANAGER (status = 'pending_approval', approval_level = 'manager')
+      if (!authorityCheck.exceedsAuthority && !floorCheck.belowFloor) {
+        finalStatus = 'approved';
+        approvalLevel = null;
+      } else {
+        finalStatus = 'pending_approval';
         approvalLevel = 'manager';
       }
 
