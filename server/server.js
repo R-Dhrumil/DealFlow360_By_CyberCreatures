@@ -23,11 +23,18 @@ function getLocalIpAddresses() {
   return addresses;
 }
 
-// Auto-run DB migrations & seeds safely on server start
+// Auto-run DB migrations & seed only on fresh/empty database start
 async function initDatabase() {
   try {
     await migrate(false);
-    await seed(false);
+    const companyCountRes = await pool.query('SELECT COUNT(*) FROM companies');
+    const count = parseInt(companyCountRes.rows[0]?.count, 10) || 0;
+    if (count === 0) {
+      logger.info('Empty database detected. Running initial seed...');
+      await seed(false);
+    } else {
+      logger.info(`Database already initialized (${count} companies present). Skipping seed.`);
+    }
   } catch (err) {
     logger.error('Failed to auto-init database on startup:', err);
   }

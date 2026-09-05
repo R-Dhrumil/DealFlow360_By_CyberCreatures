@@ -28,10 +28,10 @@ class QuotationController {
     return res.status(201).json({ success: true, ...result });
   }
 
-  /** POST /quotations/customer-request — Marketplace inquiry creation */
+  /** POST /quotations/customer-request — Marketplace inquiry and quotation creation */
   async createCustomerRequest(req, res) {
-    const { productId, quantity } = req.body;
-    const qty = Number(quantity) || 1;
+    const { productId, quantity, customerEmail, customerName } = req.body;
+    const qty = Math.max(1, Number(quantity) || 1);
 
     // Fetch Product details
     const prodRes = await db.query('SELECT * FROM products WHERE id = $1', [productId]);
@@ -42,33 +42,87 @@ class QuotationController {
     const companyId = product.company_id || 'c1';
 
     let customerId = req.user?.customerId || req.user?.id || null;
+    const emailToUse = customerEmail || req.user?.email || null;
+    const nameToUse = customerName || req.user?.name || (emailToUse ? emailToUse.split('@')[0] : 'Customer');
 
-    // Ensure customerId exists in customers table
+    // 1. Check if customerId exists in customers table
     if (customerId) {
       const custCheck = await db.query('SELECT id FROM customers WHERE id = $1', [customerId]);
       if (custCheck.rows.length === 0) {
-        const firstCust = await db.query('SELECT id FROM customers LIMIT 1');
-        customerId = firstCust.rows[0]?.id || null;
+        customerId = null;
       }
     }
 
+    // 2. If no valid customerId, check by email
+    if (!customerId && emailToUse) {
+      const emailCheck = await db.query('SELECT id FROM customers WHERE LOWER(email) = LOWER($1)', [emailToUse.trim()]);
+      if (emailCheck.rows.length > 0) {
+        customerId = emailCheck.rows[0].id;
+      } else {
+        const newCustId = 'cust_' + crypto.randomUUID().substring(0, 8);
+        await db.query(
+          'INSERT INTO customers (id, name, email, password_hash) VALUES ($1, $2, $3, $4)',
+          [newCustId, nameToUse, emailToUse.trim().toLowerCase(), 'guest']
+        );
+        customerId = newCustId;
+      }
+    }
+
+    // 3. Fallback to first customer in DB
     if (!customerId) {
       const firstCust = await db.query('SELECT id FROM customers LIMIT 1');
       customerId = firstCust.rows[0]?.id;
     }
 
     if (!customerId) {
-      return res.status(400).json({ error: 'No customer available' });
+      return res.status(400).json({ error: 'No customer account available' });
     }
 
-    // Create inquiry — notifies all sales reps
+    // 4. Create inquiry — notifies sales team
     const inquiryResult = await inquiryService.createInquiry(companyId, customerId, productId, qty);
     const inquiry = inquiryResult.inquiry;
 
+    // 5. Select active sales rep for this company to assign the quotation to
+    const repRes = await db.query(
+      "SELECT id FROM users WHERE company_id = $1 AND role = 'sales_rep' ORDER BY created_at ASC LIMIT 1",
+      [companyId]
+    );
+    let salesRepId = repRes.rows[0]?.id;
+    if (!salesRepId) {
+      const anyUserRes = await db.query(
+        "SELECT id FROM users WHERE company_id = $1 LIMIT 1",
+        [companyId]
+      );
+      salesRepId = anyUserRes.rows[0]?.id || 'u4';
+    }
+
+    // 6. Create live Quotation in database
+    const lineType = (product.category?.toLowerCase() === 'services' || (product.unit && product.unit.toLowerCase().includes('month')))
+      ? 'recurring'
+      : 'one_time';
+
+    const quoteResult = await quotationService.createQuotation(
+      companyId,
+      salesRepId,
+      { customerId, customerName: nameToUse, customerEmail: emailToUse },
+      [{
+        productId: product.id,
+        quantity: qty,
+        unitPrice: parseFloat(product.base_price),
+        discountPercent: 0,
+        lineType
+      }],
+      inquiry.id
+    );
+
+    // 7. Retrieve full quotation detail to return to customer
+    const quotation = await quotationRepository.findDetailById(quoteResult.quotationId);
+
     return res.status(201).json({
       success: true,
+      quotation,
       inquiry,
-      message: `Inquiry created for ${product.name}. Sales team has been notified.`
+      message: `Quotation #${quotation.id} created for ${product.name} (Qty: ${qty}) and assigned to your dedicated sales rep.`
     });
   }
 
@@ -100,24 +154,35 @@ class QuotationController {
     const page = parseInt(req.query.page, 10) || 1;
     const offset = (page - 1) * limit;
 
+    // Customer: only see their own quotations
     if (req.user && req.user.role === 'customer') {
-      const customerId = req.user.customerId || req.user.id;
-      if (!customerId) {
+      const customerId = req.user.customerId || req.user.id || null;
+      const customerEmail = req.user.email || null;
+      if (!customerId && !customerEmail) {
         res.set('X-Total-Count', 0);
         return res.json([]);
       }
-      const customerQuotes = await quotationRepository.findByCustomer(customerId, limit, offset);
+      const customerQuotes = await quotationRepository.findByCustomer(customerId, customerEmail, limit, offset);
       res.set('X-Total-Count', customerQuotes ? customerQuotes.totalCount : 0);
       return res.json(customerQuotes ? customerQuotes.data : []);
     }
 
-    // BOLA Protection: Sales Reps only see their own quotes
+    // Sales Rep: only see their own assigned quotations
     if (req.user && req.user.role === 'sales_rep') {
-      const quotations = await quotationRepository.findByCompanyAndSalesRep(req.companyId, req.user.userId, limit, offset);
+      const repId = req.user.userId || req.user.id;
+      const quotations = await quotationRepository.findByCompanyAndSalesRep(req.companyId, repId, limit, offset);
       res.set('X-Total-Count', quotations.totalCount);
       return res.json(quotations.data);
     }
 
+    // Super Admin across all companies if no specific company context
+    if (req.user && req.user.role === 'super_admin' && !req.companyId) {
+      const quotations = await quotationRepository.findAllQuotations(limit, offset);
+      res.set('X-Total-Count', quotations.totalCount);
+      return res.json(quotations.data);
+    }
+
+    // Sales Manager, Finance Manager, Admin: company quotations
     const quotations = await quotationRepository.findByCompany(req.companyId, limit, offset);
     res.set('X-Total-Count', quotations.totalCount);
     return res.json(quotations.data);

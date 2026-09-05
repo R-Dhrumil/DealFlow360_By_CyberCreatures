@@ -81,9 +81,16 @@ class QuotationRepository {
     return { data: result.rows, totalCount };
   }
 
-  async findByCustomer(customerId, limit = 50, offset = 0) {
-    const countRes = await db.query('SELECT COUNT(*) FROM quotations WHERE customer_id = $1', [customerId]);
-    const totalCount = parseInt(countRes.rows[0].count, 10);
+  async findByCustomer(customerId, customerEmail = null, limit = 50, offset = 0) {
+    const countRes = await db.query(
+      `SELECT COUNT(DISTINCT q.id) 
+       FROM quotations q 
+       LEFT JOIN customers c ON q.customer_id = c.id
+       WHERE ($1::text IS NOT NULL AND q.customer_id = $1::text)
+          OR ($2::text IS NOT NULL AND LOWER(c.email) = LOWER($2::text))`,
+      [customerId || null, customerEmail ? customerEmail.trim() : null]
+    );
+    const totalCount = parseInt(countRes.rows[0]?.count || 0, 10);
 
     const result = await db.query(
       `SELECT 
@@ -98,15 +105,42 @@ class QuotationRepository {
        LEFT JOIN users u ON q.sales_rep_id = u.id
        LEFT JOIN quotation_lines ql ON q.id = ql.quotation_id
        LEFT JOIN products p ON ql.product_id = p.id
-       WHERE q.customer_id = $1
+       WHERE ($1::text IS NOT NULL AND q.customer_id = $1::text)
+          OR ($2::text IS NOT NULL AND LOWER(c.email) = LOWER($2::text))
        GROUP BY q.id, c.name, c.email, u.name
        ORDER BY q.created_at DESC
-       LIMIT $2 OFFSET $3`,
-      [customerId, limit, offset]
+       LIMIT $3 OFFSET $4`,
+      [customerId || null, customerEmail ? customerEmail.trim() : null, limit, offset]
     );
     return { data: result.rows, totalCount };
   }
 
+  async findAllQuotations(limit = 50, offset = 0) {
+    const countRes = await db.query('SELECT COUNT(*) FROM quotations');
+    const totalCount = parseInt(countRes.rows[0]?.count || 0, 10);
+
+    const result = await db.query(
+      `SELECT 
+         q.id, q.status, q.blended_risk_score, q.created_at, q.updated_at,
+         c.name as customer_name, c.email as customer_email,
+         u.name as sales_rep_name,
+         comp.name as company_name,
+         COALESCE(STRING_AGG(DISTINCT p.name, ', '), 'Custom Proposal') as product_summary,
+         COALESCE(SUM(ql.unit_price * ql.quantity * (1 - ql.discount_percent/100)), 0) as total_amount,
+         COUNT(ql.id) as lines_count
+       FROM quotations q
+       LEFT JOIN customers c ON q.customer_id = c.id
+       LEFT JOIN users u ON q.sales_rep_id = u.id
+       LEFT JOIN companies comp ON q.company_id = comp.id
+       LEFT JOIN quotation_lines ql ON q.id = ql.quotation_id
+       LEFT JOIN products p ON ql.product_id = p.id
+       GROUP BY q.id, c.name, c.email, u.name, comp.name
+       ORDER BY q.created_at DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    );
+    return { data: result.rows, totalCount };
+  }
 
   async findDetailById(quotationId) {
     const qRes = await db.query(
@@ -146,6 +180,10 @@ class QuotationRepository {
 
     quote.lines = linesRes.rows;
     quote.approval_history = logRes.rows;
+    quote.total_amount = linesRes.rows.reduce(
+      (sum, l) => sum + (parseFloat(l.unit_price) * parseInt(l.quantity, 10) * (1 - parseFloat(l.discount_percent || 0) / 100)),
+      0
+    );
     return quote;
   }
 

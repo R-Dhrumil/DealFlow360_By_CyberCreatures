@@ -62,6 +62,85 @@ const UniversalDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const DEALS_PER_PAGE = 5;
 
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const role = user?.role || 'sales_rep';
+
+  const roleConfig = {
+    sales_rep: {
+      roleName: 'Sales Representative',
+      badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+      title: 'Personal Sales Cockpit',
+      subtitle: `Welcome back, ${user?.name || 'Sales Rep'} • Personal Deal Pipeline & Commission Tracking`,
+      card1Title: 'My Awaiting Approvals',
+      card1Subtitle: 'Proposals submitted for review',
+      card2Title: 'My Active Deals',
+      card2Subtitle: 'Active CPQ Quotations',
+      card3Title: 'My Won Revenue',
+      card3Subtitle: 'Closed & Confirmed Deals',
+      card4Title: 'My Attention Deals',
+      card4Subtitle: 'Risk score ≥ 5.0 requiring review',
+    },
+    sales_manager: {
+      roleName: 'Sales Operations Manager',
+      badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+      title: 'Sales Team Pipeline & Management',
+      subtitle: `Welcome back, ${user?.name || 'Manager'} • Team Deal Velocity & Approval Authority Gate`,
+      card1Title: 'Team Approval Queue',
+      card1Subtitle: 'Deals pending management sign-off',
+      card2Title: 'Team Active Pipeline',
+      card2Subtitle: 'Total active CPQ pipeline across reps',
+      card3Title: 'Team Closed Revenue',
+      card3Subtitle: 'Won & Confirmed Team Deals',
+      card4Title: 'High-Risk Team Deals',
+      card4Subtitle: 'Deals exceeding margin guardrails',
+    },
+    finance_manager: {
+      roleName: 'Finance & Margin Controller',
+      badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+      title: 'Financial Margin & Deal Clearance',
+      subtitle: `Welcome back, ${user?.name || 'Finance Lead'} • Commercial Exposure, Floor Compliance & Deal Clearance`,
+      card1Title: 'Finance Approval Gate',
+      card1Subtitle: 'Deals requiring finance clearance',
+      card2Title: 'Gross Pipeline Exposure',
+      card2Subtitle: 'Total active contract value in motion',
+      card3Title: 'Secured Margin Revenue',
+      card3Subtitle: 'Approved & Confirmed Commercial Value',
+      card4Title: 'Margin Risk Alerts',
+      card4Subtitle: 'Violations & Risk Score ≥ 5.0',
+    },
+    admin: {
+      roleName: 'Company Administrator',
+      badgeColor: 'bg-purple-100 text-purple-800 border-purple-300',
+      title: 'Revenue Operations Command',
+      subtitle: `Welcome back, ${user?.name || 'Administrator'} • Enterprise Deal Desk, Governance & Performance`,
+      card1Title: 'Executive Gatekeeper Queue',
+      card1Subtitle: 'Deals awaiting organizational sign-off',
+      card2Title: 'Enterprise Pipeline ACV',
+      card2Subtitle: 'All active company CPQ contracts',
+      card3Title: 'Recognized Revenue',
+      card3Subtitle: 'Confirmed & Closed ACV',
+      card4Title: 'Governance & Risk Alerts',
+      card4Subtitle: 'Telemetry anomalies & guardrail triggers',
+    },
+    super_admin: {
+      roleName: 'Global Super Admin',
+      badgeColor: 'bg-rose-100 text-rose-800 border-rose-300',
+      title: 'Global Platform Revenue Command',
+      subtitle: `Welcome back, ${user?.name || 'Super Admin'} • Platform-wide Pipeline Health & System Oversight`,
+      card1Title: 'Platform Approval Gate',
+      card1Subtitle: 'Cross-tenant pending approvals',
+      card2Title: 'Global Pipeline ACV',
+      card2Subtitle: 'Platform-wide CPQ contract value',
+      card3Title: 'Global Realized Revenue',
+      card3Subtitle: 'Platform won & confirmed contracts',
+      card4Title: 'Platform Risk Feed',
+      card4Subtitle: 'Global deal anomalies & audit flags',
+    }
+  };
+
+  const currentRoleConfig = roleConfig[role] || roleConfig.sales_rep;
+
   useEffect(() => {
     fetchDashboardData();
     const interval = setInterval(fetchDashboardDataSilent, 3500);
@@ -72,7 +151,7 @@ const UniversalDashboard = () => {
     try {
       const res = await api.get('/quotations');
       setQuotations(res.data || []);
-    } catch (err) {
+    } catch {
       // silent fail during background polling
     }
   };
@@ -102,9 +181,6 @@ const UniversalDashboard = () => {
   const totalRecognizedValue = quotations
     .filter(q => q.status === 'approved' || q.status === 'confirmed')
     .reduce((sum, q) => sum + (Number(q.total_amount) || 0), 0);
-
-  const draftCount = quotations.filter(q => q.status === 'draft').length;
-  const approvalGateCount = pendingDeals.length;
 
   // Filtered deals for table
   const filteredQuotations = quotations.filter(q => {
@@ -168,26 +244,57 @@ const UniversalDashboard = () => {
       {/* Executive Action & Control Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6">
         <div className="flex flex-col gap-1">
-         
-          <h1 className="text-2xl font-extrabold text-text-main tracking-tight">Revenue Operations Command</h1>
+          <div className="flex items-center gap-2">
+            <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${currentRoleConfig.badgeColor}`}>
+              {currentRoleConfig.roleName}
+            </span>
+            <span className="text-xs text-text-muted">
+              {user?.company_name || 'CyberCreatures'} Deal Desk
+            </span>
+          </div>
+          <h1 className="text-2xl font-extrabold text-text-main tracking-tight mt-1">{currentRoleConfig.title}</h1>
+          <p className="text-xs text-text-muted">{currentRoleConfig.subtitle}</p>
         </div>
         
         {/* Quick Action Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
+          {(role === 'sales_manager' || role === 'admin' || role === 'finance_manager') && (
+            <Link to="/app/approvals" className="relative group flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-amber-status border border-amber-status/30 hover:bg-amber-status/10 transition-all shadow-sm font-semibold text-xs">
+              <span className="material-symbols-outlined text-base">verified</span>
+              <span>Review Approvals</span>
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-status text-on-primary text-[11px] font-bold">
+                {pendingDeals.length}
+              </span>
+            </Link>
+          )}
+
+          {role === 'finance_manager' && (
+            <Link to="/app/finance" className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-emerald-700 border border-emerald-300 hover:bg-emerald-50 transition-all shadow-sm font-semibold text-xs">
+              <i className="fa-solid fa-coins text-xs"></i>
+              <span>Finance Hub</span>
+            </Link>
+          )}
+
+          {role === 'admin' && (
+            <Link to="/app/admin" className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-purple-700 border border-purple-300 hover:bg-purple-50 transition-all shadow-sm font-semibold text-xs">
+              <i className="fa-solid fa-user-gear text-xs"></i>
+              <span>Admin Workspace</span>
+            </Link>
+          )}
+
+          {role === 'super_admin' && (
+            <Link to="/app/superadmin" className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-rose-700 border border-rose-300 hover:bg-rose-50 transition-all shadow-sm font-semibold text-xs">
+              <i className="fa-solid fa-globe text-xs"></i>
+              <span>Tenant Console</span>
+            </Link>
+          )}
           
-          
-          <Link to="/app/approvals" className="relative group flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-amber-status border border-amber-status/30 hover:bg-amber-status/10 transition-all shadow-sm font-semibold text-xs">
-            <span className="material-symbols-outlined text-base">verified</span>
-            <span>Review Approvals</span>
-            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-status text-on-primary text-[11px] font-bold">
-              {pendingDeals.length}
-            </span>
-          </Link>
-          
-          <Link to="/app/quote" className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-on-primary font-semibold text-xs shadow-sm hover:bg-primary-dark transition-all active:scale-[0.99]">
-            <span className="material-symbols-outlined text-base">add_circle</span>
-            <span>New Quotation</span>
-          </Link>
+          {(role === 'sales_rep' || role === 'sales_manager' || role === 'admin') && (
+            <Link to="/app/quote" className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-on-primary font-semibold text-xs shadow-sm hover:bg-primary-dark transition-all active:scale-[0.99]">
+              <span className="material-symbols-outlined text-base">add_circle</span>
+              <span>New Quotation</span>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -195,11 +302,10 @@ const UniversalDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 pb-7">
         {/* Metric 1: Pending Approvals */}
         <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group overflow-hidden">
-       
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Gatekeeper Queue</span>
-              <span className="font-bold text-sm text-text-main pt-0.5">Pending Approvals</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">{currentRoleConfig.card1Subtitle}</span>
+              <span className="font-bold text-sm text-text-main pt-0.5">{currentRoleConfig.card1Title}</span>
             </div>
             <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-status/10 text-rose-status border border-rose-status/20 text-xs font-bold">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-status"></span> Queue: {pendingDeals.length}
@@ -222,11 +328,10 @@ const UniversalDashboard = () => {
 
         {/* Metric 2: Open Quotations */}
         <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group overflow-hidden">
-         
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Deal Desk Active</span>
-              <span className="font-bold text-sm text-text-main pt-0.5">Open Quotations</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">{currentRoleConfig.card2Subtitle}</span>
+              <span className="font-bold text-sm text-text-main pt-0.5">{currentRoleConfig.card2Title}</span>
             </div>
             <span className="p-2 rounded-xl bg-amber-status/10 text-amber-status border border-amber-status/20">
               <span className="material-symbols-outlined text-lg">stacked_bar_chart</span>
@@ -245,18 +350,17 @@ const UniversalDashboard = () => {
             </div>
           </div>
           <div className="pt-3 mt-4 border-t border-surface-soft flex items-center justify-between">
-            <span className="text-xs text-text-muted">Total Active CPQ Quotes</span>
+            <span className="text-xs text-text-muted">Total in Pipeline</span>
             <span className="font-mono text-xs font-semibold text-text-main">{quotations.length} records</span>
           </div>
         </div>
 
         {/* Metric 3: At-Risk Deals */}
         <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group overflow-hidden">
-         
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">AI Deal Sentry</span>
-              <span className="font-bold text-sm text-text-main pt-0.5">At-Risk Deals</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">{currentRoleConfig.card4Subtitle}</span>
+              <span className="font-bold text-sm text-text-main pt-0.5">{currentRoleConfig.card4Title}</span>
             </div>
             <span className="p-2 rounded-xl bg-rose-status/10 text-rose-status border border-rose-status/20">
               <span className="material-symbols-outlined text-lg">warning_amber</span>
@@ -277,11 +381,10 @@ const UniversalDashboard = () => {
 
         {/* Metric 4: Revenue Recognized */}
         <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group overflow-hidden">
-         
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Financial Performance</span>
-              <span className="font-bold text-sm text-text-main pt-0.5">Revenue Approved</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">{currentRoleConfig.card3Subtitle}</span>
+              <span className="font-bold text-sm text-text-main pt-0.5">{currentRoleConfig.card3Title}</span>
             </div>
             <span className="p-2 rounded-xl bg-emerald-status/10 text-emerald-status border border-emerald-status/20">
               <span className="material-symbols-outlined text-lg">payments</span>
@@ -289,24 +392,16 @@ const UniversalDashboard = () => {
           </div>
           <div className="flex items-baseline justify-between pt-4">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-text-main">{formatCurrency(totalRecognizedValue)}</span>
-              <span className="text-xs font-bold text-emerald-status bg-emerald-status/10 px-2 py-0.5 rounded border border-emerald-status/20">Live</span>
+              <span className="text-3xl font-extrabold text-emerald-status">{formatCurrency(totalRecognizedValue)}</span>
             </div>
+            <span className="text-xs font-bold text-emerald-status">{quotations.filter(q => q.status === 'approved' || q.status === 'confirmed').length} won</span>
           </div>
-          <div className="pt-3 mt-4 border-t border-surface-soft flex flex-col gap-1.5">
-            <div className="w-full bg-border-soft h-2 rounded-full overflow-hidden border border-surface-soft">
-              <div className="bg-emerald-status h-full rounded-full" style={{ width: `${Math.min(100, Math.max(15, quotations.length ? (totalRecognizedValue / (openValue || 1)) * 100 : 0))}%` }}></div>
-            </div>
-            <div className="flex justify-between text-xs text-text-muted">
-              <span>Conversion Ratio</span>
-              <span className="text-emerald-status font-mono font-bold">
-                {openValue > 0 ? ((totalRecognizedValue / openValue) * 100).toFixed(1) : 0}%
-              </span>
-            </div>
+          <div className="pt-3 mt-4 border-t border-surface-soft flex items-center justify-between">
+            <span className="text-xs text-text-muted">Approved & Confirmed ACV</span>
+            <span className="font-mono text-xs font-semibold text-text-main">Cleared</span>
           </div>
         </div>
       </div>
-
       {/* ━━━━━━━━━━━━━━━━━━━━ ANALYTICS SECTION ━━━━━━━━━━━━━━━━━━━━ */}
       <div className="pb-7">
         <div className="flex items-center justify-between mb-5">

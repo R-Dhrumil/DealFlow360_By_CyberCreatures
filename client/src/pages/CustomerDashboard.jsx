@@ -69,20 +69,24 @@ export default function CustomerDashboard() {
 
   const handleRequestQuoteForProduct = async (product, quantity = 1) => {
     try {
-      const res = await api.post('/quotations/customer-request', { productId: product.id, quantity });
+      setInquirySuccess(`Submitting quotation request for ${product.name}...`);
+      const res = await api.post('/quotations/customer-request', {
+        productId: product.id,
+        quantity,
+        customerEmail: customer.email,
+        customerName: customer.name
+      });
       const newQuote = res.data?.quotation;
-      const quoteCode = newQuote ? formatQuoteCode(newQuote.id) : 'QT-2026-1001';
-      setInquirySuccess(`Success! ${quoteCode} generated for ${product.name} (Qty: ${quantity}) and assigned to your sales rep.`);
+      const quoteCode = newQuote ? formatQuoteCode(newQuote.id) : (res.data?.inquiry?.id ? `INQ-${res.data.inquiry.id}` : 'QT-Proposal');
+      setInquirySuccess(`Success! Quotation ${quoteCode} generated for ${product.name} (Qty: ${quantity}) and assigned to your dedicated sales rep.`);
       await fetchQuotations();
       if (selectedProductDetail) setSelectedProductDetail(null);
       handleTabChange('quotations');
     } catch (err) {
       console.error('Failed to request quote:', err);
-      setInquirySuccess(`Quote request for ${product.name} submitted! Switching to proposals...`);
-      setTimeout(() => setInquirySuccess(''), 4000);
-      await fetchQuotations();
-      if (selectedProductDetail) setSelectedProductDetail(null);
-      handleTabChange('quotations');
+      const serverMsg = err.response?.data?.error || err.response?.data?.message || 'Failed to submit quote request. Please try again.';
+      setInquirySuccess(`Error: ${serverMsg}`);
+      setTimeout(() => setInquirySuccess(''), 5000);
     }
   };
 
