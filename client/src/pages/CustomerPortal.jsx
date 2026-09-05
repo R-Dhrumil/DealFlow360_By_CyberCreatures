@@ -278,7 +278,7 @@ export default function CustomerPortal() {
                         <td className="py-4 px-4 text-right font-mono">
                           {discount > 0 ? (
                             <span className="inline-block bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded text-xs border border-emerald-200">
-                              -{discount}% OFF
+                              {discount}% OFF
                             </span>
                           ) : (
                             <span className="text-slate-400 font-mono text-xs">- 0%</span>
