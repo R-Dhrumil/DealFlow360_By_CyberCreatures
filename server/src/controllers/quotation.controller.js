@@ -196,6 +196,66 @@ class QuotationController {
     return res.json(quote);
   }
 
+  /** GET /quotations/:id/discount or /quotations/:id/latest-discount */
+  async getLatestDiscount(req, res) {
+    const quotationId = req.params.id;
+    const quote = await quotationRepository.findDetailById(quotationId);
+    if (!quote) {
+      return res.status(404).json({ error: 'Quotation not found' });
+    }
+
+    const lines = quote.lines || [];
+    let baseSubtotal = 0;
+    let netPayable = 0;
+
+    const detailedLines = lines.map(line => {
+      const unitPrice = parseFloat(line.unit_price) || 0;
+      const quantity = parseInt(line.quantity, 10) || 1;
+      const discountPercent = parseFloat(line.discount_percent) || 0;
+      const grossLine = unitPrice * quantity;
+      const netUnitPrice = unitPrice * (1 - discountPercent / 100);
+      const lineTotal = netUnitPrice * quantity;
+      const discountAmount = grossLine - lineTotal;
+
+      baseSubtotal += grossLine;
+      netPayable += lineTotal;
+
+      return {
+        id: line.id,
+        productId: line.product_id,
+        productName: line.product_name,
+        category: line.category,
+        lineType: line.line_type,
+        quantity,
+        unitPrice: parseFloat(unitPrice.toFixed(2)),
+        discountPercent: parseFloat(discountPercent.toFixed(2)),
+        netUnitPrice: parseFloat(netUnitPrice.toFixed(2)),
+        lineTotal: parseFloat(lineTotal.toFixed(2)),
+        discountAmount: parseFloat(discountAmount.toFixed(2))
+      };
+    });
+
+    const totalDiscount = Math.max(0, baseSubtotal - netPayable);
+    const effectiveDiscountPercent = baseSubtotal > 0 ? ((totalDiscount / baseSubtotal) * 100) : 0;
+
+    // Check if there are any negotiation messages with counter discounts
+    const messages = await quotationRepository.getNegotiationMessages(quotationId);
+    const latestNegotiation = messages && messages.length > 0 ? messages[messages.length - 1] : null;
+
+    return res.json({
+      success: true,
+      quotationId,
+      status: quote.status,
+      baseSubtotal: parseFloat(baseSubtotal.toFixed(2)),
+      totalDiscount: parseFloat(totalDiscount.toFixed(2)),
+      discountPercent: parseFloat(effectiveDiscountPercent.toFixed(2)),
+      netPayable: parseFloat(netPayable.toFixed(2)),
+      latestCounterDiscount: latestNegotiation?.counter_discount ? parseFloat(latestNegotiation.counter_discount) : null,
+      lines: detailedLines,
+      calculatedAt: new Date().toISOString()
+    });
+  }
+
   /** PUT /quotations/:id/approve */
   async approve(req, res) {
     const quotationId = req.params.id;
