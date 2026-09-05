@@ -27,12 +27,12 @@ class QuotationController {
     const product = prodRes.rows[0];
 
     // 2. Resolve IDs
-    const companyId = product.company_id || '11111111-1111-1111-1111-111111111111';
-    const customerId = req.user?.customerId || req.user?.id || '33333333-3333-3333-3333-333333333331';
+    const companyId = product.company_id || 'c1';
+    const customerId = req.user?.customerId || req.user?.id || 'cust1';
     
     // Find active sales rep
     const repRes = await db.query("SELECT id FROM users WHERE company_id = $1 AND role = 'sales_rep' LIMIT 1", [companyId]);
-    const salesRepId = repRes.rows[0]?.id || '11111111-1111-1111-1111-100000000003';
+    const salesRepId = repRes.rows[0]?.id || 'u4';
 
     // 3. Create Quotation
     const quoteRes = await db.query(
@@ -70,7 +70,7 @@ class QuotationController {
 
   async getCompanyQuotations(req, res) {
     if (req.user && req.user.role === 'customer') {
-      const customerId = req.user.customerId || req.user.id || '33333333-3333-3333-3333-333333333331';
+      const customerId = req.user.customerId || req.user.id || 'cust1';
       const customerQuotes = await quotationRepository.findByCustomer(customerId);
       if (customerQuotes && customerQuotes.length > 0) {
         return res.json(customerQuotes);
