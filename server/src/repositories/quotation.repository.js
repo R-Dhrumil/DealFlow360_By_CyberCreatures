@@ -128,6 +128,14 @@ class QuotationRepository {
     return result.rows[0] || null;
   }
 
+  async findByIdAndCompanyForUpdate(quotationId, companyId, client) {
+    const result = await client.query(
+      'SELECT * FROM quotations WHERE id = $1 AND company_id = $2 FOR UPDATE',
+      [quotationId, companyId]
+    );
+    return result.rows[0] || null;
+  }
+
   async findQuotationLinesWithCategory(quotationId) {
     const result = await db.query(
       `SELECT ql.*, p.name as product_name, p.category, p.margin_percent 
