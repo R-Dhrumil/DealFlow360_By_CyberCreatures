@@ -101,15 +101,14 @@ class QuotationController {
     const offset = (page - 1) * limit;
 
     if (req.user && req.user.role === 'customer') {
-      const customerId = req.user.customerId || req.user.id || 'cust1';
-      const customerQuotes = await quotationRepository.findByCustomer(customerId, limit, offset);
-      if (customerQuotes && customerQuotes.data.length > 0) {
-        res.set('X-Total-Count', customerQuotes.totalCount);
-        return res.json(customerQuotes.data);
+      const customerId = req.user.customerId || req.user.id;
+      if (!customerId) {
+        res.set('X-Total-Count', 0);
+        return res.json([]);
       }
-      const allQuotes = await quotationRepository.findAll(limit, offset);
-      res.set('X-Total-Count', allQuotes.totalCount);
-      return res.json(allQuotes.data);
+      const customerQuotes = await quotationRepository.findByCustomer(customerId, limit, offset);
+      res.set('X-Total-Count', customerQuotes ? customerQuotes.totalCount : 0);
+      return res.json(customerQuotes ? customerQuotes.data : []);
     }
 
     // BOLA Protection: Sales Reps only see their own quotes

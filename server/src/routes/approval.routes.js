@@ -9,17 +9,17 @@ const asyncWrap = require('../utils/asyncWrap');
 router.use(authenticate, attachCompanyScope);
 
 // Pending queue — sales reps can see their own; managers/admin see company-wide
-router.get('/pending', checkRole('sales_rep', 'sales_manager', 'finance', 'admin', 'super_admin'),
+router.get('/pending', checkRole('sales_rep', 'sales_manager', 'finance', 'finance_manager', 'admin', 'super_admin'),
   asyncWrap((req, res) => approvalController.getPending(req, res)));
 
 // Dashboard stats
-router.get('/stats', checkRole('sales_rep', 'sales_manager', 'finance', 'admin', 'super_admin'),
+router.get('/stats', checkRole('sales_rep', 'sales_manager', 'finance', 'finance_manager', 'admin', 'super_admin'),
   asyncWrap((req, res) => approvalController.getStats(req, res)));
 
 // Approval action (approve, reject, return, modify_and_approve)
 // Admin can approve pending_admin_approval; manager handles pending_approval
 router.post('/:quotationId/action',
-  checkRole('sales_manager', 'finance', 'admin', 'super_admin'),
+  checkRole('sales_manager', 'finance', 'finance_manager', 'admin', 'super_admin'),
   asyncWrap((req, res) => approvalController.processAction(req, res)));
 
 // Config endpoints (admin only)

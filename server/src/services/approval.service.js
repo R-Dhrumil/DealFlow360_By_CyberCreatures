@@ -20,8 +20,8 @@ class ApprovalService {
       statusFilter = ['pending_approval', 'pending_finance_approval', 'pending_admin_approval'];
     } else if (role === 'sales_manager') {
       statusFilter = ['pending_approval', 'pending_finance_approval'];
-    } else if (role === 'finance') {
-      statusFilter = ['pending_finance_approval'];
+    } else if (['finance', 'finance_manager'].includes(role)) {
+      statusFilter = ['pending_finance_approval', 'pending_approval'];
     } else {
       // admin, super_admin
       statusFilter = ['pending_approval', 'pending_finance_approval', 'pending_admin_approval', 'draft'];
@@ -101,9 +101,10 @@ class ApprovalService {
       stats.pendingApproval = parseInt(res.pending_approval || 0);
       stats.approved = parseInt(res.approved || 0);
       stats.rejected = parseInt(res.rejected || 0);
-    } else if (role === 'sales_manager') {
+    } else if (['sales_manager', 'finance', 'finance_manager'].includes(role)) {
       const res = await approvalRepository.getManagerApprovalStats(companyId);
       stats.pendingApproval = parseInt(res.pending_approval || 0);
+      stats.pendingFinanceApproval = parseInt(res.pending_finance_approval || 0);
       stats.escalatedToAdmin = parseInt(res.pending_admin_approval || 0);
       stats.approved = parseInt(res.approved || 0);
       stats.rejected = parseInt(res.rejected || 0);

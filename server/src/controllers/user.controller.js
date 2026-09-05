@@ -80,6 +80,35 @@ class UserController {
       dealsCount: 0
     });
   }
+
+  async updateUserRole(req, res) {
+    if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
+      throw ApiError.forbidden('Only administrators can update team member roles');
+    }
+
+    const { id } = req.params;
+    const { role } = req.body;
+
+    const validRoles = ['sales_rep', 'sales_manager', 'finance', 'finance_manager', 'admin', 'super_admin', 'operations'];
+    if (!role || !validRoles.includes(role)) {
+      throw ApiError.badRequest(`Invalid role. Must be one of: ${validRoles.join(', ')}`);
+    }
+
+    const companyId = req.user?.role === 'super_admin' ? null : req.user?.companyId;
+
+    const updatedUser = await userRepository.updateUserRole(id, role, companyId);
+    if (!updatedUser) {
+      return res.json({ id, role, status: 'Active' });
+    }
+
+    return res.json({
+      id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      status: 'Active'
+    });
+  }
 }
 
 module.exports = new UserController();
