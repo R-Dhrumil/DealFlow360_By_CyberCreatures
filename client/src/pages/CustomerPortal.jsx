@@ -10,6 +10,7 @@ export default function CustomerPortal() {
   const { formatMoney, selected } = useCurrency();
   const { id: quotationId } = useParams();
   const [quotation, setQuotation] = useState(null);
+  const [latestDiscount, setLatestDiscount] = useState(null);
   const [loading, setLoading] = useState(true);
   
   // Payment state
@@ -54,7 +55,7 @@ export default function CustomerPortal() {
         const netUnitPrice = unitPrice * (1 - discount / 100);
         return netUnitPrice * qty;
       };
-      const totalAmount = qLines.reduce((sum, line) => sum + calculateLineNetTotal(line), 0);
+      const totalAmount = latestDiscount?.netPayable ?? qLines.reduce((sum, line) => sum + calculateLineNetTotal(line), 0);
 
       const res = await api.put(`/quotations/${quotationId}/confirm`, {
         paymentMethod: selectedPayment || 'cod',
@@ -62,7 +63,7 @@ export default function CustomerPortal() {
         amount: totalAmount
       });
       setShowPaymentModal(false);
-      // Refetch quotation to show confirmed status
+      // Refetch quotation and latest discount to show confirmed status
       await fetchQuotation();
     } catch (err) {
       console.error('Failed to confirm payment', err);
@@ -76,8 +77,20 @@ export default function CustomerPortal() {
   const fetchQuotation = async () => {
     try {
       if (!quotationId) return;
-      const res = await api.get(`/quotations/${quotationId}`);
-      setQuotation(res.data || null);
+      const [quoteRes, discountRes] = await Promise.allSettled([
+        api.get(`/quotations/${quotationId}`),
+        api.get(`/quotations/${quotationId}/discount`)
+      ]);
+
+      if (quoteRes.status === 'fulfilled') {
+        setQuotation(quoteRes.value.data || null);
+      } else {
+        setQuotation(null);
+      }
+
+      if (discountRes.status === 'fulfilled' && discountRes.value?.data?.success) {
+        setLatestDiscount(discountRes.value.data);
+      }
     } catch (error) {
       console.error('Failed to fetch public quotation details', error);
       setQuotation(null);
@@ -117,9 +130,9 @@ export default function CustomerPortal() {
     return netUnitPrice * qty;
   };
 
-  const totalGross = lines.reduce((sum, line) => sum + (Number(line.unit_price) || 0) * (Number(line.quantity) || 1), 0);
-  const grandTotal = lines.reduce((sum, line) => sum + calculateLineNetTotal(line), 0);
-  const totalDiscountSaved = Math.max(0, totalGross - grandTotal);
+  const totalGross = latestDiscount?.baseSubtotal !== undefined ? latestDiscount.baseSubtotal : lines.reduce((sum, line) => sum + (Number(line.unit_price) || 0) * (Number(line.quantity) || 1), 0);
+  const grandTotal = latestDiscount?.netPayable !== undefined ? latestDiscount.netPayable : lines.reduce((sum, line) => sum + calculateLineNetTotal(line), 0);
+  const totalDiscountSaved = latestDiscount?.totalDiscount !== undefined ? latestDiscount.totalDiscount : Math.max(0, totalGross - grandTotal);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-16">
@@ -276,11 +289,12 @@ export default function CustomerPortal() {
                   </tr>
                 ) : (
                   lines.map((line, idx) => {
-                    const unitPrice = Number(line.unit_price) || 0;
-                    const discount = Number(line.discount_percent) || 0;
-                    const qty = Number(line.quantity) || 1;
-                    const netUnitPrice = unitPrice * (1 - discount / 100);
-                    const lineNet = netUnitPrice * qty;
+                    const discountLine = latestDiscount?.lines?.find(dl => dl.id === line.id);
+                    const unitPrice = discountLine?.unitPrice !== undefined ? discountLine.unitPrice : (Number(line.unit_price) || 0);
+                    const discount = discountLine?.discountPercent !== undefined ? discountLine.discountPercent : (Number(line.discount_percent) || 0);
+                    const qty = discountLine?.quantity !== undefined ? discountLine.quantity : (Number(line.quantity) || 1);
+                    const netUnitPrice = discountLine?.netUnitPrice !== undefined ? discountLine.netUnitPrice : (unitPrice * (1 - discount / 100));
+                    const lineNet = discountLine?.lineTotal !== undefined ? discountLine.lineTotal : (netUnitPrice * qty);
 
                     return (
                       <tr key={line.id || idx} className="hover:bg-slate-50/60 transition-colors">
