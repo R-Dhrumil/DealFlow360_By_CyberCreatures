@@ -1,13 +1,5 @@
-const pool = require('../pool');
-
-async function getProductsByCompany(companyId) {
-  const result = await pool.query(
-    'SELECT * FROM products WHERE company_id = $1 ORDER BY name ASC',
-    [companyId]
-  );
-  return result.rows;
-}
+const productRepository = require('../../src/repositories/product.repository');
 
 module.exports = {
-  getProductsByCompany
+  getProductsByCompany: (companyId) => productRepository.findByCompany(companyId)
 };
