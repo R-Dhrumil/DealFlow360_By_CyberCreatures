@@ -2,6 +2,10 @@ const productRepository = require('../repositories/product.repository');
 
 class ProductController {
   async getCompanyProducts(req, res) {
+    if (!req.companyId || req.user?.role === 'customer' || req.user?.role === 'super_admin') {
+      const products = await productRepository.findMarketplaceProducts({});
+      return res.json(products);
+    }
     const products = await productRepository.findByCompany(req.companyId);
     return res.json(products);
   }

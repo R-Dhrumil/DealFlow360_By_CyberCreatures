@@ -114,10 +114,11 @@ class ProductRepository {
     try {
       let query = `
         SELECT 
-          p.id, p.name, p.category, p.base_price, p.unit, p.description, p.is_promoted,
+          p.id, p.name, p.category, p.base_price, p.unit, p.tax_rate, p.description, p.is_promoted,
+          p.margin_percent, p.floor_price,
           c.name as company_name, c.logo_url as company_logo
         FROM products p
-        JOIN companies c ON p.company_id = c.id
+        LEFT JOIN companies c ON p.company_id = c.id
         WHERE 1=1
       `;
       
