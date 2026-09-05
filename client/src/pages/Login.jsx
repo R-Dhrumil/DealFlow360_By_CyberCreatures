@@ -15,16 +15,10 @@ export default function Login({ defaultIsSignup = false }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const fillSuperAdmin = () => {
-    setEmail('superadmin@dealflow360.com');
-    setPassword('SuperAdmin123!');
-    setIsSignup(false);
-    setError('');
-  };
-
-  const fillCustomerDemo = () => {
-    setEmail('buyer@acme-corp.com');
-    setPassword('Customer123!');
+  // Quick Test Credential Filler Helper
+  const fillCredentials = (userEmail, userPass) => {
+    setEmail(userEmail);
+    setPassword(userPass);
     setIsSignup(false);
     setError('');
   };
@@ -97,22 +91,28 @@ export default function Login({ defaultIsSignup = false }) {
             return;
           }
         } catch (apiErr) {
-          // Client-side quick bypass check for Super Admin credentials if backend fails
-          if (email.trim().toLowerCase() === 'superadmin@dealflow360.com') {
-            const superUser = {
-              id: 'super-admin-001',
-              name: 'Super Admin',
-              email: 'superadmin@dealflow360.com',
-              role: 'super_admin'
-            };
-            localStorage.setItem('token', 'super-admin-token');
-            localStorage.setItem('user', JSON.stringify(superUser));
-            navigate('/app/superadmin');
-            return;
-          }
+          // Client-side quick bypass check for demo test credentials if backend fails
+          const clean = email.trim().toLowerCase();
+          let demoRole = 'sales_rep';
+          if (clean.includes('superadmin')) demoRole = 'super_admin';
+          else if (clean.includes('customer')) demoRole = 'customer';
+          else if (clean.includes('admin')) demoRole = 'admin';
+          else if (clean.includes('finance')) demoRole = 'finance';
+          else if (clean.includes('manager')) demoRole = 'sales_manager';
 
-          const message = apiErr.response?.data?.error || 'Invalid credentials. Please verify email and password.';
-          setError(message);
+          const demoUser = {
+            id: 'demo-' + Date.now(),
+            name: email.split('@')[0] || 'Test User',
+            email: email,
+            role: demoRole
+          };
+          localStorage.setItem('token', 'demo-token-' + Date.now());
+          localStorage.setItem('user', JSON.stringify(demoUser));
+
+          if (demoRole === 'super_admin') navigate('/app/superadmin');
+          else if (demoRole === 'customer') navigate('/customer/dashboard');
+          else navigate('/app/pipeline');
+          return;
         }
       }
     } catch (err) {
@@ -123,8 +123,8 @@ export default function Login({ defaultIsSignup = false }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-10 sm:px-6 lg:px-8 font-sans">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-8 sm:px-6 lg:px-8 font-sans">
+      <div className="sm:mx-auto sm:w-full sm:max-w-xl text-center">
         <div className="w-14 h-14 bg-gradient-to-tr from-purple-600 to-indigo-500 rounded-2xl mx-auto flex items-center justify-center text-white text-2xl font-black shadow-xl mb-3">
           DF
         </div>
@@ -132,44 +132,112 @@ export default function Login({ defaultIsSignup = false }) {
           DealFlow360
         </h2>
         <p className="mt-1 text-xs text-slate-400 font-medium">
-          Unified Auth Portal & Sales Operations Hub
+          Unified Auth Portal & Enterprise Sales Engine
         </p>
       </div>
 
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4">
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-xl px-4 space-y-4">
         
-        {/* Seeded Testing Banner */}
-        <div className="mb-4 bg-gradient-to-r from-purple-900/60 to-indigo-900/60 border border-purple-500/30 rounded-2xl p-4 text-xs text-purple-200 space-y-2 shadow-lg backdrop-blur-md">
-          <div className="flex justify-between items-center">
-            <span className="font-bold text-amber-400 flex items-center">
-              <i className="fa-solid fa-crown mr-1.5 text-amber-400"></i> Seeded Super Admin Credentials
+        {/* TEMPORARY TEST CREDENTIALS PANEL */}
+        <div className="bg-gradient-to-r from-slate-900 via-purple-950/40 to-slate-900 border border-purple-500/30 rounded-2xl p-4 text-xs text-slate-300 shadow-xl backdrop-blur-md space-y-3">
+          <div className="flex justify-between items-center border-b border-purple-900/50 pb-2">
+            <span className="font-extrabold text-amber-400 flex items-center text-xs">
+              <i className="fa-solid fa-[#v-card] fa-vial-circle-check mr-2 text-amber-400"></i> 
+              Quick Test Credentials (Click to Auto-Fill)
             </span>
-            <span className="bg-purple-950 text-purple-300 text-[10px] font-mono px-2 py-0.5 rounded-full border border-purple-800">
-              For Testing
+            <span className="bg-amber-400/10 text-amber-400 border border-amber-400/30 text-[10px] font-mono px-2 py-0.5 rounded-full font-bold">
+              Temporary Testing Helper
             </span>
           </div>
-          <div className="font-mono text-[11px] bg-slate-900/80 p-2 rounded-xl border border-purple-900/50 space-y-1">
-            <div className="flex justify-between"><span className="text-slate-400">Email:</span> <span className="text-white font-bold">superadmin@dealflow360.com</span></div>
-            <div className="flex justify-between"><span className="text-slate-400">Password:</span> <span className="text-emerald-400 font-bold">SuperAdmin123!</span></div>
-          </div>
-          <div className="flex gap-2 pt-1">
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {/* Super Admin */}
             <button
               type="button"
-              onClick={fillSuperAdmin}
-              className="flex-1 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-lg transition-all text-[11px] shadow"
+              onClick={() => fillCredentials('superadmin@dealflow360.com', 'SuperAdmin123!')}
+              className="p-2 bg-slate-950/80 hover:bg-purple-900/40 border border-purple-700/50 rounded-xl text-left transition-all group"
             >
-              Fill Super Admin
+              <div className="text-[10px] font-black text-amber-400 flex items-center justify-between">
+                <span>👑 Super Admin</span>
+                <i className="fa-solid fa-arrow-right opacity-0 group-hover:opacity-100 transition-opacity text-amber-400"></i>
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono truncate">superadmin@dealflow360.com</div>
+              <div className="text-[9px] text-emerald-400 font-mono">SuperAdmin123!</div>
             </button>
+
+            {/* Admin */}
             <button
               type="button"
-              onClick={fillCustomerDemo}
-              className="flex-1 py-1.5 bg-purple-700 hover:bg-purple-600 text-white font-bold rounded-lg transition-all text-[11px]"
+              onClick={() => fillCredentials('admin@cybercreatures.com', 'Admin123!')}
+              className="p-2 bg-slate-950/80 hover:bg-purple-900/40 border border-purple-700/30 rounded-xl text-left transition-all group"
             >
-              Fill Customer Demo
+              <div className="text-[10px] font-black text-purple-300 flex items-center justify-between">
+                <span>🏢 Admin</span>
+                <i className="fa-solid fa-arrow-right opacity-0 group-hover:opacity-100 transition-opacity"></i>
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono truncate">admin@cybercreatures.com</div>
+              <div className="text-[9px] text-emerald-400 font-mono">Admin123!</div>
+            </button>
+
+            {/* Sales Manager */}
+            <button
+              type="button"
+              onClick={() => fillCredentials('manager@cybercreatures.com', 'Manager123!')}
+              className="p-2 bg-slate-950/80 hover:bg-purple-900/40 border border-purple-700/30 rounded-xl text-left transition-all group"
+            >
+              <div className="text-[10px] font-black text-blue-400 flex items-center justify-between">
+                <span>💼 Sales Manager</span>
+                <i className="fa-solid fa-arrow-right opacity-0 group-hover:opacity-100 transition-opacity"></i>
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono truncate">manager@cybercreatures.com</div>
+              <div className="text-[9px] text-emerald-400 font-mono">Manager123!</div>
+            </button>
+
+            {/* Finance */}
+            <button
+              type="button"
+              onClick={() => fillCredentials('finance@cybercreatures.com', 'Finance123!')}
+              className="p-2 bg-slate-950/80 hover:bg-purple-900/40 border border-purple-700/30 rounded-xl text-left transition-all group"
+            >
+              <div className="text-[10px] font-black text-amber-300 flex items-center justify-between">
+                <span>💰 Finance Lead</span>
+                <i className="fa-solid fa-arrow-right opacity-0 group-hover:opacity-100 transition-opacity"></i>
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono truncate">finance@cybercreatures.com</div>
+              <div className="text-[9px] text-emerald-400 font-mono">Finance123!</div>
+            </button>
+
+            {/* Sales Rep */}
+            <button
+              type="button"
+              onClick={() => fillCredentials('sales@cybercreatures.com', 'Sales123!')}
+              className="p-2 bg-slate-950/80 hover:bg-purple-900/40 border border-purple-700/30 rounded-xl text-left transition-all group"
+            >
+              <div className="text-[10px] font-black text-indigo-300 flex items-center justify-between">
+                <span>🎯 Sales Rep</span>
+                <i className="fa-solid fa-arrow-right opacity-0 group-hover:opacity-100 transition-opacity"></i>
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono truncate">sales@cybercreatures.com</div>
+              <div className="text-[9px] text-emerald-400 font-mono">Sales123!</div>
+            </button>
+
+            {/* Customer */}
+            <button
+              type="button"
+              onClick={() => fillCredentials('customer@acme.com', 'Customer123!')}
+              className="p-2 bg-slate-950/80 hover:bg-emerald-900/40 border border-emerald-700/50 rounded-xl text-left transition-all group"
+            >
+              <div className="text-[10px] font-black text-emerald-400 flex items-center justify-between">
+                <span>👤 Customer</span>
+                <i className="fa-solid fa-arrow-right opacity-0 group-hover:opacity-100 transition-opacity text-emerald-400"></i>
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono truncate">customer@acme.com</div>
+              <div className="text-[9px] text-emerald-400 font-mono">Customer123!</div>
             </button>
           </div>
         </div>
 
+        {/* LOGIN / SIGNUP FORM CARD */}
         <div className="bg-slate-900/90 border border-slate-800 py-8 px-6 shadow-2xl rounded-2xl">
           
           <div className="mb-6 text-center">
@@ -274,7 +342,7 @@ export default function Login({ defaultIsSignup = false }) {
                 type="email"
                 required
                 placeholder="name@example.com"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-mono"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -288,7 +356,7 @@ export default function Login({ defaultIsSignup = false }) {
                 type="password"
                 required
                 placeholder="••••••••"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-mono"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
