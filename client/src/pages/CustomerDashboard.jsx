@@ -204,7 +204,7 @@ export default function CustomerDashboard() {
               Customer Account Active
             </span>
             <h1 className="text-2xl text-white font-bold">Welcome back, {customer.name}!</h1>
-            <p className="text-sm text-text-muted mt-1">Browse admin products catalog, request quote proposals, or negotiate custom discounts with your sales rep.</p>
+            <p className="text-sm text-white mt-1">Browse admin products catalog, request quote proposals, or negotiate custom discounts with your sales rep.</p>
           </div>
 
           {/* FIRST TAB: Browse Product Catalog */}
