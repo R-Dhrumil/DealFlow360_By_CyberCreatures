@@ -14,6 +14,8 @@ const STAGES = [
 export default function Pipeline() {
   const [deals, setDeals] = useState([]);
   const [filterText, setFilterText] = useState('');
+  const [draggedDeal, setDraggedDeal] = useState(null);
+  const [confirmData, setConfirmData] = useState({ show: false, deal: null, targetStage: null });
 
   useEffect(() => {
     fetchQuotations();
@@ -47,6 +49,42 @@ export default function Pipeline() {
     d.customer.toLowerCase().includes(filterText.toLowerCase()) ||
     d.id.toLowerCase().includes(filterText.toLowerCase())
   );
+
+  const handleDrop = (targetStage) => {
+    if (!draggedDeal || draggedDeal.stage === targetStage) return;
+    setConfirmData({ show: true, deal: draggedDeal, targetStage });
+  };
+
+  const executeDropAction = async () => {
+    const { deal, targetStage } = confirmData;
+    const fromStage = deal.stage;
+    
+    try {
+      let endpoint = '';
+      
+      // Smart State Machine Mapping
+      if (fromStage === 'Draft' && (targetStage === 'Pending Approval' || targetStage === 'Pending Finance')) {
+        endpoint = `/quotations/${deal.rawId}/submit`;
+      } else if ((fromStage === 'Pending Approval' || fromStage === 'Pending Finance') && targetStage === 'Approved') {
+        endpoint = `/quotations/${deal.rawId}/approve`;
+      } else if ((fromStage === 'Pending Approval' || fromStage === 'Pending Finance') && targetStage === 'Draft') {
+        endpoint = `/quotations/${deal.rawId}/reject`;
+      } else if (fromStage === 'Approved' && targetStage === 'Confirmed') {
+        endpoint = `/quotations/${deal.rawId}/confirm`;
+      } else {
+        alert(`Invalid Pipeline Move: You cannot drag a deal directly from ${fromStage} to ${targetStage}.`);
+        setConfirmData({ show: false, deal: null, targetStage: null });
+        return;
+      }
+      
+      await api.put(endpoint);
+      setConfirmData({ show: false, deal: null, targetStage: null });
+      fetchQuotations();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to move deal. Check your permissions.');
+      setConfirmData({ show: false, deal: null, targetStage: null });
+    }
+  };
 
   return (
     <div className="p-6 md:p-8 space-y-6">
@@ -82,7 +120,15 @@ export default function Pipeline() {
           const stageTotal = stageDeals.reduce((sum, d) => sum + d.amount, 0);
 
           return (
-            <div key={stage.name} className="bg-slate-100/70 border border-surface-soft/80 rounded-xl p-3 flex flex-col min-h-[500px]">
+            <div 
+              key={stage.name} 
+              className="bg-slate-100/70 border border-surface-soft/80 rounded-xl p-3 flex flex-col min-h-[500px]"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                handleDrop(stage.name);
+              }}
+            >
               {/* Column Header */}
               <div className="flex justify-between items-center pb-3 border-b border-surface-soft mb-3">
                 <div className="flex items-center space-x-2">
@@ -101,7 +147,9 @@ export default function Pipeline() {
                 {stageDeals.map(deal => (
                   <div
                     key={deal.id}
-                    className="bg-white rounded-lg p-4 border border-surface-soft shadow-sm hover:shadow-md hover:border-primary/60 transition-all cursor-pointer group"
+                    draggable={true}
+                    onDragStart={() => setDraggedDeal(deal)}
+                    className="bg-white rounded-lg p-4 border border-surface-soft shadow-sm hover:shadow-md hover:border-primary/60 transition-all cursor-grab active:cursor-grabbing group"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <span className="text-xs font-mono font-semibold text-primary group-hover:underline">
@@ -153,6 +201,33 @@ export default function Pipeline() {
           );
         })}
       </div>
+
+      {/* Confirmation Modal */}
+      {confirmData.show && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md border border-slate-200">
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Confirm Pipeline Move</h3>
+            <p className="text-slate-600 mb-6">
+              Are you sure you want to move <strong className="text-primary">{confirmData.deal.id}</strong> ({confirmData.deal.customer}) 
+              from <span className="font-semibold">{confirmData.deal.stage}</span> to <span className="font-semibold">{confirmData.targetStage}</span>?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setConfirmData({ show: false, deal: null, targetStage: null })}
+                className="px-4 py-2 rounded-lg font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={executeDropAction}
+                className="px-4 py-2 rounded-lg font-bold text-white bg-primary hover:bg-primary/90 transition-colors shadow-sm"
+              >
+                Yes, Move Deal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
