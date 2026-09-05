@@ -1,578 +1,377 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../api/client';
 
 const LandingPage = () => {
-  const [discount, setDiscount] = useState(14);
-  const [workflowStep, setWorkflowStep] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
+  const [siteSettings, setSiteSettings] = useState({ site_name: 'DealFlow360', tagline: '', logo_url: '' });
+  const featuresRef = useRef(null);
+  const howRef = useRef(null);
+  const ctaRef = useRef(null);
 
-  // Dynamic simulated margin calculation
-  const baseMargin = 78.5;
-  const computedMargin = (baseMargin - (discount * 0.72)).toFixed(1);
+  useEffect(() => {
+    // Fetch global settings for logo
+    api.get('/settings/public')
+      .then(res => {
+        if (res.data) setSiteSettings(prev => ({ ...prev, ...res.data }));
+      })
+      .catch(() => {});
 
-  const getFinanceGateStyles = () => {
-    if (discount >= 20) {
-      return {
-        bg: 'bg-red-50 border border-[#fecaca]',
-        statusBg: 'bg-red-100 border border-[#fecaca] text-[#b91c1c]',
-        icon: 'warning',
-        text: 'VP REVOPS ESCALATION',
-      };
-    } else if (discount >= 10) {
-      return {
-        bg: 'bg-white border border-surface-soft',
-        statusBg: 'bg-red-50 border border-[#fecaca] text-[#b91c1c]',
-        icon: 'pending',
-        text: 'REQUIRED',
-      };
-    } else {
-      return {
-        bg: 'bg-white border border-surface-soft',
-        statusBg: 'bg-emerald-50 border border-[#bbf7d0] text-[#15803d]',
-        icon: 'check_circle',
-        text: 'AUTO-BYPASS',
-      };
-    }
+    const onScroll = () => setScrolled(window.scrollY > 32);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const scrollTo = (ref) => {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const financeGate = getFinanceGateStyles();
+  const steps = [
+    { num: '01', title: 'Configure', desc: 'Build quotes with AI-powered margin guardrails', icon: 'tune' },
+    { num: '02', title: 'Route', desc: 'Parallel multi-department approval matrix', icon: 'account_tree' },
+    { num: '03', title: 'Fulfill', desc: 'Multi-warehouse stock split & dispatch', icon: 'local_shipping' },
+    { num: '04', title: 'Recognize', desc: 'Consolidated billing & revenue recognition', icon: 'account_balance' },
+  ];
+
+  const features = [
+    {
+      icon: 'shield',
+      title: 'AI Margin Guardrails',
+      desc: 'Algorithmic discount ceilings evaluate blended value, win-rates, and cost spikes before any quote leaves the desk.',
+    },
+    {
+      icon: 'mediation',
+      title: 'Parallel Approval Matrix',
+      desc: 'Multi-tier approvals route concurrently across Legal, RevOps, and Engineering — no more serial bottlenecks.',
+    },
+    {
+      icon: 'conversion_path',
+      title: 'Quote-to-Cash Pipeline',
+      desc: 'From quotation to fulfillment to ASC 606 recognition, every deal stage lives on one unified transaction fabric.',
+    },
+  ];
+
+  // Derive the logo URL — handle both absolute URLs and relative paths (uploads)
+  const getLogoSrc = () => {
+    if (!siteSettings.logo_url) return null;
+    if (siteSettings.logo_url.startsWith('http')) return siteSettings.logo_url;
+    // Relative path — resolve against the API server
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    return `http://${hostname}:5001${siteSettings.logo_url}`;
+  };
+
+  const logoSrc = getLogoSrc();
 
   return (
-    <main className="min-h-screen w-full flex flex-col items-center justify-start bg-border-soft py-10 px-4 sm:px-6 lg:px-8 font-body-md text-text-main antialiased">
-      <div className="flex flex-col w-full">
-        {/* Subtle Ambient Glow Orbs behind Hero */}
-        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16 overflow-hidden">
-          <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/10 blur-3xl pointer-events-none"></div>
-          <div className="absolute top-48 -right-32 w-[28rem] h-[28rem] rounded-full bg-primary/15 blur-3xl pointer-events-none"></div>
-          
-          {/* Hero Section */}
-          <div className="relative flex flex-col items-center text-center space-y-6 max-w-4xl mx-auto">
-            {/* Eyebrow Pill */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-surface-soft text-primary text-label-sm font-label-sm shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-              <span className="tracking-wider uppercase font-bold text-primary">Enterprise Deal OS 4.0</span>
-              <span className="text-text-muted/40">/</span>
-              <span className="text-text-body font-semibold">SOC-2 Type II Certified</span>
+    <div className="min-h-screen w-full bg-border-soft text-text-main font-sans antialiased overflow-x-hidden">
+
+      {/* ─── Sticky Navigation ─── */}
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? 'bg-white/80 backdrop-blur-xl shadow-sm border-b border-surface-soft'
+          : 'bg-transparent'
+      }`}>
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2.5 group">
+            {logoSrc ? (
+              <img src={logoSrc} alt={siteSettings.site_name} className="w-8 h-8 rounded-lg object-contain" />
+            ) : (
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-on-primary font-bold text-sm shadow-sm">
+                DF
+              </div>
+            )}
+            <span className="font-bold text-text-main text-base tracking-tight">{siteSettings.site_name}</span>
+          </Link>
+
+          {/* Nav Links */}
+          <div className="hidden md:flex items-center gap-8">
+            <button onClick={() => scrollTo(featuresRef)} className="text-sm text-text-muted hover:text-primary transition-colors font-medium cursor-pointer">Features</button>
+            <button onClick={() => scrollTo(howRef)} className="text-sm text-text-muted hover:text-primary transition-colors font-medium cursor-pointer">How it Works</button>
+            <button onClick={() => scrollTo(ctaRef)} className="text-sm text-text-muted hover:text-primary transition-colors font-medium cursor-pointer">Get Started</button>
+          </div>
+
+          {/* CTA */}
+          <div className="flex items-center gap-3">
+            <Link to="/login" className="text-sm text-text-muted hover:text-primary transition-colors font-medium hidden sm:block">
+              Sign in
+            </Link>
+            <Link to="/signup" className="px-5 py-2 rounded-lg bg-primary text-on-primary text-sm font-semibold shadow-sm hover:bg-primary-dark transition-all active:scale-[0.98] cursor-pointer">
+              Start Free Trial
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* ─── Hero Section ─── */}
+      <section className="relative pt-32 pb-24 px-6 overflow-hidden">
+        {/* Ambient gradient orbs */}
+        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-primary/8 blur-3xl pointer-events-none"></div>
+        <div className="absolute top-20 -right-40 w-[450px] h-[450px] rounded-full bg-primary/12 blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-0 left-1/3 w-[350px] h-[350px] rounded-full bg-secondary/8 blur-3xl pointer-events-none"></div>
+
+        <div className="relative max-w-4xl mx-auto text-center space-y-8">
+          {/* Eyebrow */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-surface-soft shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-status animate-pulse"></span>
+            <span className="text-xs font-bold text-primary uppercase tracking-wider">Enterprise Deal OS</span>
+          </div>
+
+          {/* Headline */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-text-main tracking-tight leading-[1.1]">
+            From Quote to Cash,{' '}
+            <span className="bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
+              Zero Friction
+            </span>
+          </h1>
+
+          {/* Subheadline */}
+          <p className="text-lg sm:text-xl text-text-body max-w-2xl mx-auto leading-relaxed">
+            Unify CPQ, approvals, fulfillment, and revenue recognition on one intelligent deal engine built for modern sales teams.
+          </p>
+
+          {/* Primary CTA */}
+          <div className="pt-2">
+            <Link
+              to="/signup"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-on-primary font-bold text-base shadow-lg hover:bg-primary-dark hover:shadow-xl transition-all active:scale-[0.98] group cursor-pointer"
+            >
+              <span>Start Free Trial</span>
+              <span className="material-symbols-outlined text-on-primary transition-transform group-hover:translate-x-1">arrow_forward</span>
+            </Link>
+          </div>
+
+          {/* Floating Metrics Strip */}
+          <div className="pt-12 flex flex-wrap items-center justify-center gap-6 sm:gap-10">
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-extrabold text-text-main">4.8h</div>
+              <div className="text-xs text-text-muted font-medium mt-1">Avg Deal Velocity</div>
             </div>
-            
-            {/* Headline */}
-            <h1 className="text-headline-xl font-headline-xl text-text-main tracking-tight max-w-3xl">
-              Orchestrate Every Deal from <span className="bg-gradient-to-r from-primary via-primary-dark to-primary-dark bg-clip-text text-transparent font-extrabold">Quote to Cash</span> in Real-Time
-            </h1>
-            
-            {/* Subheadline */}
-            <p className="text-body-lg font-body-lg text-text-body max-w-2xl text-balance">
-              Unify AI-driven CPQ margin limits, matrix approvals, multi-node warehouse fulfillment, and subscription ASC 606 revenue recognition on one single sovereign deal engine.
+            <div className="w-px h-10 bg-surface-soft hidden sm:block"></div>
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-extrabold text-text-main">99.4%</div>
+              <div className="text-xs text-text-muted font-medium mt-1">Billing Accuracy</div>
+            </div>
+            <div className="w-px h-10 bg-surface-soft hidden sm:block"></div>
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-status">+$1.4M</div>
+              <div className="text-xs text-text-muted font-medium mt-1">Margin Preserved</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Social Proof Strip ─── */}
+      <section className="py-12 px-6 border-y border-surface-soft bg-white/40">
+        <div className="max-w-4xl mx-auto text-center space-y-6">
+          <p className="text-xs font-bold text-text-muted uppercase tracking-widest">Trusted by teams worldwide</p>
+          <div className="flex flex-wrap items-center justify-center gap-10 sm:gap-16 opacity-40">
+            {/* Simple abstract SVG logos */}
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="text-text-main">
+              <rect x="4" y="4" width="14" height="14" rx="3" fill="currentColor" opacity="0.7"/>
+              <rect x="22" y="4" width="14" height="14" rx="3" fill="currentColor" opacity="0.4"/>
+              <rect x="4" y="22" width="14" height="14" rx="3" fill="currentColor" opacity="0.4"/>
+              <rect x="22" y="22" width="14" height="14" rx="3" fill="currentColor" opacity="0.7"/>
+            </svg>
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="text-text-main">
+              <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" opacity="0.6"/>
+              <circle cx="20" cy="20" r="6" fill="currentColor" opacity="0.7"/>
+            </svg>
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="text-text-main">
+              <polygon points="20,4 36,36 4,36" stroke="currentColor" strokeWidth="2.5" fill="none" opacity="0.6"/>
+              <circle cx="20" cy="24" r="4" fill="currentColor" opacity="0.5"/>
+            </svg>
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="text-text-main">
+              <path d="M20 4 L36 14 L36 28 L20 38 L4 28 L4 14 Z" stroke="currentColor" strokeWidth="2.5" fill="none" opacity="0.6"/>
+            </svg>
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="text-text-main">
+              <rect x="6" y="10" width="28" height="20" rx="4" stroke="currentColor" strokeWidth="2.5" fill="none" opacity="0.6"/>
+              <line x1="6" y1="18" x2="34" y2="18" stroke="currentColor" strokeWidth="2" opacity="0.4"/>
+              <circle cx="14" cy="26" r="3" fill="currentColor" opacity="0.5"/>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Features ─── */}
+      <section ref={featuresRef} className="py-24 px-6 scroll-mt-20">
+        <div className="max-w-6xl mx-auto space-y-16">
+          {/* Section header */}
+          <div className="text-center max-w-2xl mx-auto space-y-4">
+            <span className="text-xs font-bold text-primary uppercase tracking-widest">Core Capabilities</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-text-main tracking-tight">
+              Everything your deal desk needs
+            </h2>
+            <p className="text-text-body text-base leading-relaxed">
+              Legacy CPQs stop at quotes. ERPs fail at deal velocity. DealFlow360 unites both worlds.
             </p>
-            
-            {/* CTAs */}
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-              <Link to="/login" className="px-7 py-3.5 rounded-lg bg-primary text-white font-headline-sm text-headline-sm shadow-lg hover:bg-primary-dark transition-all flex items-center gap-2 group cursor-pointer">
-                <span>Start Free Trial</span>
-                <span className="material-symbols-outlined text-white transition-transform group-hover:translate-x-1">arrow_forward</span>
-              </Link>
-              <button className="px-6 py-3.5 rounded-lg bg-white border border-surface-soft text-primary font-headline-sm text-headline-sm shadow-sm hover:bg-border-soft hover:border-primary/30 transition-all flex items-center gap-2.5">
-                <span className="w-6 h-6 rounded-full bg-border-soft flex items-center justify-center text-primary">
-                  <span className="material-symbols-outlined text-sm" style={{fontVariationSettings: "'FILL' 1"}}>play_arrow</span>
+          </div>
+
+          {/* Feature cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {features.map((f, i) => (
+              <div
+                key={i}
+                className="group p-8 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col gap-5"
+              >
+                <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/15 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-300">
+                  <span className="material-symbols-outlined text-xl">{f.icon}</span>
+                </div>
+                <h3 className="text-lg font-bold text-text-main">{f.title}</h3>
+                <p className="text-sm text-text-body leading-relaxed flex-1">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── How It Works ─── */}
+      <section ref={howRef} className="py-24 px-6 bg-white border-y border-surface-soft scroll-mt-20">
+        <div className="max-w-5xl mx-auto space-y-16">
+          <div className="text-center max-w-2xl mx-auto space-y-4">
+            <span className="text-xs font-bold text-primary uppercase tracking-widest">How It Works</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-text-main tracking-tight">
+              Four steps. One seamless pipeline.
+            </h2>
+          </div>
+
+          {/* Stepper */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {steps.map((step, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveStep(i)}
+                className={`relative text-left p-6 rounded-2xl transition-all duration-300 cursor-pointer group ${
+                  activeStep === i
+                    ? 'bg-primary text-on-primary shadow-lg scale-[1.02]'
+                    : 'bg-border-soft border border-surface-soft hover:border-primary/30 hover:bg-white'
+                }`}
+              >
+                {/* Step number */}
+                <span className={`text-xs font-bold tracking-widest uppercase ${
+                  activeStep === i ? 'text-on-primary/60' : 'text-text-muted'
+                }`}>
+                  Step {step.num}
                 </span>
-                <span>Watch 2-Min Interactive Demo</span>
+
+                {/* Icon */}
+                <div className={`mt-4 w-10 h-10 rounded-lg flex items-center justify-center ${
+                  activeStep === i
+                    ? 'bg-on-primary/20 text-on-primary'
+                    : 'bg-primary/10 text-primary'
+                }`}>
+                  <span className="material-symbols-outlined text-lg">{step.icon}</span>
+                </div>
+
+                {/* Content */}
+                <h3 className={`mt-4 text-lg font-bold ${
+                  activeStep === i ? 'text-on-primary' : 'text-text-main'
+                }`}>
+                  {step.title}
+                </h3>
+                <p className={`mt-2 text-sm leading-relaxed ${
+                  activeStep === i ? 'text-on-primary/80' : 'text-text-muted'
+                }`}>
+                  {step.desc}
+                </p>
+
+                {/* Active indicator */}
+                {activeStep === i && (
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 rounded-full bg-primary ring-4 ring-white"></div>
+                )}
               </button>
-            </div>
-            
-            {/* Enterprise Client Badges */}
-            <div className="pt-10 w-full flex flex-col items-center space-y-4">
-              <span className="text-label-sm font-label-sm text-text-muted uppercase tracking-widest font-semibold">Trusted by Global Deal Desks &amp; RevOps Teams</span>
-              <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-85">
-                <div className="flex items-center gap-2 text-text-body font-headline-md text-headline-md tracking-wider">
-                  <span className="material-symbols-outlined text-primary">diamond</span>
-                  <span className="font-headline-md font-bold text-text-main">ACME CORP</span>
-                </div>
-                <div className="flex items-center gap-2 text-text-body font-headline-md text-headline-md tracking-wider">
-                  <span className="material-symbols-outlined text-primary">token</span>
-                  <span className="font-headline-md font-bold text-text-main">NOVA RETAIL</span>
-                </div>
-                <div className="flex items-center gap-2 text-text-body font-headline-md text-headline-md tracking-wider">
-                  <span className="material-symbols-outlined text-primary">polyline</span>
-                  <span className="font-headline-md font-bold text-text-main">ZENITH</span>
-                </div>
-                <div className="flex items-center gap-2 text-text-body font-headline-md text-headline-md tracking-wider">
-                  <span className="material-symbols-outlined text-primary">hub</span>
-                  <span className="font-headline-md font-bold text-text-main">ORION TECH</span>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* Live Interactive CPQ & Margin Calculator Preview */}
-          <div className="mt-14 max-w-5xl mx-auto rounded-xl bg-white border border-surface-soft p-5 sm:p-7 shadow-xl">
-            <div className="flex flex-wrap items-center justify-between gap-4 pb-4 bg-border-soft border border-surface-soft px-4 py-3 rounded-lg mb-6">
-              <div className="flex items-center gap-3">
-                <span className="w-3 h-3 rounded-full bg-[#15803d]"></span>
-                <span className="text-headline-sm font-headline-sm text-text-main">Deal #OR-8921 // CloudCore Global Rollout</span>
-                <span className="px-2.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-label-sm text-label-sm uppercase tracking-wide font-bold">Dynamic Simulation</span>
-              </div>
-              <div className="flex items-center gap-2 text-label-sm font-label-sm text-text-body">
-                <span className="material-symbols-outlined text-base text-[#15803d]">verified</span>
-                <span className="font-bold text-text-main">Target Contract ACV: $428,500</span>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Live Deal Parameters */}
-              <div className="space-y-4 bg-border-soft border border-surface-soft p-4 rounded-lg">
-                <span className="text-label-md font-label-md text-text-muted uppercase tracking-wider block font-bold">1. Deal Composition &amp; Discounting</span>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-body-sm font-body-sm text-text-body">
-                    <span>Platform Tier Seats (500 Enterprise)</span>
-                    <span className="font-data-tabular text-data-tabular text-text-main font-bold">$180,000</span>
-                  </div>
-                  <div className="flex justify-between text-body-sm font-body-sm text-text-body">
-                    <span>Edge Rack Hardware (8 Units)</span>
-                    <span className="font-data-tabular text-data-tabular text-text-main font-bold">$164,000</span>
-                  </div>
-                  <div className="flex justify-between text-body-sm font-body-sm text-text-body">
-                    <span>24/7 Mission-Critical SLA</span>
-                    <span className="font-data-tabular text-data-tabular text-text-main font-bold">$84,500</span>
-                  </div>
-                </div>
-                <div className="pt-2 space-y-2 border-t border-surface-soft">
-                  <div className="flex justify-between text-body-sm font-body-sm">
-                    <span className="text-text-body font-medium">Contract Discount Override</span>
-                    <span className="text-primary font-data-tabular text-data-tabular font-bold">{discount}%</span>
-                  </div>
-                  <input 
-                    className="w-full accent-primary cursor-pointer h-2 bg-purple-200 rounded-lg appearance-none" 
-                    max="35" min="0" type="range" 
-                    value={discount} 
-                    onChange={(e) => setDiscount(Number(e.target.value))}
-                  />
-                  <div className="flex justify-between text-body-sm font-body-sm text-text-muted">
-                    <span>0% (Standard)</span>
-                    <span className="text-[#b91c1c] font-semibold">25%+ (VP RevOps Flag)</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Real-Time Margin & Gate Visualizer */}
-              <div className="space-y-4 bg-border-soft border border-surface-soft p-4 rounded-lg flex flex-col justify-between">
-                <div>
-                  <span className="text-label-md font-label-md text-text-muted uppercase tracking-wider block font-bold">2. Blended Margin Health</span>
-                  <div className="mt-4 flex items-baseline justify-between">
-                    <span className="text-headline-md font-headline-md text-text-main">Gross Margin</span>
-                    <span className="text-data-metric font-data-metric text-[#15803d]">{computedMargin}%</span>
-                  </div>
-                  {/* Dynamic Progress Bar */}
-                  <div className="w-full bg-surface-soft h-3 rounded-full overflow-hidden mt-2">
-                    <div className="h-full bg-gradient-to-r from-primary to-[#15803d] transition-all duration-300" style={{ width: `${computedMargin}%` }}></div>
-                  </div>
-                </div>
-                {/* Calculated Leakage & Protection */}
-                <div className="p-3 bg-white border border-[#bbf7d0] rounded-lg flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#15803d]">security</span>
-                    <span className="text-body-sm font-body-sm text-text-main font-medium">Margin Floor Protected</span>
-                  </div>
-                  <span className="text-data-tabular font-data-tabular text-[#15803d] font-bold">+$24,180 Preserved</span>
-                </div>
-              </div>
-
-              {/* Route Status Matrix */}
-              <div className="space-y-4 bg-border-soft border border-surface-soft p-4 rounded-lg flex flex-col justify-between">
-                <div>
-                  <span className="text-label-md font-label-md text-text-muted uppercase tracking-wider block font-bold">3. Autonomous Route Evaluation</span>
-                  <div className="mt-3 space-y-2.5">
-                    <div className="flex items-center justify-between p-2 rounded bg-white border border-surface-soft text-body-sm font-body-sm">
-                      <span className="text-text-main font-medium">Software Auto-Sign</span>
-                      <span className="flex items-center gap-1 text-[#15803d] bg-emerald-50 px-2 py-0.5 rounded border border-[#bbf7d0] text-label-sm font-label-sm font-bold">
-                        <span className="material-symbols-outlined text-xs">check_circle</span> PASSED
-                      </span>
-                    </div>
-                    <div className={`flex items-center justify-between p-2 rounded text-body-sm font-body-sm ${financeGate.bg}`}>
-                      <span className="text-text-main font-medium">Finance Tier 2 Approval</span>
-                      <span className={`flex items-center gap-1 px-2 py-0.5 rounded text-label-sm font-label-sm font-bold ${financeGate.statusBg}`}>
-                        <span className="material-symbols-outlined text-xs">{financeGate.icon}</span> {financeGate.text}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded bg-white border border-surface-soft text-body-sm font-body-sm">
-                      <span className="text-text-main font-medium">Stock Availability Check</span>
-                      <span className="flex items-center gap-1 text-[#15803d] bg-emerald-50 px-2 py-0.5 rounded border border-[#bbf7d0] text-label-sm font-label-sm font-bold">
-                        <span className="material-symbols-outlined text-xs">warehouse</span> ALLOCATED (US-EAST)
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <button className="w-full py-2.5 rounded bg-white border border-primary text-primary text-label-md font-label-md hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2 font-bold shadow-sm">
-                  <span className="material-symbols-outlined text-sm text-[#c2410c]">bolt</span>
-                  <span>Simulate Route Execution</span>
-                </button>
-              </div>
-            </div>
+          {/* Connector line (desktop only) */}
+          <div className="hidden lg:block relative -mt-12 mx-auto max-w-3xl">
+            <div className="h-0.5 bg-surface-soft w-full"></div>
+            <div className="h-0.5 bg-primary transition-all duration-500" style={{ width: `${((activeStep + 1) / 4) * 100}%` }}></div>
           </div>
         </div>
+      </section>
 
-        {/* Real-World Enterprise Proof Imagery & Metrics Strip */}
-        <div className="w-full bg-border-soft py-12 px-4 sm:px-6 lg:px-8 mt-6">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div className="p-6 rounded-xl bg-white border border-surface-soft shadow-sm">
-              <div className="flex justify-center mb-2">
-                <span className="material-symbols-outlined text-primary text-headline-lg font-headline-lg">timer</span>
-              </div>
-              <div className="text-data-metric font-data-metric text-text-main">4.8h</div>
-              <div className="text-headline-sm font-headline-sm text-primary mt-1">Average Deal Velocity</div>
-              <p className="text-body-sm font-body-sm text-text-body mt-2">Down from 12 business days. Complex matrix authorizations route concurrently in parallel queues.</p>
-            </div>
-            <div className="p-6 rounded-xl bg-white border border-surface-soft shadow-sm">
-              <div className="flex justify-center mb-2">
-                <span className="material-symbols-outlined text-[#15803d] text-headline-lg font-headline-lg">receipt_long</span>
-              </div>
-              <div className="text-data-metric font-data-metric text-text-main">99.4%</div>
-              <div className="text-headline-sm font-headline-sm text-[#15803d] mt-1">Billing &amp; Ledger Accuracy</div>
-              <p className="text-body-sm font-body-sm text-text-body mt-2">Zero unbilled hardware shipments and automatic proration across multi-year SaaS milestones.</p>
-            </div>
-            <div className="p-6 rounded-xl bg-white border border-surface-soft shadow-sm">
-              <div className="flex justify-center mb-2">
-                <span className="material-symbols-outlined text-[#15803d] text-headline-lg font-headline-lg">savings</span>
-              </div>
-              <div className="text-data-metric font-data-metric text-[#15803d]">+$1.4M</div>
-              <div className="text-headline-sm font-headline-sm text-primary mt-1">Preserved Margin Leakage</div>
-              <p className="text-body-sm font-body-sm text-text-body mt-2">AI discount guardrails instantly stop unvetted contract concessions prior to e-signature submission.</p>
-            </div>
-          </div>
-        </div>
+      {/* ─── Final CTA Banner ─── */}
+      <section ref={ctaRef} className="py-24 px-6 scroll-mt-20">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative rounded-2xl bg-primary p-10 sm:p-16 shadow-xl overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute -right-24 -bottom-24 w-72 h-72 rounded-full bg-primary-dark/40 blur-2xl pointer-events-none"></div>
+            <div className="absolute -left-16 -top-16 w-56 h-56 rounded-full bg-on-primary/5 blur-2xl pointer-events-none"></div>
 
-        {/* 4 Core Pillars / Value Proposition Bento Grid */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full space-y-12">
-          <div className="text-center max-w-3xl mx-auto space-y-3">
-            <span className="text-label-sm font-label-sm uppercase tracking-widest text-primary font-bold">Full Stack Deal Infrastructure</span>
-            <h2 className="text-headline-lg font-headline-lg text-text-main">Engineered for Complex Products, Tangible Assets, and Global Recurring Rev</h2>
-            <p className="text-body-md font-body-md text-text-body">Legacy CPQs stop at quotes. Modern ERPs fail at deal velocity. DealFlow360 unites both worlds into a single executable transaction fabric.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Pillar 1 */}
-            <div className="rounded-xl bg-white border border-surface-soft p-8 shadow-sm flex flex-col justify-between relative overflow-hidden group">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-lg bg-border-soft border border-surface-soft flex items-center justify-center text-primary">
-                  <span className="material-symbols-outlined text-headline-md font-headline-md">tune</span>
-                </div>
-                <h3 className="text-headline-md font-headline-md text-text-main">1. Dynamic CPQ &amp; AI Margin Optimization</h3>
-                <p className="text-body-md font-body-md text-text-body leading-relaxed">
-                  Algorithmic discount ceiling guardrails evaluate blended customer lifetime value, historical win rates, and raw material cost spikes before quoting. Stop leaving money on the negotiating table.
-                </p>
-                <div className="pt-2 space-y-2">
-                  <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                    <span className="material-symbols-outlined text-[#15803d] text-base">check_circle</span>
-                    <span>Contextual discount floors tied to ARR commitment length</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                    <span className="material-symbols-outlined text-[#15803d] text-base">check_circle</span>
-                    <span>Predictive bill-of-materials cost recalculation at checkout</span>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-8 rounded-lg overflow-hidden h-44 w-full border border-surface-soft">
-                <img alt="Dashboard visual" className="w-full h-full object-cover rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgX7Iv5zk1kGCdO4WOxAszjb_rupCCyEKg2YGPCnj6X4rqz_R1SC6-zPG0geqGIKY_EADFEBnGmpoot8GyVZ2O0w3zYcPvpFvjD4ucxEX7FFiKWjviQA9y3jx7zHnYtK4Xwq8ILNvBCp-DaVIPqG-x9lga45PstndJpunJ01mWdhQu9_BIhZ0YLUGUsN76vW92Nh-XWi3viZswvSptndmyFMqtbXtiZTZhOlqyJYie2anVJ550eikgww"/>
-              </div>
-            </div>
-
-            {/* Pillar 2 */}
-            <div className="rounded-xl bg-white border border-surface-soft p-8 shadow-sm flex flex-col justify-between relative overflow-hidden group">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-lg bg-border-soft border border-surface-soft flex items-center justify-center text-primary">
-                  <span className="material-symbols-outlined text-headline-md font-headline-md">account_tree</span>
-                </div>
-                <h3 className="text-headline-md font-headline-md text-text-main">2. Blended Risk Matrix Approvals</h3>
-                <p className="text-body-md font-body-md text-text-body leading-relaxed">
-                  Eliminate cross-departmental bottlenecks. Multi-tier approval matrices instantly parse deals containing mixed elements (recurring software licenses, physical equipment, and custom professional services).
-                </p>
-                <div className="pt-2 space-y-2">
-                  <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                    <span className="material-symbols-outlined text-[#15803d] text-base">check_circle</span>
-                    <span>Parallel reviews across Legal, RevOps, and Solutions Engineering</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                    <span className="material-symbols-outlined text-[#15803d] text-base">check_circle</span>
-                    <span>One-click Slack and Microsoft Teams mobile signing webhooks</span>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-8 rounded-lg overflow-hidden h-44 w-full border border-surface-soft">
-                <img alt="Node workflow graph" className="w-full h-full object-cover rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBYd7EETUzYsZ8PHdQIsnRXc7hCDpEddVjZ-HI3MZj1Ic4XoLydLVe7gq6lEZagXGyvFR-zSdROdXgTGvY4a2-q7n5mdQcCxFca5Td9ZePCvym2jYl7uQe34b_onSFHzow8hfijns8UrhYBoXZYrux8xIp_pmjfa4PkO_UIBQa-Qj5fcy8J0_f9TUiLGSnaBrH2VZIenbFcvlwUgvcO6UjzN0EtXaedzsyFMyIoZC8Ea9WAENmlCofVQ"/>
-              </div>
-            </div>
-
-            {/* Pillar 3 */}
-            <div className="rounded-xl bg-white border border-surface-soft p-8 shadow-sm flex flex-col justify-between relative overflow-hidden group">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-lg bg-border-soft border border-surface-soft flex items-center justify-center text-primary">
-                  <span className="material-symbols-outlined text-headline-md font-headline-md">forklift</span>
-                </div>
-                <h3 className="text-headline-md font-headline-md text-text-main">3. Distributed Inventory &amp; Smart Fulfillment</h3>
-                <p className="text-body-md font-body-md text-text-body leading-relaxed">
-                  Bridge digital software licenses with real-world supply chain commitments. DealFlow360 splits hardware lines, reserves warehouse stock, and dispatches split shipments without pausing the quote flow.
-                </p>
-                <div className="pt-2 space-y-2">
-                  <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                    <span className="material-symbols-outlined text-[#15803d] text-base">check_circle</span>
-                    <span>Multi-warehouse automated allocation based on customer geo-proximity</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                    <span className="material-symbols-outlined text-[#15803d] text-base">check_circle</span>
-                    <span>Automated backorder holds and partial delivery notifications</span>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-8 rounded-lg overflow-hidden h-44 w-full border border-surface-soft">
-                <img alt="Logistics map" className="w-full h-full object-cover rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAK4NJOHXu90ND0ybRgb-rbd05SVbqazFmcBp9s9Hp8Yy9Tu7_nugm0b4Al_SWcHS3yX50cBRWLJ-wB055MoeglyhOHEaub3EsnOqLpqgOPoJaJgL0GWYFK_taaH0rr1kinDkHcFRaxWRWKb2PCiugYn_dpTt7VhfW6cvt3WVuSH69D3bDvqaH84qtmDIw8NgNWNSG5RcHULAPFPU8EPUqPjNytQO2YglaCbLdPsRGU4nmgy76AGuN_Fg"/>
-              </div>
-            </div>
-
-            {/* Pillar 4 */}
-            <div className="rounded-xl bg-white border border-surface-soft p-8 shadow-sm flex flex-col justify-between relative overflow-hidden group">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-lg bg-border-soft border border-surface-soft flex items-center justify-center text-primary">
-                  <span className="material-symbols-outlined text-headline-md font-headline-md">account_balance_wallet</span>
-                </div>
-                <h3 className="text-headline-md font-headline-md text-text-main">4. Unified Billing &amp; ASC 606 Recognition</h3>
-                <p className="text-body-md font-body-md text-text-body leading-relaxed">
-                  Consolidate ongoing subscriptions with one-off milestone billing and partial shipment invoices. Seamlessly feed compliant journal entries straight into NetSuite, SAP, or QuickBooks.
-                </p>
-                <div className="pt-2 space-y-2">
-                  <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                    <span className="material-symbols-outlined text-[#15803d] text-base">check_circle</span>
-                    <span>Automated deferred revenue amortization schedules</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                    <span className="material-symbols-outlined text-[#15803d] text-base">check_circle</span>
-                    <span>Prorated mid-term contract co-terming and seat upgrades</span>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-8 rounded-lg overflow-hidden h-44 w-full border border-surface-soft">
-                <img alt="Billing ledger" className="w-full h-full object-cover rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAR1_44Hss1D4913FudvsHmEzSJdja5XvTDp0Q3VD0yL3dk_Gggc9THJ4i9eCVMjbhjk_XwOsmc1eM-YPtcIx1wBtDTXsOEkJzG8BhkKojPR2-JJi5wdrDxPijI4GGmOC78wvCdA9otLNyJ24KEdhz4y180Kj_cTN_tfk0LhBibTlfRFbsBmDYW8p82fiwydLsZLhupEvt3o9bb5hnslHBwwPKlrkypfFQ45wIwjLkX7zFNzfxCQCZ0Sw"/>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Interactive Live Deal Trace: End-to-End Workflow Execution */}
-        <div className="w-full bg-border-soft border-y border-surface-soft py-20 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto space-y-12">
-            <div className="text-center max-w-3xl mx-auto space-y-3">
-              <span className="text-label-sm font-label-sm uppercase tracking-widest text-primary font-bold">Unified Pipeline In Action</span>
-              <h2 className="text-headline-lg font-headline-lg text-text-main">Trace an Enterprise Deal from Quote to Cash</h2>
-              <p className="text-body-md font-body-md text-text-body">Experience how DealFlow360 connects previously disjointed tools into a contiguous, zero-friction automated pipeline.</p>
-            </div>
-            
-            {/* Workflow Timeline Navigator */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <button 
-                className={`p-4 rounded-xl text-left transition-all flex flex-col space-y-2 ${workflowStep === 0 ? 'bg-white border-2 border-primary shadow-sm' : 'bg-white/70 border border-surface-soft hover:bg-white hover:border-primary/50'}`}
-                onClick={() => setWorkflowStep(0)}
-              >
-                <span className={`text-label-sm font-label-sm font-bold ${workflowStep === 0 ? 'text-primary' : 'text-text-muted'}`}>PHASE 01</span>
-                <span className="text-headline-sm font-headline-sm text-text-main">Quotation Creation</span>
-                <span className="text-body-sm font-body-sm text-text-body">CPQ configuration with live margin protection</span>
-              </button>
-              <button 
-                className={`p-4 rounded-xl text-left transition-all flex flex-col space-y-2 ${workflowStep === 1 ? 'bg-white border-2 border-primary shadow-sm' : 'bg-white/70 border border-surface-soft hover:bg-white hover:border-primary/50'}`}
-                onClick={() => setWorkflowStep(1)}
-              >
-                <span className={`text-label-sm font-label-sm font-bold ${workflowStep === 1 ? 'text-primary' : 'text-text-muted'}`}>PHASE 02</span>
-                <span className="text-headline-sm font-headline-sm text-text-main">Blended Routing</span>
-                <span className="text-body-sm font-body-sm text-text-body">Concurrent multi-department sign-offs</span>
-              </button>
-              <button 
-                className={`p-4 rounded-xl text-left transition-all flex flex-col space-y-2 ${workflowStep === 2 ? 'bg-white border-2 border-primary shadow-sm' : 'bg-white/70 border border-surface-soft hover:bg-white hover:border-primary/50'}`}
-                onClick={() => setWorkflowStep(2)}
-              >
-                <span className={`text-label-sm font-label-sm font-bold ${workflowStep === 2 ? 'text-primary' : 'text-text-muted'}`}>PHASE 03</span>
-                <span className="text-headline-sm font-headline-sm text-text-main">Multi-Warehouse Fulfillment</span>
-                <span className="text-body-sm font-body-sm text-text-body">Automated stock split &amp; tracking synch</span>
-              </button>
-              <button 
-                className={`p-4 rounded-xl text-left transition-all flex flex-col space-y-2 ${workflowStep === 3 ? 'bg-white border-2 border-primary shadow-sm' : 'bg-white/70 border border-surface-soft hover:bg-white hover:border-primary/50'}`}
-                onClick={() => setWorkflowStep(3)}
-              >
-                <span className={`text-label-sm font-label-sm font-bold ${workflowStep === 3 ? 'text-primary' : 'text-text-muted'}`}>PHASE 04</span>
-                <span className="text-headline-sm font-headline-sm text-text-main">Consolidated Ledger</span>
-                <span className="text-body-sm font-body-sm text-text-body">ASC 606 revenue recognition &amp; invoicing</span>
-              </button>
-            </div>
-            
-            {/* Step Content Display Window */}
-            <div className="p-6 sm:p-8 rounded-xl bg-white border border-surface-soft shadow-lg">
-              {workflowStep === 0 && (
-                <div className="step-panel grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                  <div className="space-y-4">
-                    <span className="px-3 py-1 rounded bg-border-soft text-primary border border-surface-soft text-label-sm font-label-sm uppercase tracking-wider font-bold">Dynamic CPQ Stage</span>
-                    <h3 className="text-headline-md font-headline-md text-text-main">Algorithmic Deal Building Without Spreadsheets</h3>
-                    <p className="text-body-md font-body-md text-text-body">Sales reps compose multi-year subscriptions alongside physical appliances. Dynamic pricing guardrails instantly compute unit costs, delivery tariffs, and partner margins, alerting the rep before discounts violate corporate margin policies.</p>
-                    <div className="space-y-2 pt-2">
-                      <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                        <span className="material-symbols-outlined text-[#15803d]">task_alt</span>
-                        <span>Automated bundle compatibility checks prevent invalid orders</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                        <span className="material-symbols-outlined text-[#15803d]">task_alt</span>
-                        <span>Direct CRM quote sync (Salesforce, HubSpot, Microsoft Dynamics)</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-5 rounded-lg bg-border-soft border border-surface-soft space-y-3">
-                    <div className="flex justify-between text-body-sm font-body-sm text-text-main">
-                      <span className="font-medium">SKU: ENT-SERVER-GEN4</span>
-                      <span className="text-[#15803d] font-data-tabular font-bold">24 Units Allocated</span>
-                    </div>
-                    <div className="flex justify-between text-body-sm font-body-sm text-text-main">
-                      <span className="font-medium">SKU: SAAS-CORE-SEATS</span>
-                      <span className="text-[#15803d] font-data-tabular font-bold">1,200 Annual Licenses</span>
-                    </div>
-                    <div className="w-full bg-white border border-[#bbf7d0] p-3 rounded text-body-sm font-body-sm text-text-body flex justify-between">
-                      <span className="font-medium text-text-main">Calculated Deal Margin</span>
-                      <span className="text-[#15803d] font-data-tabular font-bold">71.2% (Standard Clearance)</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {workflowStep === 1 && (
-                <div className="step-panel grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                  <div className="space-y-4">
-                    <span className="px-3 py-1 rounded bg-border-soft text-primary border border-surface-soft text-label-sm font-label-sm uppercase tracking-wider font-bold">Approval Matrix Stage</span>
-                    <h3 className="text-headline-md font-headline-md text-text-main">Parallel Multi-Disciplinary Routing</h3>
-                    <p className="text-body-md font-body-md text-text-body">Say goodbye to linear approval chains where deals languish for weeks. Deals automatically branch: non-standard SLA clauses route to Legal, custom hardware specs to Engineering, and discount overrides to RevOps—all concurrently.</p>
-                    <div className="space-y-2 pt-2">
-                      <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                        <span className="material-symbols-outlined text-[#15803d]">task_alt</span>
-                        <span>SLA escalation rules re-assign stalled approvals after 4 hours</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                        <span className="material-symbols-outlined text-[#15803d]">task_alt</span>
-                        <span>Audit-trailed immutable change-log with e-signature pairing</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-5 rounded-lg bg-border-soft border border-surface-soft space-y-3">
-                    <div className="flex items-center justify-between p-2.5 rounded bg-white border border-surface-soft text-body-sm">
-                      <span className="text-text-main font-medium">General Counsel (Indemnity Clause)</span>
-                      <span className="text-[#15803d] font-label-sm font-bold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded border border-[#bbf7d0]"><span className="material-symbols-outlined text-xs">done_all</span> APPROVED</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2.5 rounded bg-white border border-surface-soft text-body-sm">
-                      <span className="text-text-main font-medium">VP of Sales Operations (18% Discount)</span>
-                      <span className="text-[#15803d] font-label-sm font-bold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded border border-[#bbf7d0]"><span className="material-symbols-outlined text-xs">done_all</span> APPROVED</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2.5 rounded bg-white border border-surface-soft text-body-sm">
-                      <span className="text-text-main font-medium">Security &amp; InfoSec Compliance</span>
-                      <span className="text-[#15803d] font-label-sm font-bold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded border border-[#bbf7d0]"><span className="material-symbols-outlined text-xs">done_all</span> APPROVED</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {workflowStep === 2 && (
-                <div className="step-panel grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                  <div className="space-y-4">
-                    <span className="px-3 py-1 rounded bg-border-soft text-primary border border-surface-soft text-label-sm font-label-sm uppercase tracking-wider font-bold">Logistics Dispatch Stage</span>
-                    <h3 className="text-headline-md font-headline-md text-text-main">Autonomous Multi-Facility Stock Split</h3>
-                    <p className="text-body-md font-body-md text-text-body">The instant contracts are executed, hardware lines transform into warehouse pick-and-pack orders across your fulfillment hubs without human manual entry, while software seats instantly provision via SCIM.</p>
-                    <div className="space-y-2 pt-2">
-                      <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                        <span className="material-symbols-outlined text-[#15803d]">task_alt</span>
-                        <span>Split order tracking synchronized directly to buyer's portal</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                        <span className="material-symbols-outlined text-[#15803d]">task_alt</span>
-                        <span>Automated 3PL connector (FedEx, DHL, ShipBob, SAP EWM)</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-5 rounded-lg bg-border-soft border border-surface-soft space-y-3">
-                    <div className="p-3 rounded bg-white border border-surface-soft text-body-sm space-y-1">
-                      <div className="flex justify-between font-medium text-text-main">
-                        <span>Warehouse Hub #1 (Frankfurt)</span>
-                        <span className="text-[#15803d] font-data-tabular font-bold">Dispatched 14 Racks</span>
-                      </div>
-                      <div className="text-text-muted text-label-sm">Tracking: DHL-EX-990218-DE</div>
-                    </div>
-                    <div className="p-3 rounded bg-white border border-surface-soft text-body-sm space-y-1">
-                      <div className="flex justify-between font-medium text-text-main">
-                        <span>Warehouse Hub #2 (Newark)</span>
-                        <span className="text-[#15803d] font-data-tabular font-bold">Dispatched 10 Racks</span>
-                      </div>
-                      <div className="text-text-muted text-label-sm">Tracking: FDX-PRIORITY-448102</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {workflowStep === 3 && (
-                <div className="step-panel grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                  <div className="space-y-4">
-                    <span className="px-3 py-1 rounded bg-border-soft text-primary border border-surface-soft text-label-sm font-label-sm uppercase tracking-wider font-bold">Financial Reconciliation</span>
-                    <h3 className="text-headline-md font-headline-md text-text-main">Consolidated Invoicing &amp; ASC 606 Amortization</h3>
-                    <p className="text-body-md font-body-md text-text-body">Hardware delivery confirmations trigger immediate partial asset invoicing, while recurring platform tiers amortize neatly onto deferred revenue waterfalls compliant with international audit standards.</p>
-                    <div className="space-y-2 pt-2">
-                      <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                        <span className="material-symbols-outlined text-[#15803d]">task_alt</span>
-                        <span>One-click journal entries pushed straight to NetSuite &amp; Workday</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-body-sm font-body-sm text-text-main">
-                        <span className="material-symbols-outlined text-[#15803d]">task_alt</span>
-                        <span>Automatic multi-currency VAT &amp; sales tax reconciliation</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-5 rounded-lg bg-border-soft border border-surface-soft space-y-3">
-                    <div className="flex justify-between text-body-sm font-body-sm">
-                      <span className="text-text-main font-bold">Consolidated Invoice #INV-2025-09</span>
-                      <span className="text-primary font-data-tabular font-bold">$428,500.00</span>
-                    </div>
-                    <div className="w-full bg-white border border-surface-soft p-3 rounded space-y-2">
-                      <div className="flex justify-between text-label-sm font-label-sm text-text-body">
-                        <span>Delivered Hardware (Immediate Rev)</span>
-                        <span className="text-text-main font-data-tabular font-semibold">$164,000.00</span>
-                      </div>
-                      <div className="flex justify-between text-label-sm font-label-sm text-text-body">
-                        <span>Recognized Month 1 SaaS Subscription</span>
-                        <span className="text-text-main font-data-tabular font-semibold">$15,000.00</span>
-                      </div>
-                      <div className="flex justify-between text-label-sm font-label-sm text-primary font-semibold">
-                        <span>Deferred ARR (ASC 606 Schedule)</span>
-                        <span className="font-data-tabular font-bold">$249,500.00</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Final Conversion Banner */}
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20" id="trial">
-          <div className="rounded-xl bg-primary p-8 sm:p-14 shadow-xl relative overflow-hidden text-white">
-            <div className="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-primary-dark/40 blur-2xl pointer-events-none"></div>
-            <div className="max-w-3xl mx-auto text-center space-y-6 relative z-10">
-              <span className="text-label-sm font-label-sm uppercase tracking-widest text-on-primary font-bold">Zero Friction Deployment</span>
-              <h2 className="text-headline-lg font-headline-lg text-white font-extrabold">
-                Ready to Modernize Your Enterprise Deal Lifecycle?
+            <div className="relative z-10 max-w-2xl mx-auto text-center space-y-6">
+              <span className="text-xs font-bold text-on-primary/70 uppercase tracking-widest">Zero Friction Deployment</span>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-on-primary tracking-tight leading-tight">
+                Ready to modernize your deal lifecycle?
               </h2>
-              <p className="text-body-lg font-body-lg text-on-primary/90 max-w-2xl mx-auto">
-                Deploy DealFlow360 across your revenue operations team in under 14 days. Plug directly into your existing CRM, ERP, and logistics infrastructure.
+              <p className="text-on-primary/80 text-base sm:text-lg leading-relaxed">
+                Deploy across your revenue operations team in under 14 days. Plug directly into your existing CRM and ERP.
               </p>
-              
-              <form className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-lg mx-auto pt-4" onSubmit={(e) => { e.preventDefault(); alert('Demo environment credentials dispatched to your enterprise inbox.'); }}>
-                <input className="w-full sm:flex-1 px-4 py-3.5 rounded-lg bg-white text-text-main placeholder:text-text-muted text-body-md font-body-md focus:outline-none focus:ring-2 focus:ring-on-primary shadow-sm" placeholder="Enter corporate email..." required type="email"/>
-                <button className="w-full sm:w-auto px-7 py-3.5 rounded-lg bg-primary-dark border border-primary-dark text-white font-headline-sm text-headline-sm hover:bg-primary-dark transition-all whitespace-nowrap shadow-md cursor-pointer" type="submit">
-                  Get Started with DealFlow360
+
+              {/* Email form */}
+              <form
+                className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto pt-4"
+                onSubmit={(e) => { e.preventDefault(); alert('Demo environment credentials dispatched to your enterprise inbox.'); }}
+              >
+                <input
+                  className="w-full sm:flex-1 px-4 py-3 rounded-lg bg-white text-text-main placeholder:text-text-muted text-sm focus:outline-none focus:ring-2 focus:ring-on-primary/30 shadow-sm"
+                  placeholder="Enter work email..."
+                  required
+                  type="email"
+                />
+                <button
+                  className="w-full sm:w-auto px-6 py-3 rounded-lg bg-primary-dark text-on-primary font-semibold text-sm hover:bg-text-main transition-all whitespace-nowrap shadow-md cursor-pointer"
+                  type="submit"
+                >
+                  Get Started
                 </button>
               </form>
-              <div className="flex flex-wrap items-center justify-center gap-6 pt-4 text-label-sm font-label-sm text-on-primary">
-                <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-emerald-status text-sm">check_circle</span> 14-day dedicated pilot</span>
-                <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-emerald-status text-sm">check_circle</span> Pre-built ERP connectors</span>
-                <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-emerald-status text-sm">check_circle</span> Custom SLA guarantee</span>
+
+              {/* Trust badges */}
+              <div className="flex flex-wrap items-center justify-center gap-5 pt-4 text-xs text-on-primary/70 font-medium">
+                <span className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-emerald-status text-sm">check_circle</span>
+                  14-day pilot
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-emerald-status text-sm">check_circle</span>
+                  Pre-built connectors
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-emerald-status text-sm">check_circle</span>
+                  SOC-2 certified
+                </span>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </main>
+      </section>
+
+      {/* ─── Footer ─── */}
+      <footer className="py-10 px-6 border-t border-surface-soft bg-white/40">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            {logoSrc ? (
+              <img src={logoSrc} alt={siteSettings.site_name} className="w-6 h-6 rounded object-contain" />
+            ) : (
+              <div className="w-6 h-6 bg-primary rounded flex items-center justify-center text-on-primary font-bold text-[10px]">
+                DF
+              </div>
+            )}
+            <span className="text-sm font-semibold text-text-main">{siteSettings.site_name}</span>
+          </div>
+          <div className="flex items-center gap-6 text-xs text-text-muted">
+            <Link to="/login" className="hover:text-primary transition-colors cursor-pointer">Sign in</Link>
+            <Link to="/marketplace" className="hover:text-primary transition-colors cursor-pointer">Marketplace</Link>
+            <a href="mailto:support@dealflow360.com" className="hover:text-primary transition-colors cursor-pointer">Contact</a>
+          </div>
+          <p className="text-xs text-text-muted">
+            © {new Date().getFullYear()} {siteSettings.site_name}. All rights reserved.
+          </p>
+        </div>
+      </footer>
+    </div>
   );
 };
 
