@@ -20,6 +20,18 @@ function initSocket(httpServer) {
   io.on('connection', (socket) => {
     logger.info(`⚡ [Socket.io] Client connected: ${socket.id}`);
 
+    // Register user ID and role to join respective rooms
+    socket.on('register_user', ({ userId, role }) => {
+      if (userId) {
+        socket.join(`user_${userId}`);
+        logger.info(`⚡ [Socket.io] ${socket.id} joined user room: user_${userId}`);
+      }
+      if (role) {
+        socket.join(`role_${role}`);
+        logger.info(`⚡ [Socket.io] ${socket.id} joined role room: role_${role}`);
+      }
+    });
+
     // Join specific room (e.g. quotationId, companyId)
     socket.on('join_room', (room) => {
       socket.join(room);
@@ -78,9 +90,29 @@ function emitNotification(userId, notification) {
   if (io) {
     io.to(`user_${userId}`).emit('notification', {
       ...notification,
+      id: Date.now() + Math.random().toString(36).substring(2, 7),
       timestamp: new Date(),
     });
   }
+}
+
+/**
+ * Broadcast notification to one or multiple roles
+ * @param {string|string[]} roles - Role name or array of role names (e.g. 'admin', ['sales_manager', 'admin'])
+ * @param {object} notification - Notification payload { type, title, message, link }
+ */
+function emitRoleNotification(roles, notification) {
+  if (!io) return;
+  const roleArray = Array.isArray(roles) ? roles : [roles];
+  const payload = {
+    ...notification,
+    id: Date.now() + Math.random().toString(36).substring(2, 7),
+    timestamp: new Date(),
+  };
+
+  roleArray.forEach((role) => {
+    io.to(`role_${role}`).emit('notification', payload);
+  });
 }
 
 module.exports = {
@@ -89,4 +121,5 @@ module.exports = {
   emitToRoom,
   broadcastEvent,
   emitNotification,
+  emitRoleNotification,
 };
