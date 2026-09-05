@@ -111,7 +111,8 @@ export default function CustomerDashboard() {
     try {
       const res = await api.get('/quotations');
       setQuotations(res.data || []);
-    } catch {
+    } catch (err) {
+      console.error('Failed to fetch customer quotations:', err);
       setQuotations([]);
     }
   };
