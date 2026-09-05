@@ -5,20 +5,11 @@ import { useNotification } from '../contexts/NotificationContext';
 
 export default function SuperAdminConsole({ defaultTab }) {
   const { showNotification } = useNotification();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const currentTabFromUrl = searchParams.get('tab') || defaultTab || 'tenants';
-
-  const [activeTab, setActiveTab] = useState(currentTabFromUrl); // 'tenants' | 'settings' | 'users'
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || defaultTab || 'tenants';
   const [companies, setCompanies] = useState([]);
   const [tenantUsers, setTenantUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Sync tab state when URL search parameters change (e.g., sidebar links clicked)
-  useEffect(() => {
-    if (currentTabFromUrl && currentTabFromUrl !== activeTab) {
-      setActiveTab(currentTabFromUrl);
-    }
-  }, [currentTabFromUrl]);
 
   // User Modal State
   const [selectedUser, setSelectedUser] = useState(null);
@@ -147,11 +138,6 @@ export default function SuperAdminConsole({ defaultTab }) {
     } finally {
       setSavingPassword(false);
     }
-  };
-
-  const switchTab = (tab) => {
-    setActiveTab(tab);
-    setSearchParams({ tab });
   };
 
   if (loading) {

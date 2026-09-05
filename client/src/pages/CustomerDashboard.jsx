@@ -14,9 +14,7 @@ export default function CustomerDashboard() {
     company_name: 'Acme Corporation'
   };
 
-  const tabFromUrl = searchParams.get('tab');
-  const initialTab = tabFromUrl || localStorage.getItem('customerActiveTab') || 'products';
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const activeTab = searchParams.get('tab') || localStorage.getItem('customerActiveTab') || 'products';
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,14 +25,7 @@ export default function CustomerDashboard() {
   const [selectedProductDetail, setSelectedProductDetail] = useState(null);
   const [modalQuantity, setModalQuantity] = useState(1);
 
-  useEffect(() => {
-    if (tabFromUrl && tabFromUrl !== activeTab) {
-      setActiveTab(tabFromUrl);
-    }
-  }, [tabFromUrl]);
-
   const handleTabChange = (tab) => {
-    setActiveTab(tab);
     setSearchParams({ tab }, { replace: true });
     localStorage.setItem('customerActiveTab', tab);
   };
@@ -48,11 +39,11 @@ export default function CustomerDashboard() {
     try {
       const res = await api.get('/marketplace/products');
       setProducts(res.data || []);
-    } catch (err) {
+    } catch {
       try {
         const res2 = await api.get('/products');
         setProducts(res2.data || []);
-      } catch (err2) {
+      } catch {
         setProducts([]);
       }
     }
@@ -62,7 +53,7 @@ export default function CustomerDashboard() {
     try {
       const res = await api.get('/quotations');
       setQuotations(res.data || []);
-    } catch (err) {
+    } catch {
       setQuotations([]);
     }
   };
@@ -315,7 +306,6 @@ export default function CustomerDashboard() {
                 {quotations.map(q => {
                   const statusLabel = (q.status || 'draft').replace(/_/g, ' ');
                   const totalVal = Number(q.total_amount || q.totalAmount || 0);
-                  const productVal = Number(q.amount);
                   const quoteCode = formatQuoteCode(q.id);
                   return (
                     <div

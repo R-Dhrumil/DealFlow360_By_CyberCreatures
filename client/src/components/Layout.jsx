@@ -1,14 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 
-const DEMO_USERS = [
-  { name: 'Alex Rep', email: 'rep@dealflow360.com', role: 'sales_rep', label: 'Sales Rep' },
-  { name: 'Sarah Manager', email: 'manager@dealflow360.com', role: 'sales_manager', label: 'Sales Manager' },
-  { name: 'David Finance', email: 'finance@dealflow360.com', role: 'finance', label: 'Finance' },
-  { name: 'Elena Admin', email: 'admin@dealflow360.com', role: 'admin', label: 'Admin' },
-  { name: 'Omar Operations', email: 'ops@dealflow360.com', role: 'operations', label: 'Operations' }
-];
-
 export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();

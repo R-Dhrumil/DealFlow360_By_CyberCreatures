@@ -16,7 +16,6 @@ import CustomerDashboard from './pages/CustomerDashboard';
 import UniversalDashboard from './pages/UniversalDashboard';
 import Reporting from './pages/Reporting';
 import SuperAdminConsole from './pages/SuperAdminConsole';
-import SuperAdminSettings from './pages/SuperAdminSettings';
 import AdminWorkspace from './pages/AdminWorkspace';
 import FinanceOperations from './pages/FinanceOperations';
 import OperationsDashboard from './pages/OperationsDashboard';
@@ -87,7 +86,7 @@ function App() {
                 <Route path="fulfillment/:id" element={<FulfillmentSplit />} />
                 <Route path="reporting" element={<Reporting />} />
                 <Route path="superadmin" element={<SuperAdminConsole />} />
-                <Route path="settings" element={<SuperAdminSettings />} />
+                <Route path="settings" element={<Navigate to="/app/superadmin?tab=settings" replace />} />
                 <Route path="admin" element={<AdminWorkspace />} />
                 <Route path="finance" element={<FinanceOperations />} />
                 <Route path="operations" element={<OperationsDashboard />} />

@@ -76,7 +76,7 @@ export default function QuotationBuilder() {
         }))
       });
       setValidation(res.data);
-    } catch (err) {
+    } catch {
       // silent — validation is best-effort
     } finally {
       setValidating(false);
