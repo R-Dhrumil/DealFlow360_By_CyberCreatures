@@ -8,8 +8,8 @@
   --color-primary: #702963;
   --color-primary-dark: #55104b;
   --color-primary-container: #702963;
-  --color-on-primary: #ffffff;
-  --color-on-primary-container: #ffffff;
+  --color-on-primary: #f6f6f6;
+  --color-on-primary-container: #f6f6f6;
   --color-secondary: #006877;
   --color-border-soft: #e2d0f5;
   --color-surface-soft: #faf2ff;
@@ -42,12 +42,14 @@ body {
   overscroll-behavior: none;
 }
 
-main > :first-child {
+main> :first-child {
   margin-top: 0 !important;
 }
-main > :last-child {
+
+main> :last-child {
   margin-bottom: 0 !important;
 }
+
 ::-webkit-scrollbar {
   display: none;
 }
