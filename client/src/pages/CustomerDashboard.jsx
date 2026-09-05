@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../api/client';
+
+const SEEDED_PRODUCTS = [
+  { id: 'p1', sku: 'HW-SRV-01', name: 'Enterprise Server X1', category: 'Hardware', base_price: 5000, unit: 'unit', description: 'High-performance enterprise rack unit server built for heavy AI & database workloads.' },
+  { id: 'p2', sku: 'SW-LIC-01', name: 'SaaS Platform License', category: 'Software', base_price: 100, unit: 'user/month', description: 'Cloud analytics platform license with automated pipeline tracking & risk scoring.' },
+  { id: 'p3', sku: 'SVC-ONB-01', name: 'Implementation Services', category: 'Services', base_price: 2500, unit: 'package', description: 'Onboarding & custom integration support package with 24/7 dedicated engineer access.' },
+  { id: 'p4', sku: 'HW-NET-02', name: 'Gigabit Switch 48-Port', category: 'Hardware', base_price: 1800, unit: 'unit', description: 'Enterprise managed L3 network switch with PoE+ power delivery.' },
+  { id: 'p5', sku: 'SW-SEC-05', name: 'Endpoint Security Suite', category: 'Software', base_price: 45, unit: 'device/month', description: 'Next-generation antivirus, endpoint detection, and real-time firewall threat prevention.' },
+  { id: 'p6', sku: 'CLD-STR-09', name: 'Cloud Storage Vault 10TB', category: 'Cloud License', base_price: 350, unit: 'month', description: 'Ultra-secure encrypted cloud storage backup vault with instant failover recovery.' },
+];
 
 export default function CustomerDashboard() {
   const navigate = useNavigate();
@@ -11,7 +21,12 @@ export default function CustomerDashboard() {
     company_name: 'Acme Corporation'
   };
 
-  const [activeTab, setActiveTab] = useState('quotations');
+  const [activeTab, setActiveTab] = useState('products'); // Default to 'products' first!
+  const [products, setProducts] = useState(SEEDED_PRODUCTS);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [inquirySuccess, setInquirySuccess] = useState('');
+
   const [quotations, setQuotations] = useState([
     {
       id: 'Q-101',
@@ -33,11 +48,39 @@ export default function CustomerDashboard() {
     }
   ]);
 
+  useEffect(() => {
+    fetchCatalogProducts();
+  }, []);
+
+  const fetchCatalogProducts = async () => {
+    try {
+      const res = await api.get('/products');
+      if (res.data && res.data.length > 0) {
+        setProducts(res.data);
+      }
+    } catch (err) {
+      console.warn('Using seeded products in Customer Dashboard');
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');
   };
+
+  const handleRequestQuoteForProduct = (product) => {
+    setInquirySuccess(`Quote request submitted to your sales rep for ${product.name}!`);
+    setTimeout(() => setInquirySuccess(''), 4000);
+  };
+
+  const categories = ['All', 'Hardware', 'Software', 'Services', 'Cloud License'];
+
+  const filteredProducts = products.filter(p => {
+    const matchesCat = selectedCategory === 'All' || p.category?.toLowerCase() === selectedCategory.toLowerCase();
+    const matchesSearch = p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || p.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCat && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
@@ -80,15 +123,26 @@ export default function CustomerDashboard() {
               Customer Account Active
             </span>
             <h1 className="text-2xl font-bold">Welcome back, {customer.name}!</h1>
-            <p className="text-sm text-slate-300 mt-1">Review live proposals, request line discounts, or E-sign quotations from your sales rep.</p>
+            <p className="text-sm text-slate-300 mt-1">Browse admin products catalog, request quote proposals, or negotiate custom discounts with your sales rep.</p>
           </div>
 
-          <div className="flex space-x-3">
+          {/* FIRST TAB: Browse Product Catalog */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setActiveTab('products')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'products'
+                  ? 'bg-emerald-500 text-white shadow ring-2 ring-emerald-400/50'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              <i className="fa-solid fa-boxes-stacked mr-1.5"></i> Browse Product Catalog
+            </button>
             <button
               onClick={() => setActiveTab('quotations')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'quotations'
-                  ? 'bg-emerald-500 text-white shadow'
+                  ? 'bg-emerald-500 text-white shadow ring-2 ring-emerald-400/50'
                   : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
               }`}
             >
@@ -98,16 +152,100 @@ export default function CustomerDashboard() {
               onClick={() => setActiveTab('profile')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'profile'
-                  ? 'bg-emerald-500 text-white shadow'
+                  ? 'bg-emerald-500 text-white shadow ring-2 ring-emerald-400/50'
                   : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
               }`}
             >
-              <i className="fa-solid fa-id-card mr-1.5"></i> My Personal Profile
+              <i className="fa-solid fa-id-card mr-1.5"></i> Personal Profile
             </button>
           </div>
         </div>
 
-        {/* TAB 1: Proposals List */}
+        {inquirySuccess && (
+          <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 p-4 rounded-2xl text-xs font-bold flex items-center shadow-sm">
+            <i className="fa-solid fa-circle-check mr-2 text-base"></i>
+            <span>{inquirySuccess}</span>
+          </div>
+        )}
+
+        {/* TAB 1 (FIRST): Browse Admin Products Catalog */}
+        {activeTab === 'products' && (
+          <div className="space-y-6">
+            <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <div>
+                <h2 className="text-lg font-extrabold text-slate-900">Admin Products Catalog & Price Listing</h2>
+                <p className="text-xs text-slate-500">Browse official company products configured by system administrators</p>
+              </div>
+
+              <div className="w-full sm:w-72">
+                <input
+                  type="text"
+                  placeholder="Search products by name or description..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Category Pills */}
+            <div className="flex flex-wrap gap-2">
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    selectedCategory === cat
+                      ? 'bg-emerald-600 text-white shadow'
+                      : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Product Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProducts.map(p => (
+                <div 
+                  key={p.id}
+                  className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all p-6 flex flex-col justify-between space-y-4"
+                >
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-start">
+                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                        {p.category}
+                      </span>
+                      <span className="text-[11px] font-mono text-slate-400">{p.sku || 'SKU-00' + p.id}</span>
+                    </div>
+
+                    <h3 className="font-extrabold text-slate-900 text-base leading-snug">{p.name}</h3>
+                    <p className="text-xs text-slate-500 line-clamp-2">{p.description}</p>
+
+                    <div className="pt-2 border-t border-slate-100 flex justify-between items-baseline">
+                      <span className="text-xs text-slate-400 font-medium">List Price:</span>
+                      <span className="text-xl font-black text-emerald-700">
+                        ${typeof p.base_price === 'number' ? p.base_price.toLocaleString() : p.base_price}
+                        <span className="text-xs text-slate-400 font-normal"> / {p.unit || 'unit'}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleRequestQuoteForProduct(p)}
+                    className="w-full bg-slate-900 hover:bg-emerald-600 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <i className="fa-solid fa-paper-plane"></i>
+                    <span>Request Quotation for Product</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: My Proposals */}
         {activeTab === 'quotations' && (
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-slate-900">Active Proposals & Quotations</h2>
@@ -155,7 +293,7 @@ export default function CustomerDashboard() {
           </div>
         )}
 
-        {/* TAB 2: Personal Profile */}
+        {/* TAB 3: Personal Profile */}
         {activeTab === 'profile' && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8 space-y-6 max-w-3xl mx-auto">
             <div className="flex items-center space-x-4 pb-6 border-b border-slate-100">
@@ -183,7 +321,7 @@ export default function CustomerDashboard() {
               </div>
 
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <span className="text-slate-500 font-semibold block mb-1">Customer History Status</span>
+                <span className="text-slate-500 font-semibold block mb-1">Customer Tier Status</span>
                 <span className="text-emerald-700 font-bold text-sm">Gold Tier Customer</span>
               </div>
 
