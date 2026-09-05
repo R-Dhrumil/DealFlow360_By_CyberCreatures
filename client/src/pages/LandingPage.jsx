@@ -1,14 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../api/client';
 
 export default function LandingPage() {
+  const [settings, setSettings] = useState({
+    site_name: 'DealFlow360',
+    tagline: 'B2B Sales Operations Platform',
+    logo_url: ''
+  });
+
+  useEffect(() => {
+    api.get('/settings/public').then(res => {
+      if (res.data) {
+        setSettings({
+          site_name: res.data.site_name || 'DealFlow360',
+          tagline: res.data.tagline || 'B2B Sales Operations Platform',
+          logo_url: res.data.logo_url || ''
+        });
+      }
+    }).catch(console.error);
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <i className="fa-solid fa-store text-primary-600 text-2xl"></i>
-            <span className="font-bold text-slate-900 text-xl tracking-wide">DealFlow360</span>
+            {settings.logo_url ? (
+              <img src={settings.logo_url} alt="Logo" className="h-8 object-contain" />
+            ) : (
+              <i className="fa-solid fa-store text-primary-600 text-2xl"></i>
+            )}
+            <span className="font-bold text-slate-900 text-xl tracking-wide">{settings.site_name}</span>
           </div>
           <div className="flex space-x-4 items-center">
             <Link to="/marketplace" className="text-slate-600 hover:text-primary-600 font-medium text-sm">
@@ -23,11 +46,11 @@ export default function LandingPage() {
 
       <main className="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8 py-20">
         <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight mb-6 max-w-4xl">
-          The Next Generation <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-indigo-500">B2B Sales Operations</span> Platform
+          The Next Generation <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-indigo-500">{settings.site_name}</span>
         </h1>
         
         <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl">
-          Streamline quotations, manage complex multi-warehouse fulfillments, and accelerate deal approvals with intelligent, risk-aware workflows.
+          {settings.tagline}
         </p>
 
         <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">

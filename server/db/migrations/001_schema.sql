@@ -11,6 +11,19 @@ CREATE TABLE IF NOT EXISTS otps (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS global_settings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  site_name VARCHAR(255) DEFAULT 'DealFlow360',
+  tagline VARCHAR(255) DEFAULT 'B2B Sales Operations Platform',
+  logo_url VARCHAR(1024),
+  favicon_url VARCHAR(1024),
+  google_analytics_id VARCHAR(100),
+  google_search_console_id VARCHAR(100),
+  meta_pixel_id VARCHAR(100),
+  custom_meta_tags JSONB DEFAULT '[]'::jsonb,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE companies (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(255) NOT NULL,

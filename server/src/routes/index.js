@@ -12,6 +12,7 @@ const dashboardRoutes = require('./dashboard.routes');
 const superadminRoutes = require('./superadmin.routes');
 const exportRoutes = require('./export.routes');
 const uploadRoutes = require('./upload.routes');
+const settingsRoutes = require('./settings.routes');
 
 // Health check endpoint
 router.get('/health', async (req, res) => {
@@ -45,5 +46,6 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/superadmin', superadminRoutes);
 router.use('/export', exportRoutes);
 router.use('/upload', uploadRoutes);
+router.use('/settings', settingsRoutes);
 
 module.exports = router;

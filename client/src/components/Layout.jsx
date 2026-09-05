@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import api from '../api/client';
 
 const DEMO_USERS = [
   { name: 'Alex Rep', email: 'rep@dealflow360.com', role: 'sales_rep', label: 'Sales Rep' },
@@ -9,10 +11,16 @@ const DEMO_USERS = [
 ];
 
 export default function Layout() {
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : { name: 'Alex Rep', role: 'sales_rep', companyId: '11111111-1111-1111-1111-111111111111' };
+  const [siteName, setSiteName] = useState('DealFlow360');
+
+  useEffect(() => {
+    api.get('/settings/public').then(res => {
+      if (res.data?.site_name) setSiteName(res.data.site_name);
+    }).catch(console.error);
+  }, []);
 
   const handleRoleSwitch = (demoUser) => {
     const newUser = {
@@ -83,7 +91,7 @@ export default function Layout() {
               DF
             </div>
             <div>
-              <span className="font-bold text-white text-base tracking-wide block leading-tight">DealFlow360</span>
+              <span className="font-bold text-white text-base tracking-wide block leading-tight">{siteName}</span>
               <span className="text-[11px] text-slate-400 font-mono">Self-Governing Engine</span>
             </div>
           </div>
