@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import api from './api/client';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { AlertProvider } from './contexts/AlertContext';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 import LandingPage from './pages/LandingPage';
 import Marketplace from './pages/Marketplace';
 import Login from './pages/Login';
@@ -17,6 +18,7 @@ import UniversalDashboard from './pages/UniversalDashboard';
 import Reporting from './pages/Reporting';
 import SuperAdminConsole from './pages/SuperAdminConsole';
 import SuperAdminSettings from './pages/SuperAdminSettings';
+import CurrencySettings from './pages/CurrencySettings';
 import AdminWorkspace from './pages/AdminWorkspace';
 import FinanceOperations from './pages/FinanceOperations';
 import OperationsDashboard from './pages/OperationsDashboard';
@@ -58,6 +60,7 @@ function App() {
   return (
     <NotificationProvider>
       <AlertProvider>
+        <CurrencyProvider>
         <BrowserRouter>
           <Routes>
             {/* Public Routes */}
@@ -88,6 +91,7 @@ function App() {
                 <Route path="reporting" element={<Reporting />} />
                 <Route path="superadmin" element={<SuperAdminConsole />} />
                 <Route path="settings" element={<SuperAdminSettings />} />
+                <Route path="currency" element={<CurrencySettings />} />
                 <Route path="admin" element={<AdminWorkspace />} />
                 <Route path="finance" element={<FinanceOperations />} />
                 <Route path="operations" element={<OperationsDashboard />} />
@@ -100,6 +104,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
+        </CurrencyProvider>
       </AlertProvider>
     </NotificationProvider>
   );
