@@ -24,22 +24,13 @@ export default function CustomerPortal() {
 
   const fetchQuotationAndMessages = async () => {
     try {
-      setQuotation({
-        id: quotationId || 'Q-102',
-        status: 'presented',
-        company_name: 'CyberCreatures',
-        customer_name: 'Acme Corp',
-        company_logo: null,
-        created_at: new Date().toISOString(),
-        customer_tier: 'Gold',
-        lines: [
-          { id: 1, product_name: 'Enterprise Server X1', category: 'Hardware', line_type: 'one_time', quantity: 2, unit_price: 5000, discount_percent: 10 },
-          { id: 2, product_name: 'SaaS Platform License', category: 'Software', line_type: 'recurring', quantity: 50, unit_price: 100, discount_percent: 15 },
-        ]
-      });
-      
+      if (!quotationId) return;
+      const res = await api.get(`/quotations/${quotationId}`);
+      if (res.data) {
+        setQuotation(res.data);
+      }
       setMessages([
-        { id: 1, sender_type: 'sales_rep', content: 'Hi there! Here is the latest proposal we prepared for Acme Corp. Feel free to review or submit counter proposals.', created_at: new Date(Date.now() - 86400000).toISOString() }
+        { id: 1, sender_type: 'sales_rep', content: `Proposal #${quotationId.split('-')[0]} loaded. Feel free to review line items, propose counter discounts, or e-sign below.`, created_at: new Date().toISOString() }
       ]);
       setLoading(false);
     } catch (error) {
@@ -52,44 +43,32 @@ export default function CustomerPortal() {
     setCounterDiscounts(prev => ({ ...prev, [lineId]: parseFloat(val) || 0 }));
   };
 
-  const submitCounterProposal = (e) => {
+  const submitCounterProposal = async (e) => {
     e.preventDefault();
-    if (!quotation) return;
+    if (!quotation || !quotation.lines) return;
 
-    // Compute new risk score based on counter discounts
-    let totalValue = 0;
-    let excessSum = 0;
+    const payloadLines = quotation.lines.map(line => ({
+      id: line.id,
+      discountPercent: counterDiscounts[line.id] !== undefined ? counterDiscounts[line.id] : Number(line.discount_percent || 0)
+    }));
 
-    const updatedLines = quotation.lines.map(line => {
-      const newDiscount = counterDiscounts[line.id] !== undefined ? counterDiscounts[line.id] : line.discount_percent;
-      const lineVal = line.quantity * line.unit_price;
-      totalValue += lineVal;
-
-      // Hardware ceiling 15%, Software ceiling 10%
-      const ceiling = line.category === 'Hardware' ? 15 : 10;
-      const excess = Math.max(0, newDiscount - ceiling);
-      excessSum += excess * lineVal;
-
-      return { ...line, discount_percent: newDiscount };
-    });
-
-    const newRiskScore = totalValue > 0 ? (excessSum / totalValue).toFixed(2) : 0;
-    const reApproveNeeded = parseFloat(newRiskScore) > 0;
-
-    const newMsg = {
-      id: Date.now(),
-      sender_type: 'customer',
-      content: `Submitted counter-proposal with revised discounts. Calculated Risk Score: ${newRiskScore}%. ${reApproveNeeded ? '⚡ Proposal triggered automated re-approval flow.' : 'Within standard bounds.'}`,
-      created_at: new Date().toISOString()
-    };
-
-    setMessages([...messages, newMsg]);
-    setQuotation({
-      ...quotation,
-      lines: updatedLines,
-      status: reApproveNeeded ? 'pending_approval' : 'negotiating'
-    });
-    setIsCounterSubmitted(true);
+    try {
+      await api.put(`/quotations/${quotation.id}/counter`, { lines: payloadLines, status: 'pending_approval' });
+      const refreshed = await api.get(`/quotations/${quotation.id}`);
+      if (refreshed.data) {
+        setQuotation(refreshed.data);
+      }
+      const newMsg = {
+        id: Date.now(),
+        sender_type: 'customer',
+        content: `Submitted counter-proposal with revised discounts. Sent to Sales Manager for review.`,
+        created_at: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, newMsg]);
+      setIsCounterSubmitted(true);
+    } catch (err) {
+      console.error('Failed to submit counter proposal', err);
+    }
   };
 
   const sendMessage = (e) => {
@@ -139,19 +118,39 @@ export default function CustomerPortal() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   };
 
-  const submitSignature = () => {
-    alert('Quotation accepted and digitally signed! Sales manager and fulfillment team notified.');
-    setQuotation({ ...quotation, status: 'accepted' });
-    setShowSignModal(false);
+  const submitSignature = async () => {
+    if (!quotation) return;
+    try {
+      await api.put(`/quotations/${quotation.id}/status`, { status: 'confirmed' });
+      const refreshed = await api.get(`/quotations/${quotation.id}`);
+      if (refreshed.data) {
+        setQuotation(refreshed.data);
+      }
+      alert('Quotation accepted and digitally signed! Sales manager and fulfillment team notified.');
+      setShowSignModal(false);
+    } catch (err) {
+      console.error('Failed to sign quotation', err);
+    }
   };
 
-  if (loading) {
+  const calculateSubtotal = () => {
+    if (!quotation || !quotation.lines) return 0;
+    return quotation.lines.reduce((acc, line) => {
+      const activeDisc = counterDiscounts[line.id] !== undefined ? counterDiscounts[line.id] : Number(line.discount_percent || 0);
+      const net = (Number(line.unit_price) || 0) * (1 - activeDisc / 100);
+      return acc + (net * (Number(line.quantity) || 1));
+    }, 0);
+  };
+
+  if (loading || !quotation) {
     return (
       <div className="flex justify-center items-center h-screen bg-white text-text-main">
         <i className="fa-solid fa-spinner fa-spin text-primary-500 text-4xl"></i>
       </div>
     );
   }
+
+  const subtotalAmount = calculateSubtotal();
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-12">
@@ -318,27 +317,23 @@ export default function CustomerPortal() {
               
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between text-slate-600">
-                  <span>Hardware Subtotal</span>
-                  <span className="font-semibold text-slate-800">$9,000.00</span>
-                </div>
-                <div className="flex justify-between text-slate-600">
-                  <span>Monthly Recurring</span>
-                  <span className="font-semibold text-primary-700">$4,250.00/mo</span>
+                  <span>Subtotal Amount</span>
+                  <span className="font-semibold text-slate-800">${subtotalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
               
               <div className="border-t border-surface-soft pt-4">
                 <div className="flex justify-between items-end">
                   <span className="font-bold text-slate-700 text-sm">Total Due Today</span>
-                  <span className="text-2xl font-black text-text-main">$9,000.00</span>
+                  <span className="text-2xl font-black text-text-main">${subtotalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
 
-              {quotation.status !== 'accepted' ? (
+              {quotation.status !== 'accepted' && quotation.status !== 'confirmed' ? (
                 <div className="space-y-3">
                   <button 
                     onClick={() => setShowSignModal(true)}
-                    className="w-full bg-white hover:bg-surface-soft text-text-main font-bold py-3.5 px-4 rounded-xl transition-all shadow-md flex justify-center items-center text-sm"
+                    className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-md flex justify-center items-center text-sm"
                   >
                     <i className="fa-solid fa-pen-nib mr-2"></i> E-Sign & Accept Proposal
                   </button>
