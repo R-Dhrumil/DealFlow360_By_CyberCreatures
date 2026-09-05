@@ -50,9 +50,10 @@ class ProductRepository {
         'SELECT * FROM products WHERE company_id = $1 ORDER BY name ASC',
         [companyId]
       );
-      return result.rows.length > 0 ? result.rows : MOCK_PRODUCTS;
+      return result.rows;
     } catch (err) {
-      return MOCK_PRODUCTS;
+      console.error('Error fetching company products:', err.message);
+      return [];
     }
   }
 
@@ -112,12 +113,10 @@ class ProductRepository {
       query += ' ORDER BY p.is_promoted DESC, p.name ASC';
 
       const result = await db.query(query, params);
-      return result.rows.length > 0 ? result.rows : MOCK_PRODUCTS;
+      return result.rows;
     } catch (err) {
-      let items = MOCK_PRODUCTS;
-      if (category) items = items.filter(i => i.category.toLowerCase() === category.toLowerCase());
-      if (search) items = items.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
-      return items;
+      console.error('Error fetching marketplace products:', err.message);
+      return [];
     }
   }
 }

@@ -298,21 +298,28 @@ export default function QuotationBuilder() {
           <div className="bg-white rounded-xl shadow-sm border border-surface-soft p-6">
             <h2 className="text-base font-bold text-text-main mb-4">Product Catalog</h2>
             <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-              {products.map(product => (
-                <div 
-                  key={product.id} 
-                  className="border border-surface-soft rounded-lg p-3 hover:border-primary/60 hover:bg-surface-soft/30 transition-all cursor-pointer group flex justify-between items-center" 
-                  onClick={() => addLine(product)}
-                >
-                  <div>
-                    <h4 className="font-bold text-text-main text-xs group-hover:text-primary">{product.name}</h4>
-                    <span className="text-[11px] text-text-muted">{product.category} &bull; ${parseFloat(product.base_price).toFixed(2)}</span>
-                  </div>
-                  <button className="w-7 h-7 rounded-lg bg-surface-soft group-hover:bg-primary group-hover:text-on-primary text-text-muted flex items-center justify-center transition-colors">
-                    <i className="fa-solid fa-plus text-xs"></i>
-                  </button>
+              {products.length === 0 ? (
+                <div className="text-center py-8 text-xs text-text-muted">
+                  <i className="fa-solid fa-box-open text-xl mb-2 text-slate-300 block"></i>
+                  No products in catalog. Admin can add products in the Admin Workspace.
                 </div>
-              ))}
+              ) : (
+                products.map(product => (
+                  <div 
+                    key={product.id} 
+                    className="border border-surface-soft rounded-lg p-3 hover:border-primary/60 hover:bg-surface-soft/30 transition-all cursor-pointer group flex justify-between items-center" 
+                    onClick={() => addLine(product)}
+                  >
+                    <div>
+                      <h4 className="font-bold text-text-main text-xs group-hover:text-primary">{product.name}</h4>
+                      <span className="text-[11px] text-text-muted">{product.category} &bull; ${parseFloat(product.base_price).toFixed(2)}</span>
+                    </div>
+                    <button className="w-7 h-7 rounded-lg bg-surface-soft group-hover:bg-primary group-hover:text-on-primary text-text-muted flex items-center justify-center transition-colors">
+                      <i className="fa-solid fa-plus text-xs"></i>
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
