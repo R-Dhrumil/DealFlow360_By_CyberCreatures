@@ -188,17 +188,20 @@ class QuotationService {
     const client = await db.pool.connect();
     try {
       await client.query('BEGIN');
-      const quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
+      // companyId may be null for customer role — repository handles both cases
+      const quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId || null, client);
       if (!quotation) throw ApiError.notFound('Quotation not found');
 
-      if (quotation.status !== 'approved' && quotation.status !== 'draft' && quotation.status !== 'presented') {
-        throw ApiError.conflict(`Cannot confirm quotation. Current status is ${quotation.status}. Pending manager approval is required first.`);
+      // Terminal states that cannot be re-confirmed
+      const terminalStates = ['confirmed', 'rejected'];
+      if (terminalStates.includes(quotation.status)) {
+        throw ApiError.conflict(`Quotation is already ${quotation.status}.`);
       }
 
       await quotationRepository.updateQuotationStatusAndScore(
         quotationId,
         'confirmed',
-        quotation.blended_risk_score,
+        quotation.blended_risk_score || 0,
         client
       );
 

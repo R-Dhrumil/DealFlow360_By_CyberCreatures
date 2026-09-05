@@ -201,21 +201,9 @@ export default function CustomerPortal() {
     try {
       setIsSigning(true);
       const quoteId = quotation.rawId || quotation.id;
-      
-      try {
-        await api.put(`/quotations/${quoteId}/confirm`);
-      } catch (err1) {
-        try {
-          await api.put(`/quotations/${quoteId}/status`, { status: 'confirmed' });
-        } catch (err2) {
-          try {
-            await api.put(`/quotations/${quoteId}/counter`, { lines: [], status: 'confirmed' });
-          } catch (err3) {
-            console.error('All confirm endpoints failed:', err3);
-            throw err3;
-          }
-        }
-      }
+
+      // Single authoritative confirm call
+      await api.put(`/quotations/${quoteId}/confirm`);
 
       // Record acceptance message in discussion thread
       try {
@@ -245,7 +233,6 @@ export default function CustomerPortal() {
       console.error('Failed to sign quotation', err);
       const errMsg = err.response?.data?.error || err.response?.data?.message || 'Failed to confirm signature. Please check permissions.';
       showNotification('error', errMsg);
-      alert(errMsg);
     } finally {
       setIsSigning(false);
     }
