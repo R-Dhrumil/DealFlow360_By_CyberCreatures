@@ -4,8 +4,10 @@ import api from '../api/client';
 import { formatQuoteCode } from '../utils/formatters';
 import { useNotification } from '../contexts/NotificationContext';
 import { copyTextToClipboard } from '../utils/clipboard';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 export default function QuotationView() {
+  const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
   const { id: quotationId } = useParams();
   const [quotation, setQuotation] = useState(null);
@@ -249,9 +251,9 @@ export default function QuotationView() {
                     <tr key={line.id}>
                       <td className="px-6 py-4 font-medium text-slate-800">{line.product_name} <span className="text-xs text-text-muted font-normal block">{line.category}</span></td>
                       <td className="px-6 py-4 text-right text-slate-600">{qty}</td>
-                      <td className="px-6 py-4 text-right text-slate-600">${uPrice.toFixed(2)}</td>
+                      <td className="px-6 py-4 text-right text-slate-600">{formatMoney(uPrice)}</td>
                       <td className="px-6 py-4 text-right text-slate-600">{dPercent}%</td>
-                      <td className="px-6 py-4 text-right font-semibold text-slate-800">${(netPrice * qty).toFixed(2)}</td>
+                      <td className="px-6 py-4 text-right font-semibold text-slate-800">{formatMoney(netPrice * qty)}</td>
                     </tr>
                   )
                 })}
@@ -285,9 +287,9 @@ export default function QuotationView() {
                     <tr key={line.id}>
                       <td className="px-6 py-4 font-medium text-slate-800">{line.product_name} <span className="text-xs text-text-muted font-normal block">{line.category}</span></td>
                       <td className="px-6 py-4 text-right text-slate-600">{qty}</td>
-                      <td className="px-6 py-4 text-right text-slate-600">${uPrice.toFixed(2)}</td>
+                      <td className="px-6 py-4 text-right text-slate-600">{formatMoney(uPrice)}</td>
                       <td className="px-6 py-4 text-right text-slate-600">{dPercent}%</td>
-                      <td className="px-6 py-4 text-right font-semibold text-primary">${(netPrice * qty).toFixed(2)}</td>
+                      <td className="px-6 py-4 text-right font-semibold text-primary">{formatMoney(netPrice * qty)}</td>
                     </tr>
                   )
                 })}
@@ -369,7 +371,7 @@ export default function QuotationView() {
             <div className="space-y-4 border-b border-surface-soft pb-6 mb-6">
               <div className="flex justify-between items-center">
                 <span className="text-slate-600 font-medium">Total Due Today</span>
-                <span className="text-xl font-bold text-text-main">${oneTimeTotal.toFixed(2)}</span>
+                <span className="text-xl font-bold text-text-main">{formatMoney(oneTimeTotal)}</span>
               </div>
               <p className="text-xs text-text-muted">Includes all hardware, implementation, and setup fees.</p>
             </div>
@@ -379,7 +381,7 @@ export default function QuotationView() {
                 <span className="text-primary font-medium flex items-center">
                   <i className="fa-solid fa-rotate mr-2"></i> Monthly Recurring
                 </span>
-                <span className="text-xl font-bold text-primary">${recurringTotal.toFixed(2)}</span>
+                <span className="text-xl font-bold text-primary">{formatMoney(recurringTotal)}</span>
               </div>
               <p className="text-xs text-text-muted">Billed on the 1st of every month starting after implementation.</p>
             </div>
@@ -387,11 +389,11 @@ export default function QuotationView() {
             <div className="mt-8 pt-6 border-t border-surface-soft">
               <div className="flex justify-between items-center">
                 <span className="text-text-muted text-sm">Annual Contract Value (ACV)</span>
-                <span className="font-semibold text-slate-800">${(recurringTotal * 12).toFixed(2)}</span>
+                <span className="font-semibold text-slate-800">{formatMoney(recurringTotal * 12)}</span>
               </div>
               <div className="flex justify-between items-center mt-2">
                 <span className="text-text-muted text-sm">Total Contract Value (1 Yr)</span>
-                <span className="font-bold text-text-main">${(oneTimeTotal + (recurringTotal * 12)).toFixed(2)}</span>
+                <span className="font-bold text-text-main">{formatMoney(oneTimeTotal + (recurringTotal * 12))}</span>
               </div>
             </div>
             

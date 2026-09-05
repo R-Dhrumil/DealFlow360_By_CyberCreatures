@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const statusColors = {
   open: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', dot: 'bg-blue-500', label: 'Open' },
@@ -17,6 +18,7 @@ const tierColors = {
 };
 
 export default function InquiryList() {
+  const { formatMoney } = useCurrency();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const [inquiries, setInquiries] = useState([]);
@@ -149,11 +151,11 @@ export default function InquiryList() {
                   <div className="text-right shrink-0 hidden sm:block">
                     <div className="text-xs text-slate-400">Base Price</div>
                     <div className="text-sm font-bold text-slate-800">
-                      ₹{Number(inquiry.base_price).toLocaleString('en-IN')}
+                      {formatMoney(inquiry.base_price)}
                     </div>
                     {inquiry.floor_price && (
                       <div className="text-[10px] text-rose-500 font-semibold">
-                        Floor: ₹{Number(inquiry.floor_price).toLocaleString('en-IN')}
+                        Floor: {formatMoney(inquiry.floor_price)}
                       </div>
                     )}
                   </div>
@@ -239,7 +241,7 @@ export default function InquiryList() {
                               <div className="flex justify-between items-center">
                                 <span className="text-slate-500 text-xs">Amount</span>
                                 <span className="font-black text-sm text-slate-900">
-                                  ₹{Number(q.total_amount || 0).toLocaleString('en-IN')}
+                                  {formatMoney(q.total_amount)}
                                 </span>
                               </div>
                               {q.max_discount > 0 && (

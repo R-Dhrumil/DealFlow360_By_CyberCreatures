@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 export default function Marketplace() {
+  const { formatMoney } = useCurrency();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('');
@@ -115,7 +117,7 @@ export default function Marketplace() {
                     
                     <div className="pt-4 border-t border-slate-100 mt-auto flex items-end justify-between">
                       <div>
-                        <span className="text-2xl font-bold text-text-main">${parseFloat(product.base_price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        <span className="text-2xl font-bold text-text-main">{formatMoney(product.base_price)}</span>
                         <span className="text-xs text-text-muted ml-1">/ {product.unit}</span>
                       </div>
                       <button className="text-primary hover:text-primary-dark p-2 rounded-full hover:bg-border-soft transition-colors" title="Requires login to quote">

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 export default function Reporting() {
+  const { formatMoney } = useCurrency();
   const [reports] = useState([
     { id: 1, repName: 'Alice Smith', dealsWon: 12, totalRevenue: 154000, avgMargin: 24.5 },
     { id: 2, repName: 'Bob Jones', dealsWon: 8, totalRevenue: 98500, avgMargin: 22.1 },
@@ -37,7 +39,7 @@ export default function Reporting() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-slate-600 text-right">{report.dealsWon}</td>
-                  <td className="px-6 py-4 text-slate-800 font-bold text-right">${report.totalRevenue.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-slate-800 font-bold text-right">{formatMoney(report.totalRevenue)}</td>
                   <td className="px-6 py-4 text-center text-right">
                     <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${report.avgMargin > 20 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
                       {report.avgMargin}%

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import api from '../api/client';
 import { formatQuoteCode } from '../utils/formatters';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const STAGES = [
   { name: 'Draft', color: 'border-slate-300 bg-slate-100 text-slate-700' },
@@ -22,6 +23,7 @@ const getSocketUrl = () => {
 };
 
 export default function Pipeline() {
+  const { formatMoney } = useCurrency();
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState('');
@@ -277,7 +279,7 @@ export default function Pipeline() {
                   <h3 className="font-bold text-slate-800 text-xs tracking-tight">{stage.name}</h3>
                 </div>
                 <span className="text-xs font-semibold text-text-muted">
-                  ${(stageTotal / 1000).toFixed(1)}k
+                  {formatMoney(stageTotal, { compact: true })}
                 </span>
               </div>
 
@@ -307,7 +309,7 @@ export default function Pipeline() {
 
                     <div>
                       <h4 className="font-bold text-text-main text-sm mb-1">{deal.customer}</h4>
-                      <p className="text-lg font-black text-slate-800">${deal.amount.toLocaleString()}</p>
+                      <p className="text-lg font-black text-slate-800">{formatMoney(deal.amount)}</p>
                     </div>
 
                     <div className="pt-2 border-t border-slate-100 flex flex-wrap justify-between items-center text-xs text-text-muted gap-y-2">

@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuoteCode } from '../utils/formatters';
+import { useCurrency } from '../contexts/CurrencyContext';
+import CurrencyPicker from '../components/CurrencyPicker';
 
 export default function CustomerPortal() {
+  const { formatMoney, selected } = useCurrency();
   const { id: quotationId } = useParams();
   const [quotation, setQuotation] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -79,6 +82,9 @@ export default function CustomerPortal() {
             <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold">
               <i className="fa-solid fa-globe text-[10px]"></i> Public Demo Access
             </span>
+            <div className="print:hidden">
+              <CurrencyPicker />
+            </div>
             <button
               onClick={() => window.print()}
               className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 print:hidden"
@@ -170,10 +176,10 @@ export default function CustomerPortal() {
                           )}
                         </td>
                         <td className="py-4 px-4 text-center font-semibold text-slate-700">{qty}</td>
-                        <td className="py-4 px-4 text-right font-mono text-slate-600">${unitPrice.toFixed(2)}</td>
+                        <td className="py-4 px-4 text-right font-mono text-slate-600">{formatMoney(unitPrice)}</td>
                         <td className="py-4 px-4 text-right font-mono text-slate-500">{discount > 0 ? `${discount}%` : '-'}</td>
                         <td className="py-4 px-6 text-right font-bold text-slate-900 font-mono">
-                          ${lineNet.toFixed(2)}
+                          {formatMoney(lineNet)}
                         </td>
                       </tr>
                     );
@@ -186,13 +192,13 @@ export default function CustomerPortal() {
           {/* Totals Summary */}
           <div className="bg-slate-50/50 p-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <p className="text-xs text-slate-500 italic">
-              All prices are displayed in USD ($). This is a public quotation document preview.
+              All prices are displayed in {selected.name} ({selected.symbol}). This is a public quotation document preview.
             </p>
             <div className="w-full sm:w-72 space-y-2 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-200">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-600">Total Amount:</span>
                 <span className="text-xl font-black text-slate-900 font-mono">
-                  ${grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {formatMoney(grandTotal)}
                 </span>
               </div>
             </div>

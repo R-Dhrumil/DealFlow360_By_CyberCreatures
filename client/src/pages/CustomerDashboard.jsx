@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuoteCode, formatSKU } from '../utils/formatters';
+import { useCurrency } from '../contexts/CurrencyContext';
+import CurrencyPicker from '../components/CurrencyPicker';
 
 export default function CustomerDashboard() {
+  const { formatMoney } = useCurrency();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const userStr = localStorage.getItem('user');
@@ -111,6 +114,8 @@ export default function CustomerDashboard() {
               <p className="text-xs font-semibold text-text-main">{customer.name}</p>
               <p className="text-[11px] text-text-muted">{customer.email}</p>
             </div>
+
+            <CurrencyPicker />
 
             <button
               onClick={() => handleTabChange('profile')}
@@ -254,7 +259,7 @@ export default function CustomerDashboard() {
                     <div className="pt-2 border-t border-slate-100 flex justify-between items-baseline">
                       <span className="text-xs text-text-muted font-medium">List Price:</span>
                       <span className="text-xl font-black text-emerald-700">
-                        ${typeof p.base_price === 'number' ? p.base_price.toLocaleString(undefined, { minimumFractionDigits: 2 }) : parseFloat(p.base_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        {formatMoney(p.base_price)}
                         <span className="text-xs text-text-muted font-normal"> / {p.unit || 'unit'}</span>
                       </span>
                     </div>
@@ -331,7 +336,7 @@ export default function CustomerDashboard() {
                         <div className="pt-2 flex justify-between items-baseline border-t border-slate-100">
                           <span className="text-xs text-text-muted font-medium">Total Proposal Value:</span>
                           <span className="text-2xl font-black text-emerald-700">
-                            ${totalVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {formatMoney(totalVal)}
                           </span>
                         </div>
                       </div>
@@ -438,7 +443,7 @@ export default function CustomerDashboard() {
                 <div className="bg-emerald-50/70 border border-emerald-200 p-4 rounded-2xl">
                   <span className="text-xs text-emerald-700 font-semibold block">Base List Price</span>
                   <span className="text-2xl font-black text-emerald-800">
-                    ${parseFloat(selectedProductDetail.base_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {formatMoney(selectedProductDetail.base_price)}
                   </span>
                   <span className="text-[11px] text-emerald-600 block font-medium">per {selectedProductDetail.unit || 'unit'}</span>
                 </div>
@@ -531,7 +536,7 @@ export default function CustomerDashboard() {
                   <div>
                     <span className="text-[11px] text-slate-400 block">Est. Base Subtotal:</span>
                     <span className="text-xl font-black text-emerald-400">
-                      ${(parseFloat(selectedProductDetail.base_price || 0) * modalQuantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatMoney(parseFloat(selectedProductDetail.base_price || 0) * modalQuantity)}
                     </span>
                   </div>
 
