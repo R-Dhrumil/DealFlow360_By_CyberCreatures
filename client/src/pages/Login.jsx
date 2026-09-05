@@ -14,53 +14,31 @@ const Login = ({ defaultIsSignup = false }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const fillCredentials = async (userEmail, userPass) => {
+  const fillCredentials = (userEmail, userPass) => {
     setEmail(userEmail);
     setPassword(userPass);
     setIsSignup(false);
     setError('');
-    await executeLogin(userEmail, userPass);
   };
 
-  const executeLogin = async (loginEmail, loginPassword) => {
+  const getPasswordStrength = (val) => {
+    const len = val.length;
+    if (len === 0) return { text: 'Required', color: 'text-text-muted', bars: 0, barColor: 'bg-surface-soft' };
+    if (len < 6) return { text: 'Weak', color: 'text-rose-status', bars: 1, barColor: 'bg-rose-status' };
+    if (len < 10) return { text: 'Moderate', color: 'text-amber-status', bars: 2, barColor: 'bg-amber-status' };
+    return { text: 'Enterprise Compliant', color: 'text-emerald-status', bars: 4, barColor: 'bg-emerald-status' };
+  };
+
+  const strength = getPasswordStrength(password);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const res = await api.post('/auth/login', { email: loginEmail, password: loginPassword });
-      if (res.data && res.data.token) {
-        localStorage.setItem('token', res.data.token);
-        const user = res.data.user;
-        localStorage.setItem('user', JSON.stringify(user));
-
-        if (user.role === 'super_admin') {
-          navigate('/app/superadmin');
-        } else if (user.role === 'customer') {
-          navigate('/customer/dashboard');
-        } else if (user.role === 'admin') {
-          navigate('/app/admin');
-        } else if (user.role === 'finance' || user.role === 'finance_manager') {
-          navigate('/app/finance');
-        } else {
-          navigate('/app/pipeline');
-        }
-        return;
-      }
-    } catch (err) {
-      console.error('Authentication failed:', err);
-      const serverMsg = err.response?.data?.error || err.response?.data?.message || 'Invalid email or password. Please try again.';
-      setError(serverMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (isSignup) {
-      setError('');
-      setLoading(true);
-      try {
+      if (isSignup) {
+        // Unified Sign Up
         const res = await api.post('/auth/signup', {
           accountType,
           name,
@@ -80,15 +58,34 @@ const Login = ({ defaultIsSignup = false }) => {
           else navigate('/app/pipeline');
           return;
         }
-      } catch (err) {
-        console.error('Authentication failed:', err);
-        const serverMsg = err.response?.data?.error || err.response?.data?.message || 'Invalid email or password. Please try again.';
-        setError(serverMsg);
-      } finally {
-        setLoading(false);
+      } else {
+        // Unified Login
+        const res = await api.post('/auth/login', { email, password });
+        if (res.data && res.data.token) {
+          localStorage.setItem('token', res.data.token);
+          const user = res.data.user;
+          localStorage.setItem('user', JSON.stringify(user));
+
+          if (user.role === 'super_admin') {
+            navigate('/app/superadmin');
+          } else if (user.role === 'customer') {
+            navigate('/customer/dashboard');
+          } else if (user.role === 'admin') {
+            navigate('/app/admin');
+          } else if (user.role === 'finance' || user.role === 'finance_manager') {
+            navigate('/app/finance');
+          } else {
+            navigate('/app/pipeline');
+          }
+          return;
+        }
       }
-    } else {
-      await executeLogin(email, password);
+    } catch (err) {
+      console.error('Authentication failed:', err);
+      const serverMsg = err.response?.data?.error || err.response?.data?.message || 'Invalid email or password. Please try again.';
+      setError(serverMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
