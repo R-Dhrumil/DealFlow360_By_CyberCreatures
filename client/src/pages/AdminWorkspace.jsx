@@ -1274,6 +1274,7 @@ export default function AdminWorkspace() {
                               m.role === 'sales_manager' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
                               m.role === 'sales_rep' ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200' :
                               m.role === 'finance' ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' :
+                              m.role === 'finance_manager' ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' :
                               'bg-slate-200 text-slate-800 border-slate-300 hover:bg-slate-300'
                             }`}
                           >
@@ -1282,6 +1283,7 @@ export default function AdminWorkspace() {
                             <option value="sales_manager" className="bg-white text-slate-800 font-bold">SALES MANAGER</option>
                             <option value="sales_rep" className="bg-white text-slate-800 font-bold">SALES REP</option>
                             <option value="finance" className="bg-white text-slate-800 font-bold">FINANCE</option>
+                            <option value="finance_manager" className="bg-white text-slate-800 font-bold">FINANCE MANAGER</option>
                           </select>
                           <i className="fa-solid fa-chevron-down text-[8px] pointer-events-none absolute right-2.5 opacity-60 text-current"></i>
                         </div>

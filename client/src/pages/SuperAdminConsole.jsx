@@ -596,6 +596,7 @@ export default function SuperAdminConsole({ defaultTab }) {
                 <option value="sales_manager">Sales Manager</option>
                 <option value="sales_rep">Sales Rep</option>
                 <option value="finance">Finance</option>
+                <option value="finance_manager">Finance Manager</option>
                 <option value="operations">Operations</option>
                 <option value="customer">Customer</option>
               </select>
@@ -652,6 +653,7 @@ export default function SuperAdminConsole({ defaultTab }) {
                               user.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200' :
                               user.role === 'sales_manager' ? 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200' :
                               user.role === 'finance' ? 'bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200' :
+                              user.role === 'finance_manager' ? 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200' :
                               user.role === 'operations' ? 'bg-indigo-100 text-indigo-800 border-indigo-200 hover:bg-indigo-200' :
                               'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
                             }`}
@@ -661,6 +663,7 @@ export default function SuperAdminConsole({ defaultTab }) {
                             <option value="sales_manager" className="bg-white text-slate-800 font-bold">SALES MANAGER</option>
                             <option value="sales_rep" className="bg-white text-slate-800 font-bold">SALES REP</option>
                             <option value="finance" className="bg-white text-slate-800 font-bold">FINANCE</option>
+                            <option value="finance_manager" className="bg-white text-slate-800 font-bold">FINANCE MANAGER</option>
                             <option value="operations" className="bg-white text-slate-800 font-bold">OPERATIONS</option>
                           </select>
                           <i className="fa-solid fa-chevron-down text-[8px] pointer-events-none absolute right-2.5 opacity-60 text-current"></i>
