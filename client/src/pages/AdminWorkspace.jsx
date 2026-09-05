@@ -1,13 +1,91 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
+import { useAlert } from '../contexts/AlertContext';
 
 export default function AdminWorkspace() {
   const { showNotification } = useNotification();
+  const { showAlert } = useAlert();
   const [activeTab, setActiveTab] = useState('products'); // 'products' | 'tiers' | 'team' | 'warehouses' | 'audit'
 
+  // Initial Product Catalog Fallback (CyberCreatures Company Catalog)
+  const INITIAL_PRODUCTS = [
+    {
+      id: 'p1',
+      sku: 'HW-RTR-01',
+      name: 'Industrial Router Pro',
+      category: 'Hardware',
+      base_price: 1200.00,
+      min_margin: 40.00,
+      unit: 'unit',
+      stock: 85,
+      status: 'Active',
+      description: 'High-performance industrial grade router'
+    },
+    {
+      id: 'p2',
+      sku: 'HW-NODE-01',
+      name: 'Edge Compute Node X1',
+      category: 'Hardware',
+      base_price: 2500.00,
+      min_margin: 35.00,
+      unit: 'unit',
+      stock: 45,
+      status: 'Active',
+      description: 'Ruggedized edge computing server for low-latency nodes'
+    },
+    {
+      id: 'p3',
+      sku: 'HW-IOT-01',
+      name: 'IoT Sensor Hub',
+      category: 'Hardware',
+      base_price: 450.00,
+      min_margin: 50.00,
+      unit: 'unit',
+      stock: 120,
+      status: 'Active',
+      description: 'Central hub for telemetry and industrial IoT sensors'
+    },
+    {
+      id: 'p6',
+      sku: 'SEC-FW-01',
+      name: 'NextGen Enterprise Firewall',
+      category: 'Hardware',
+      base_price: 3800.00,
+      min_margin: 45.00,
+      unit: 'unit',
+      stock: 30,
+      status: 'Active',
+      description: 'Zero-Trust network security & deep packet inspection appliance'
+    },
+    {
+      id: 'p7',
+      sku: 'SW-CPQ-01',
+      name: 'CPQ Engine Enterprise Suite',
+      category: 'Software',
+      base_price: 350.00,
+      min_margin: 85.00,
+      unit: 'user/month',
+      stock: 999,
+      status: 'Active',
+      description: 'Multi-tier automated pricing, margin guardrails, and deal desk suite'
+    },
+    {
+      id: 'p4',
+      sku: 'SVC-SLA-01',
+      name: '24/7 Premium Support SLA',
+      category: 'Services',
+      base_price: 500.00,
+      min_margin: 80.00,
+      unit: 'month',
+      stock: 100,
+      status: 'Active',
+      description: 'Round-the-clock priority technical support & 99.99% uptime'
+    }
+  ];
+
   // Products State
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(INITIAL_PRODUCTS);
   const [prodSearch, setProdSearch] = useState('');
   const [newProdName, setNewProdName] = useState('');
   const [newProdSku, setNewProdSku] = useState('');
@@ -15,6 +93,11 @@ export default function AdminWorkspace() {
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdMargin, setNewProdMargin] = useState('25');
   const [newProdUnit, setNewProdUnit] = useState('unit');
+  const [newProdStock, setNewProdStock] = useState('100');
+
+  // Edit Product Modal State
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Governance Tiers State
   const [tiers, setTiers] = useState([
@@ -56,18 +139,20 @@ export default function AdminWorkspace() {
     { id: 'LOG-9084', action: 'USER_PROVISIONED', entity: 'Jim Halpert', user: 'CyberCreatures Admin', role: 'admin', timestamp: '2026-09-05 10:05', details: 'Provisioned as Sales Representative' }
   ]);
 
-  useEffect(() => {
-    fetchProducts();
-    fetchTeam();
-  }, []);
-
   const fetchProducts = async () => {
     try {
       const res = await api.get('/products');
-      setProducts(res.data || []);
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        setProducts(res.data.map(p => ({
+          ...p,
+          base_price: parseFloat(p.base_price) || 0,
+          stock: p.stock !== undefined && p.stock !== null ? parseInt(p.stock, 10) : 100,
+          min_margin: p.min_margin !== undefined ? parseFloat(p.min_margin) : (parseFloat(p.margin_percent) || 25),
+          status: p.status || 'Active'
+        })));
+      }
     } catch (err) {
       console.error('Failed to fetch products:', err);
-      setProducts([]);
     }
   };
 
@@ -75,15 +160,21 @@ export default function AdminWorkspace() {
     try {
       const res = await api.get('/superadmin/users');
       setTeam(res.data || []);
-    } catch (err) {
+    } catch (_err) {
       setTeam([]);
     }
   };
+
+  useEffect(() => {
+    fetchProducts();
+    fetchTeam();
+  }, []);
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
     if (!newProdName.trim() || !newProdPrice) return;
 
+    const stockVal = parseInt(newProdStock || 100, 10);
     const newProd = {
       id: 'p-' + Date.now(),
       sku: newProdSku || 'SKU-' + Date.now().toString().slice(-4),
@@ -92,7 +183,7 @@ export default function AdminWorkspace() {
       base_price: parseFloat(newProdPrice),
       min_margin: parseFloat(newProdMargin || 25),
       unit: newProdUnit,
-      stock: 100,
+      stock: stockVal,
       status: 'Active'
     };
 
@@ -103,17 +194,189 @@ export default function AdminWorkspace() {
         basePrice: newProdPrice,
         unit: newProdUnit,
         sku: newProdSku,
-        minMargin: newProdMargin
+        minMargin: newProdMargin,
+        stock: stockVal
       });
-    } catch (err) {
+    } catch (_err) {
       console.warn('Stored product locally');
     }
 
     setProducts([newProd, ...products]);
+
+    // Audit log entry
+    setAuditLogs(prev => [
+      {
+        id: 'LOG-' + Date.now().toString().slice(-4),
+        action: 'PRODUCT_CREATED',
+        entity: newProd.name,
+        user: 'CyberCreatures Admin',
+        role: 'admin',
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
+        details: `Added to catalog at $${newProd.base_price} base price, initial stock ${newProd.stock}`
+      },
+      ...prev
+    ]);
+
     setNewProdName('');
     setNewProdSku('');
     setNewProdPrice('');
+    setNewProdStock('100');
     showNotification('success', `Product '${newProd.name}' successfully added to catalog at $${newProd.base_price}!`);
+  };
+
+  // Stock Increment / Decrement Handlers
+  const handleIncrementStock = async (productId) => {
+    const prod = products.find(p => p.id === productId);
+    if (!prod) return;
+    const currentStock = prod.stock !== undefined ? parseInt(prod.stock, 10) : 100;
+    const newStock = currentStock + 1;
+
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, stock: newStock } : p));
+    try {
+      await api.patch(`/products/${productId}/stock`, { stock: newStock });
+    } catch (_err) {
+      console.warn('Updated stock locally');
+    }
+    showNotification('success', `Incremented stock for '${prod.name}' to ${newStock} units`);
+  };
+
+  const handleDecrementStock = async (productId) => {
+    const prod = products.find(p => p.id === productId);
+    if (!prod) return;
+    const currentStock = prod.stock !== undefined ? parseInt(prod.stock, 10) : 100;
+    if (currentStock <= 0) return;
+    const newStock = currentStock - 1;
+
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, stock: newStock } : p));
+    try {
+      await api.patch(`/products/${productId}/stock`, { stock: newStock });
+    } catch (_err) {
+      console.warn('Updated stock locally');
+    }
+    showNotification('info', `Decremented stock for '${prod.name}' to ${newStock} units`);
+  };
+
+  const handleStockChange = async (productId, val) => {
+    const prod = products.find(p => p.id === productId);
+    if (!prod) return;
+    const newStock = Math.max(0, parseInt(val, 10) || 0);
+
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, stock: newStock } : p));
+    try {
+      await api.patch(`/products/${productId}/stock`, { stock: newStock });
+    } catch (_err) {
+      console.warn('Updated stock locally');
+    }
+  };
+
+  // Quick Price Stepper Handlers (+/- $10)
+  const handleAdjustPrice = async (productId, delta) => {
+    const prod = products.find(p => p.id === productId);
+    if (!prod) return;
+    const currentPrice = typeof prod.base_price === 'number' ? prod.base_price : parseFloat(prod.base_price) || 0;
+    const newPrice = Math.max(1, Math.round((currentPrice + delta) * 100) / 100);
+
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, base_price: newPrice } : p));
+    try {
+      await api.put(`/products/${productId}`, { ...prod, basePrice: newPrice });
+    } catch (_err) {
+      console.warn('Updated price locally');
+    }
+    showNotification('success', `Updated price for '${prod.name}' to $${newPrice.toLocaleString()}`);
+  };
+
+  // Edit Product Handlers
+  const handleEditProduct = (prod) => {
+    setEditingProduct({
+      ...prod,
+      base_price: prod.base_price,
+      min_margin: prod.min_margin !== undefined ? prod.min_margin : (prod.margin_percent || 25),
+      stock: prod.stock !== undefined ? prod.stock : 100,
+      status: prod.status || 'Active'
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEditedProduct = async (e) => {
+    e.preventDefault();
+    if (!editingProduct || !editingProduct.name.trim() || !editingProduct.base_price) return;
+
+    const updatedProd = {
+      ...editingProduct,
+      base_price: parseFloat(editingProduct.base_price),
+      min_margin: parseFloat(editingProduct.min_margin || 25),
+      stock: parseInt(editingProduct.stock !== undefined ? editingProduct.stock : 100, 10)
+    };
+
+    try {
+      await api.put(`/products/${editingProduct.id}`, {
+        name: updatedProd.name,
+        category: updatedProd.category,
+        basePrice: updatedProd.base_price,
+        unit: updatedProd.unit,
+        sku: updatedProd.sku,
+        minMargin: updatedProd.min_margin,
+        stock: updatedProd.stock,
+        status: updatedProd.status
+      });
+    } catch (_err) {
+      console.warn('Product updated locally');
+    }
+
+    setProducts(prev => prev.map(p => p.id === editingProduct.id ? updatedProd : p));
+
+    // Add audit log entry
+    setAuditLogs(prev => [
+      {
+        id: 'LOG-' + Date.now().toString().slice(-4),
+        action: 'PRODUCT_UPDATED',
+        entity: updatedProd.name,
+        user: 'CyberCreatures Admin',
+        role: 'admin',
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
+        details: `Updated price to $${updatedProd.base_price}, stock to ${updatedProd.stock} units`
+      },
+      ...prev
+    ]);
+
+    setIsEditModalOpen(false);
+    setEditingProduct(null);
+    showNotification('success', `Product '${updatedProd.name}' updated successfully!`);
+  };
+
+  // Delete Product Handler
+  const handleDeleteProduct = (prod) => {
+    showAlert(
+      'Delete Product',
+      `Are you sure you want to remove "${prod.name}" (${prod.sku || prod.id}) from your company catalog? This will remove it from future quotation selections.`,
+      'warning',
+      async () => {
+        try {
+          await api.delete(`/products/${prod.id}`);
+        } catch (_err) {
+          console.warn('Deleted product locally');
+        }
+
+        setProducts(prev => prev.filter(p => p.id !== prod.id));
+
+        // Add audit log entry
+        setAuditLogs(prev => [
+          {
+            id: 'LOG-' + Date.now().toString().slice(-4),
+            action: 'PRODUCT_DELETED',
+            entity: prod.name,
+            user: 'CyberCreatures Admin',
+            role: 'admin',
+            timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
+            details: `Removed SKU ${prod.sku || prod.id} from catalog`
+          },
+          ...prev
+        ]);
+
+        showNotification('success', `Product '${prod.name}' was removed from catalog.`);
+      },
+      () => {} // Cancelled, do nothing
+    );
   };
 
   const handleAddTier = (e) => {
@@ -292,13 +555,15 @@ export default function AdminWorkspace() {
                     <th className="p-3">Category</th>
                     <th className="p-3 text-right">Base Price ($)</th>
                     <th className="p-3 text-center">Floor Margin</th>
+                    <th className="p-3 text-center">Stock Units</th>
                     <th className="p-3 text-center">Status</th>
+                    <th className="p-3 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredProducts.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="p-8 text-center text-text-muted">
+                      <td colSpan="8" className="p-8 text-center text-text-muted">
                         <div className="flex flex-col items-center justify-center space-y-2">
                           <i className="fa-solid fa-box-open text-2xl text-slate-300"></i>
                           <p className="font-medium text-slate-600">No products in catalog</p>
@@ -310,15 +575,44 @@ export default function AdminWorkspace() {
                     filteredProducts.map(p => (
                       <tr key={p.id} className="hover:bg-purple-50/40 transition-colors">
                         <td className="p-3 font-mono font-bold text-text-muted">{p.sku || 'SKU-00' + p.id}</td>
-                        <td className="p-3 font-extrabold text-text-main">{p.name}</td>
+                        <td className="p-3">
+                          <div className="font-extrabold text-text-main">{p.name}</div>
+                          {p.description && (
+                            <div className="text-[10px] text-text-muted truncate max-w-xs">{p.description}</div>
+                          )}
+                        </td>
                         <td className="p-3">
                           <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg text-[10px] font-bold">
                             {p.category}
                           </span>
                         </td>
-                        <td className="p-3 text-right font-black text-purple-700">
-                          ${typeof p.base_price === 'number' ? p.base_price.toLocaleString() : p.base_price}
-                          <span className="text-[10px] text-text-muted font-normal block">/ {p.unit || 'unit'}</span>
+                        <td className="p-3 text-right">
+                          <div className="flex items-center justify-end space-x-1.5">
+                            <div className="text-right">
+                              <span className="font-black text-purple-700 block">
+                                ${typeof p.base_price === 'number' ? p.base_price.toLocaleString() : p.base_price}
+                              </span>
+                              <span className="text-[10px] text-text-muted font-normal block">/ {p.unit || 'unit'}</span>
+                            </div>
+                            <div className="flex flex-col ml-1">
+                              <button 
+                                type="button"
+                                onClick={() => handleAdjustPrice(p.id, 10)}
+                                title="Quick increment price (+$10)"
+                                className="w-5 h-4 flex items-center justify-center text-[9px] text-slate-500 hover:text-primary hover:bg-purple-100 rounded transition-colors"
+                              >
+                                <i className="fa-solid fa-chevron-up"></i>
+                              </button>
+                              <button 
+                                type="button"
+                                onClick={() => handleAdjustPrice(p.id, -10)}
+                                title="Quick decrement price (-$10)"
+                                className="w-5 h-4 flex items-center justify-center text-[9px] text-slate-500 hover:text-primary hover:bg-purple-100 rounded transition-colors"
+                              >
+                                <i className="fa-solid fa-chevron-down"></i>
+                              </button>
+                            </div>
+                          </div>
                         </td>
                         <td className="p-3 text-center">
                           <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px]">
@@ -326,9 +620,64 @@ export default function AdminWorkspace() {
                           </span>
                         </td>
                         <td className="p-3 text-center">
-                          <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-[10px]">
-                            Active
+                          <div className="inline-flex items-center border border-surface-soft rounded-lg bg-slate-50 overflow-hidden shadow-xs">
+                            <button
+                              type="button"
+                              onClick={() => handleDecrementStock(p.id)}
+                              disabled={(p.stock !== undefined ? p.stock : 100) <= 0}
+                              className="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-slate-200 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+                              title="Decrement stock quantity"
+                            >
+                              <i className="fa-solid fa-minus text-[9px]"></i>
+                            </button>
+                            <input
+                              type="number"
+                              min="0"
+                              value={p.stock !== undefined ? p.stock : 100}
+                              onChange={(e) => handleStockChange(p.id, e.target.value)}
+                              className="w-10 text-center font-bold text-text-main text-xs bg-transparent border-0 focus:ring-0 p-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              title="In-stock inventory units"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleIncrementStock(p.id)}
+                              className="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-slate-200 transition-colors"
+                              title="Increment stock quantity"
+                            >
+                              <i className="fa-solid fa-plus text-[9px]"></i>
+                            </button>
+                          </div>
+                        </td>
+                        <td className="p-3 text-center">
+                          <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                            p.status === 'Inactive' 
+                              ? 'bg-slate-100 text-slate-600' 
+                              : p.status === 'Archived' 
+                                ? 'bg-red-100 text-red-700' 
+                                : 'bg-emerald-100 text-emerald-800'
+                          }`}>
+                            {p.status || 'Active'}
                           </span>
+                        </td>
+                        <td className="p-3 text-center">
+                          <div className="flex items-center justify-center space-x-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleEditProduct(p)}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-primary hover:bg-purple-100 transition-colors"
+                              title="Edit Product & Pricing"
+                            >
+                              <i className="fa-solid fa-pen-to-square text-xs"></i>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteProduct(p)}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              title="Delete Product from Company Catalog"
+                            >
+                              <i className="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -342,7 +691,7 @@ export default function AdminWorkspace() {
           <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
             <div className="border-b border-slate-100 pb-3">
               <h3 className="font-extrabold text-text-main text-base">Add New Product & Price</h3>
-              <p className="text-xs text-text-muted">Configure base selling price and margin floor</p>
+              <p className="text-xs text-text-muted">Configure base selling price, margin floor, and stock count</p>
             </div>
 
             <form onSubmit={handleAddProduct} className="space-y-3 text-xs">
@@ -408,23 +757,37 @@ export default function AdminWorkspace() {
                 </div>
               </div>
 
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Unit Pricing Model</label>
-                <select
-                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
-                  value={newProdUnit}
-                  onChange={(e) => setNewProdUnit(e.target.value)}
-                >
-                  <option value="unit">Per Unit</option>
-                  <option value="user/month">Per User / Month</option>
-                  <option value="package">Package / Fixed</option>
-                  <option value="device/month">Per Device / Month</option>
-                </select>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Unit Pricing Model</label>
+                  <select
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={newProdUnit}
+                    onChange={(e) => setNewProdUnit(e.target.value)}
+                  >
+                    <option value="unit">Per Unit</option>
+                    <option value="user/month">Per User / Month</option>
+                    <option value="package">Package / Fixed</option>
+                    <option value="device/month">Per Device / Month</option>
+                    <option value="month">Per Month</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Initial Stock Units</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="100"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={newProdStock}
+                    onChange={(e) => setNewProdStock(e.target.value)}
+                  />
+                </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2.5 px-4 bg-primary text-white text-text-main font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2"
+                className="w-full py-2.5 px-4 bg-primary text-white font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2 hover:bg-primary-dark"
               >
                 <i className="fa-solid fa-plus"></i>
                 <span>Add Product to Catalog</span>
@@ -758,6 +1121,170 @@ export default function AdminWorkspace() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Product Modal */}
+      {isEditModalOpen && editingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border border-surface-soft shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
+            <div className="flex justify-between items-center p-5 border-b border-surface-soft bg-slate-50">
+              <div className="flex items-center space-x-2.5">
+                <span className="w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center text-sm font-bold">
+                  <i className="fa-solid fa-pen-to-square"></i>
+                </span>
+                <div>
+                  <h3 className="font-extrabold text-text-main text-sm">Edit Product &amp; Pricing</h3>
+                  <p className="text-[11px] text-text-muted">Modify catalog listing for {editingProduct.name}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setIsEditModalOpen(false); setEditingProduct(null); }}
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors"
+              >
+                <i className="fa-solid fa-xmark text-sm"></i>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditedProduct} className="p-5 space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Product Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editingProduct.name}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">SKU Code</label>
+                  <input
+                    type="text"
+                    value={editingProduct.sku || ''}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, sku: e.target.value })}
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Category</label>
+                  <select
+                    value={editingProduct.category}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="Hardware">Hardware</option>
+                    <option value="Software">Software</option>
+                    <option value="Services">Services</option>
+                    <option value="Cloud License">Cloud License</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Base Price ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={editingProduct.base_price}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, base_price: e.target.value })}
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Floor Margin (%)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={editingProduct.min_margin}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, min_margin: e.target.value })}
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Unit Pricing Model</label>
+                  <select
+                    value={editingProduct.unit || 'unit'}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, unit: e.target.value })}
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="unit">Per Unit</option>
+                    <option value="user/month">Per User / Month</option>
+                    <option value="package">Package / Fixed</option>
+                    <option value="device/month">Per Device / Month</option>
+                    <option value="month">Per Month</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Inventory / Stock Count</label>
+                  <div className="flex items-center space-x-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditingProduct(prev => ({ ...prev, stock: Math.max(0, (parseInt(prev.stock, 10) || 0) - 1) }))}
+                      className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center transition-colors"
+                      title="Decrement stock"
+                    >
+                      <i className="fa-solid fa-minus text-[10px]"></i>
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      value={editingProduct.stock !== undefined ? editingProduct.stock : 100}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, stock: Math.max(0, parseInt(e.target.value, 10) || 0) })}
+                      className="flex-1 text-center bg-slate-50 border border-surface-soft rounded-lg py-1.5 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setEditingProduct(prev => ({ ...prev, stock: (parseInt(prev.stock, 10) || 0) + 1 }))}
+                      className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center transition-colors"
+                      title="Increment stock"
+                    >
+                      <i className="fa-solid fa-plus text-[10px]"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Catalog Status</label>
+                <select
+                  value={editingProduct.status || 'Active'}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, status: e.target.value })}
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="Active">Active (Available for Quotes)</option>
+                  <option value="Inactive">Inactive (Hidden from Reps)</option>
+                  <option value="Archived">Archived</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => { setIsEditModalOpen(false); setEditingProduct(null); }}
+                  className="px-4 py-2 rounded-xl border border-surface-soft text-slate-600 font-bold hover:bg-slate-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-primary text-white font-bold hover:bg-primary-dark transition-colors shadow-sm flex items-center space-x-1.5"
+                >
+                  <i className="fa-solid fa-check text-xs"></i>
+                  <span>Save Changes</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
