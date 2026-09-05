@@ -11,9 +11,9 @@ const app = express();
 // Security Headers
 app.use(helmet());
 
-// CORS configuration
+// CORS configuration - Allow dynamic origins for local dev, IP network, and production
 app.use(cors({
-  origin: config.corsOrigin,
+  origin: (origin, callback) => callback(null, true),
   credentials: true
 }));
 

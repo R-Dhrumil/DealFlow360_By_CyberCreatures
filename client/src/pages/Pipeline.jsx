@@ -2,14 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 
-const INITIAL_DEALS = [
-  { id: 'Q-101', customer: 'Acme Corp', amount: 18500, riskScore: 0.00, stage: 'Draft', rep: 'Alex Rep', linesCount: 4, updatedAt: '10 mins ago' },
-  { id: 'Q-102', customer: 'Beta Industries', amount: 45000, riskScore: 8.50, stage: 'Pending Approval', rep: 'Alex Rep', linesCount: 3, updatedAt: '1 hour ago' },
-  { id: 'Q-103', customer: 'CyberNet Systems', amount: 112000, riskScore: 18.20, stage: 'Pending Finance', rep: 'John Sales', linesCount: 6, updatedAt: '3 hours ago' },
-  { id: 'Q-104', customer: 'Delta Logistics', amount: 29000, riskScore: 0.00, stage: 'Approved', rep: 'Alex Rep', linesCount: 2, updatedAt: '1 day ago' },
-  { id: 'Q-105', customer: 'Echo Energy', amount: 87500, riskScore: 0.00, stage: 'Confirmed', rep: 'Maria Garcia', linesCount: 5, updatedAt: '2 days ago' },
-];
-
 const STAGES = [
   { name: 'Draft', color: 'border-slate-300 bg-slate-100 text-slate-700' },
   { name: 'Pending Approval', color: 'border-amber-status bg-amber-50 text-amber-800' },
@@ -19,7 +11,7 @@ const STAGES = [
 ];
 
 export default function Pipeline() {
-  const [deals, setDeals] = useState(INITIAL_DEALS);
+  const [deals, setDeals] = useState([]);
   const [filterText, setFilterText] = useState('');
 
   useEffect(() => {
@@ -41,9 +33,11 @@ export default function Pipeline() {
           updatedAt: 'Recently'
         }));
         setDeals(formatted);
+      } else {
+        setDeals([]);
       }
     } catch (err) {
-      console.warn('Using demo deal pipeline in Pipeline view');
+      setDeals([]);
     }
   };
 

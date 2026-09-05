@@ -7,14 +7,14 @@ const config = require('../config/environment');
 const ApiError = require('../utils/apiError');
 const db = require('../config/db');
 
-// Seeded Demo Accounts for Instant Testing
+// Seeded Demo Accounts for Instant Testing with PostgreSQL UUID compatibility
 const DEMO_ACCOUNTS = [
-  { email: 'superadmin@dealflow360.com', password: 'SuperAdmin123!', name: 'Super Admin', role: 'super_admin', id: 'sa-001' },
-  { email: 'admin@cybercreatures.com', password: 'Admin123!', name: 'CyberCreatures Admin', role: 'admin', id: 'usr-admin-01', companyId: 'comp-01' },
-  { email: 'manager@cybercreatures.com', password: 'Manager123!', name: 'Sales Manager', role: 'sales_manager', id: 'usr-mgr-01', companyId: 'comp-01' },
-  { email: 'finance@cybercreatures.com', password: 'Finance123!', name: 'Finance Lead', role: 'finance', id: 'usr-fin-01', companyId: 'comp-01' },
-  { email: 'sales@cybercreatures.com', password: 'Sales123!', name: 'Sales Executive', role: 'sales_rep', id: 'usr-rep-01', companyId: 'comp-01' },
-  { email: 'customer@acme.com', password: 'Customer123!', name: 'Acme Procurement', role: 'customer', id: 'cust-acme-01' },
+  { email: 'superadmin@dealflow360.com', password: 'SuperAdmin123!', name: 'Super Admin', role: 'super_admin', id: '11111111-1111-1111-1111-100000000000' },
+  { email: 'admin@cybercreatures.com', password: 'Admin123!', name: 'CyberCreatures Admin', role: 'admin', id: '11111111-1111-1111-1111-100000000001', companyId: '11111111-1111-1111-1111-111111111111' },
+  { email: 'manager@cybercreatures.com', password: 'Manager123!', name: 'Sales Manager', role: 'sales_manager', id: '11111111-1111-1111-1111-100000000002', companyId: '11111111-1111-1111-1111-111111111111' },
+  { email: 'finance@cybercreatures.com', password: 'Finance123!', name: 'Finance Lead', role: 'finance', id: '11111111-1111-1111-1111-100000000004', companyId: '11111111-1111-1111-1111-111111111111' },
+  { email: 'sales@cybercreatures.com', password: 'Sales123!', name: 'Sales Executive', role: 'sales_rep', id: '11111111-1111-1111-1111-100000000003', companyId: '11111111-1111-1111-1111-111111111111' },
+  { email: 'customer@acme.com', password: 'Customer123!', name: 'Acme Procurement', role: 'customer', id: '33333333-3333-3333-3333-333333333331' },
 ];
 
 class AuthService {

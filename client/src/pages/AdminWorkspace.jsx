@@ -1,50 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
 
-const INITIAL_PRODUCTS = [
-  { id: 'p1', sku: 'HW-SRV-01', name: 'Enterprise Server X1', category: 'Hardware', base_price: 5000, min_margin: 30, unit: 'unit', stock: 120, status: 'Active' },
-  { id: 'p2', sku: 'SW-LIC-01', name: 'SaaS Platform License', category: 'Software', base_price: 100, min_margin: 20, unit: 'user/month', stock: 999, status: 'Active' },
-  { id: 'p3', sku: 'SVC-ONB-01', name: 'Implementation Services', category: 'Services', base_price: 2500, min_margin: 40, unit: 'package', stock: 50, status: 'Active' },
-  { id: 'p4', sku: 'HW-NET-02', name: 'Gigabit Switch 48-Port', category: 'Hardware', base_price: 1800, min_margin: 25, unit: 'unit', stock: 75, status: 'Active' },
-  { id: 'p5', sku: 'SW-SEC-05', name: 'Endpoint Security Suite', category: 'Software', base_price: 45, min_margin: 15, unit: 'device/month', stock: 500, status: 'Active' },
-];
-
-const INITIAL_TIERS = [
-  { id: 't1', tier: 'Bronze', maxDiscount: 5.0, minMargin: 35.0, approver: 'Auto-Approve', maxQty: 10 },
-  { id: 't2', tier: 'Silver', maxDiscount: 10.0, minMargin: 25.0, approver: 'Sales Manager', maxQty: 50 },
-  { id: 't3', tier: 'Gold', maxDiscount: 15.0, minMargin: 15.0, approver: 'Finance Lead', maxQty: 200 },
-  { id: 't4', tier: 'Platinum', maxDiscount: 25.0, minMargin: 10.0, approver: 'Admin Override', maxQty: 1000 },
-];
-
-const CATEGORY_DISCOUNT_RULES = [
-  { category: 'Hardware', maxDiscount: 12.0, defaultMargin: 30.0 },
-  { category: 'Software', maxDiscount: 20.0, defaultMargin: 70.0 },
-  { category: 'Services', maxDiscount: 15.0, defaultMargin: 50.0 },
-];
-
-const INITIAL_TEAM = [
-  { id: 1, name: 'Alex Rep', email: 'sales@cybercreatures.com', role: 'sales_rep', status: 'Active', dealsCount: 14 },
-  { id: 2, name: 'Sarah Manager', email: 'manager@cybercreatures.com', role: 'sales_manager', status: 'Active', dealsCount: 42 },
-  { id: 3, name: 'David Finance', email: 'finance@cybercreatures.com', role: 'finance', status: 'Active', dealsCount: 29 },
-  { id: 4, name: 'Elena Admin', email: 'admin@cybercreatures.com', role: 'admin', status: 'Active', dealsCount: 0 }
-];
-
-const INITIAL_WAREHOUSES = [
-  { id: 'wh-main', name: 'Main Warehouse Depot', location: 'Chicago, IL', shippingCostWeight: 1.0, stockCount: 1420 },
-  { id: 'wh-east', name: 'East Coast Logistics', location: 'Newark, NJ', shippingCostWeight: 1.2, stockCount: 850 }
-];
-
-const INITIAL_AUDIT_LOGS = [
-  { id: 'L-901', action: 'CREATE_PRODUCT', entity: 'Product #HW-SRV-01', user: 'Elena Admin', role: 'admin', timestamp: '2026-09-05 14:10:00', details: 'Added Enterprise Server X1 at base price $5,000' },
-  { id: 'L-902', action: 'UPDATE_TIER_CONFIG', entity: 'Tier #Gold', user: 'Elena Admin', role: 'admin', timestamp: '2026-09-05 13:45:00', details: 'Updated max discount ceiling to 15% for Gold Tier' },
-  { id: 'L-903', action: 'APPROVE_QUOTATION', entity: 'Quotation #Q-104', user: 'Sarah Manager', role: 'sales_manager', timestamp: '2026-09-05 13:15:00', details: 'Approved discount of 8.5% within tier limit' },
-];
-
 export default function AdminWorkspace() {
   const [activeTab, setActiveTab] = useState('products'); // 'products' | 'tiers' | 'team' | 'warehouses' | 'audit'
 
   // Products State
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState([]);
   const [prodSearch, setProdSearch] = useState('');
   const [newProdName, setNewProdName] = useState('');
   const [newProdSku, setNewProdSku] = useState('');
@@ -54,36 +15,48 @@ export default function AdminWorkspace() {
   const [newProdUnit, setNewProdUnit] = useState('unit');
 
   // Governance Tiers State
-  const [tiers, setTiers] = useState(INITIAL_TIERS);
-  const [categoryRules, setCategoryRules] = useState(CATEGORY_DISCOUNT_RULES);
+  const [tiers, setTiers] = useState([]);
+  const [categoryRules, setCategoryRules] = useState([]);
   const [newTierName, setNewTierName] = useState('');
   const [newTierDiscount, setNewTierDiscount] = useState('');
   const [newTierMargin, setNewTierMargin] = useState('');
   const [newTierApprover, setNewTierApprover] = useState('Sales Manager');
 
   // Team State
-  const [team, setTeam] = useState(INITIAL_TEAM);
+  const [team, setTeam] = useState([]);
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newRole, setNewRole] = useState('sales_rep');
 
   // Warehouses State
-  const [warehouses, setWarehouses] = useState(INITIAL_WAREHOUSES);
+  const [warehouses, setWarehouses] = useState([]);
   const [newWhName, setNewWhName] = useState('');
   const [newWhLoc, setNewWhLoc] = useState('');
 
+  // Audit Logs State
+  const [auditLogs, setAuditLogs] = useState([]);
+
   useEffect(() => {
     fetchProducts();
+    fetchTeam();
   }, []);
 
   const fetchProducts = async () => {
     try {
       const res = await api.get('/products');
-      if (res.data && res.data.length > 0) {
-        setProducts(res.data);
-      }
+      setProducts(res.data || []);
     } catch (err) {
-      console.warn('Using seeded products in Admin workspace');
+      console.error('Failed to fetch products:', err);
+      setProducts([]);
+    }
+  };
+
+  const fetchTeam = async () => {
+    try {
+      const res = await api.get('/superadmin/users');
+      setTeam(res.data || []);
+    } catch (err) {
+      setTeam([]);
     }
   };
 

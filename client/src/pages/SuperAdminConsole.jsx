@@ -23,38 +23,21 @@ export default function SuperAdminConsole() {
         api.get('/superadmin/users')
       ]);
 
-      let companyList = [];
-      if (compRes.status === 'fulfilled' && compRes.value?.data?.length > 0) {
-        companyList = compRes.value.data;
+      if (compRes.status === 'fulfilled' && Array.isArray(compRes.value?.data)) {
+        setCompanies(compRes.value.data);
       } else {
-        companyList = [
-          { id: '1', name: 'CyberCreatures Operations', subdomain_slug: 'cybercreatures', user_count: 8, quotation_count: 36, won_deals: 28, lost_deals: 4, revenue: '$485,000' },
-          { id: '2', name: 'Nexus Industrial Solutions', subdomain_slug: 'nexus', user_count: 5, quotation_count: 24, won_deals: 18, lost_deals: 3, revenue: '$210,000' },
-          { id: '3', name: 'Vertex Cloud Technologies', subdomain_slug: 'vertex', user_count: 12, quotation_count: 52, won_deals: 41, lost_deals: 6, revenue: '$890,000' },
-        ];
+        setCompanies([]);
       }
-      setCompanies(companyList);
 
-      if (userRes.status === 'fulfilled' && userRes.value?.data?.length > 0) {
+      if (userRes.status === 'fulfilled' && Array.isArray(userRes.value?.data)) {
         setTenantUsers(userRes.value.data);
       } else {
-        // Seeded demo user info across business tenants
-        setTenantUsers([
-          { id: 'u1', name: 'Alexander Wright', email: 'alex@cybercreatures.com', role: 'admin', company_name: 'CyberCreatures Operations', created_at: '2026-01-15' },
-          { id: 'u2', name: 'Elena Rostova', email: 'elena@cybercreatures.com', role: 'sales_manager', company_name: 'CyberCreatures Operations', created_at: '2026-02-01' },
-          { id: 'u3', name: 'Marcus Brody', email: 'marcus@cybercreatures.com', role: 'finance', company_name: 'CyberCreatures Operations', created_at: '2026-02-10' },
-          { id: 'u4', name: 'Sarah Jenkins', email: 'sarah@cybercreatures.com', role: 'sales_rep', company_name: 'CyberCreatures Operations', created_at: '2026-03-05' },
-          
-          { id: 'u5', name: 'David Miller', email: 'david@nexus-ind.com', role: 'admin', company_name: 'Nexus Industrial Solutions', created_at: '2026-02-14' },
-          { id: 'u6', name: 'Rachel Vance', email: 'rachel@nexus-ind.com', role: 'sales_rep', company_name: 'Nexus Industrial Solutions', created_at: '2026-03-12' },
-
-          { id: 'u7', name: 'Vikram Patel', email: 'vikram@vertexcloud.io', role: 'admin', company_name: 'Vertex Cloud Technologies', created_at: '2026-01-20' },
-          { id: 'u8', name: 'Samantha Reed', email: 'samantha@vertexcloud.io', role: 'sales_manager', company_name: 'Vertex Cloud Technologies', created_at: '2026-02-22' },
-          { id: 'u9', name: 'Chloe Bennett', email: 'chloe@vertexcloud.io', role: 'finance', company_name: 'Vertex Cloud Technologies', created_at: '2026-03-01' },
-        ]);
+        setTenantUsers([]);
       }
     } catch (error) {
       console.error('Failed to fetch super admin data', error);
+      setCompanies([]);
+      setTenantUsers([]);
     } finally {
       setLoading(false);
     }

@@ -2,15 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 
-const SEEDED_PRODUCTS = [
-  { id: 'p1', sku: 'HW-SRV-01', name: 'Enterprise Server X1', category: 'Hardware', base_price: 5000, unit: 'unit', description: 'High-performance enterprise rack unit server built for heavy AI & database workloads.' },
-  { id: 'p2', sku: 'SW-LIC-01', name: 'SaaS Platform License', category: 'Software', base_price: 100, unit: 'user/month', description: 'Cloud analytics platform license with automated pipeline tracking & risk scoring.' },
-  { id: 'p3', sku: 'SVC-ONB-01', name: 'Implementation Services', category: 'Services', base_price: 2500, unit: 'package', description: 'Onboarding & custom integration support package with 24/7 dedicated engineer access.' },
-  { id: 'p4', sku: 'HW-NET-02', name: 'Gigabit Switch 48-Port', category: 'Hardware', base_price: 1800, unit: 'unit', description: 'Enterprise managed L3 network switch with PoE+ power delivery.' },
-  { id: 'p5', sku: 'SW-SEC-05', name: 'Endpoint Security Suite', category: 'Software', base_price: 45, unit: 'device/month', description: 'Next-generation antivirus, endpoint detection, and real-time firewall threat prevention.' },
-  { id: 'p6', sku: 'CLD-STR-09', name: 'Cloud Storage Vault 10TB', category: 'Cloud License', base_price: 350, unit: 'month', description: 'Ultra-secure encrypted cloud storage backup vault with instant failover recovery.' },
-];
-
 export default function CustomerDashboard() {
   const navigate = useNavigate();
   const userStr = localStorage.getItem('user');
@@ -21,52 +12,38 @@ export default function CustomerDashboard() {
     company_name: 'Acme Corporation'
   };
 
-  const [activeTab, setActiveTab] = useState('products'); // Default to 'products' first!
-  const [products, setProducts] = useState(SEEDED_PRODUCTS);
+  const [activeTab, setActiveTab] = useState('products');
+  const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [inquirySuccess, setInquirySuccess] = useState('');
-
-  const [quotations, setQuotations] = useState([
-    {
-      id: 'Q-101',
-      title: 'Enterprise Server & Cloud SaaS Proposal',
-      totalAmount: 18500.00,
-      status: 'presented',
-      created_at: '2026-09-04',
-      sales_rep: 'Alex Rep (CyberCreatures)',
-      lines_count: 4
-    },
-    {
-      id: 'Q-102',
-      title: 'Hardware Upgrade & Annual Support',
-      totalAmount: 45000.00,
-      status: 'pending_approval',
-      created_at: '2026-09-05',
-      sales_rep: 'Sarah Manager (CyberCreatures)',
-      lines_count: 3
-    }
-  ]);
+  const [quotations, setQuotations] = useState([]);
 
   useEffect(() => {
     fetchCatalogProducts();
+    fetchQuotations();
   }, []);
 
   const fetchCatalogProducts = async () => {
     try {
       const res = await api.get('/marketplace/products');
-      if (res.data && res.data.length > 0) {
-        setProducts(res.data);
-      }
+      setProducts(res.data || []);
     } catch (err) {
       try {
         const res2 = await api.get('/products');
-        if (res2.data && res2.data.length > 0) {
-          setProducts(res2.data);
-        }
+        setProducts(res2.data || []);
       } catch (err2) {
-        console.warn('Using seeded products in Customer Dashboard');
+        setProducts([]);
       }
+    }
+  };
+
+  const fetchQuotations = async () => {
+    try {
+      const res = await api.get('/quotations');
+      setQuotations(res.data || []);
+    } catch (err) {
+      setQuotations([]);
     }
   };
 
