@@ -314,6 +314,136 @@ const UniversalDashboard = () => {
         </div>
       </div>
 
+      {/* ━━━━━━━━━━━━━━━━━━━━ ANALYTICS SECTION ━━━━━━━━━━━━━━━━━━━━ */}
+      <div className="pb-7">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="text-lg font-extrabold text-text-main tracking-tight">Pipeline Analytics</h2>
+            <p className="text-xs text-text-muted">Real-time deal distribution, value breakdown, and conversion metrics</p>
+          </div>
+          <span className="text-[11px] bg-primary/10 text-primary font-bold px-3 py-1 rounded-full border border-primary/20">
+            {quotations.length} Total Records
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+          {/* Chart 1: Status Distribution Bar Chart */}
+          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-primary/10 text-primary"><i className="fa-solid fa-chart-bar"></i></span>
+              <div>
+                <h3 className="text-sm font-bold text-text-main">Deal Status Distribution</h3>
+                <p className="text-[10px] text-text-muted">Count by pipeline stage</p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3">
+              {statusGroups.map(g => (
+                <div key={g.label} className="flex items-center gap-3">
+                  <span className="text-[11px] font-bold text-text-muted w-16 shrink-0">{g.label}</span>
+                  <div className="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${(g.count / maxGroupCount) * 100}%`, backgroundColor: g.color }}
+                    ></div>
+                  </div>
+                  <span className="text-xs font-extrabold text-text-main w-6 text-right">{g.count}</span>
+                </div>
+              ))}
+            </div>
+            <div className="pt-2 border-t border-slate-100 flex justify-between text-[11px] text-text-muted">
+              <span>Total Deals</span>
+              <span className="font-bold text-text-main">{quotations.length}</span>
+            </div>
+          </div>
+
+          {/* Chart 2: Pipeline Value Donut */}
+          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-indigo-100 text-indigo-600"><i className="fa-solid fa-chart-pie"></i></span>
+              <div>
+                <h3 className="text-sm font-bold text-text-main">Pipeline Value Breakdown</h3>
+                <p className="text-[10px] text-text-muted">ACV split by deal stage</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="relative shrink-0">
+                <svg width="130" height="130" viewBox="0 0 130 130">
+                  {donutSegments.map((seg, i) => (
+                    <circle
+                      key={i}
+                      cx="65" cy="65"
+                      r={DONUT_R}
+                      fill="none"
+                      stroke={seg.color}
+                      strokeWidth={DONUT_STROKE}
+                      strokeDasharray={`${seg.dash} ${DONUT_CIRC - seg.dash}`}
+                      strokeDashoffset={-seg.offset}
+                      style={{ transform: 'rotate(-90deg)', transformOrigin: '65px 65px' }}
+                    />
+                  ))}
+                  <text x="65" y="60" textAnchor="middle" className="fill-slate-900" style={{ fontSize: 11, fontWeight: 800 }}>
+                    {formatCurrency(totalPipelineValue)}
+                  </text>
+                  <text x="65" y="74" textAnchor="middle" style={{ fontSize: 8, fill: '#94a3b8', fontWeight: 600 }}>PIPELINE</text>
+                </svg>
+              </div>
+              <div className="flex flex-col gap-2 flex-1">
+                {donutData.map(seg => (
+                  <div key={seg.label} className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: seg.color }}></span>
+                      <span className="text-[11px] font-semibold text-text-muted">{seg.label}</span>
+                    </div>
+                    <span className="text-[11px] font-extrabold text-text-main">{formatCurrency(seg.value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Chart 3: Conversion Funnel Stats */}
+          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-emerald-100 text-emerald-600"><i className="fa-solid fa-filter"></i></span>
+              <div>
+                <h3 className="text-sm font-bold text-text-main">Conversion Funnel</h3>
+                <p className="text-[10px] text-text-muted">Stage-to-stage progression rates</p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3">
+              {[
+                { label: 'Total Created',  val: quotations.length,                                                                   pct: 100,  color: 'bg-slate-400' },
+                { label: 'Submitted',      val: quotations.filter(q => q.status !== 'draft').length,                                 pct: quotations.length ? Math.round(quotations.filter(q => q.status !== 'draft').length / quotations.length * 100) : 0, color: 'bg-blue-400' },
+                { label: 'In Approval',   val: pendingDeals.length,                                                                  pct: quotations.length ? Math.round(pendingDeals.length / quotations.length * 100) : 0, color: 'bg-amber-400' },
+                { label: 'Approved',      val: quotations.filter(q => q.status === 'approved' || q.status === 'confirmed').length,   pct: quotations.length ? Math.round(quotations.filter(q => q.status === 'approved' || q.status === 'confirmed').length / quotations.length * 100) : 0, color: 'bg-emerald-500' },
+                { label: 'Won',           val: quotations.filter(q => q.status === 'confirmed').length,                              pct: quotations.length ? Math.round(quotations.filter(q => q.status === 'confirmed').length / quotations.length * 100) : 0, color: 'bg-indigo-500' },
+              ].map((row) => (
+                <div key={row.label}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-bold text-text-muted">{row.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-extrabold text-text-main">{row.val}</span>
+                      <span className="text-[10px] font-semibold text-text-muted">({row.pct}%)</span>
+                    </div>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div className={`${row.color} h-full rounded-full transition-all duration-700`} style={{ width: `${row.pct}%` }}></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="pt-2 border-t border-slate-100 flex justify-between text-[11px]">
+              <span className="text-text-muted">Win Rate</span>
+              <span className="font-extrabold text-emerald-600">
+                {quotations.length > 0 ? ((quotations.filter(q => q.status === 'confirmed').length / quotations.length) * 100).toFixed(1) : 0}%
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       {/* Main Stage Split-Plane Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pb-7">
         {/* Left / Center Stage: Active Deal Pipeline Board (8 cols on lg, 9 cols on xl) */}
@@ -643,138 +773,6 @@ const UniversalDashboard = () => {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* ━━━━━━━━━━━━━━━━━━━━ ANALYTICS SECTION ━━━━━━━━━━━━━━━━━━━━ */}
-      <div className="pb-8">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h2 className="text-lg font-extrabold text-text-main tracking-tight">Pipeline Analytics</h2>
-            <p className="text-xs text-text-muted">Real-time deal distribution, value breakdown, and conversion metrics</p>
-          </div>
-          <span className="text-[11px] bg-primary/10 text-primary font-bold px-3 py-1 rounded-full border border-primary/20">
-            {quotations.length} Total Records
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-          {/* Chart 1: Status Distribution Bar Chart */}
-          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-5 flex flex-col gap-4">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-primary/10 text-primary"><i className="fa-solid fa-chart-bar"></i></span>
-              <div>
-                <h3 className="text-sm font-bold text-text-main">Deal Status Distribution</h3>
-                <p className="text-[10px] text-text-muted">Count by pipeline stage</p>
-              </div>
-            </div>
-            <div className="flex flex-col gap-3">
-              {statusGroups.map(g => (
-                <div key={g.label} className="flex items-center gap-3">
-                  <span className="text-[11px] font-bold text-text-muted w-16 shrink-0">{g.label}</span>
-                  <div className="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${(g.count / maxGroupCount) * 100}%`, backgroundColor: g.color }}
-                    ></div>
-                  </div>
-                  <span className="text-xs font-extrabold text-text-main w-6 text-right">{g.count}</span>
-                </div>
-              ))}
-            </div>
-            <div className="pt-2 border-t border-slate-100 flex justify-between text-[11px] text-text-muted">
-              <span>Total Deals</span>
-              <span className="font-bold text-text-main">{quotations.length}</span>
-            </div>
-          </div>
-
-          {/* Chart 2: Pipeline Value Donut */}
-          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-5 flex flex-col gap-4">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-indigo-100 text-indigo-600"><i className="fa-solid fa-chart-pie"></i></span>
-              <div>
-                <h3 className="text-sm font-bold text-text-main">Pipeline Value Breakdown</h3>
-                <p className="text-[10px] text-text-muted">ACV split by deal stage</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              {/* SVG Donut */}
-              <div className="relative shrink-0">
-                <svg width="130" height="130" viewBox="0 0 130 130">
-                  {donutSegments.map((seg, i) => (
-                    <circle
-                      key={i}
-                      cx="65" cy="65"
-                      r={DONUT_R}
-                      fill="none"
-                      stroke={seg.color}
-                      strokeWidth={DONUT_STROKE}
-                      strokeDasharray={`${seg.dash} ${DONUT_CIRC - seg.dash}`}
-                      strokeDashoffset={-seg.offset}
-                      style={{ transform: 'rotate(-90deg)', transformOrigin: '65px 65px' }}
-                    />
-                  ))}
-                  <text x="65" y="60" textAnchor="middle" className="fill-slate-900" style={{ fontSize: 11, fontWeight: 800 }}>
-                    {formatCurrency(totalPipelineValue)}
-                  </text>
-                  <text x="65" y="74" textAnchor="middle" style={{ fontSize: 8, fill: '#94a3b8', fontWeight: 600 }}>PIPELINE</text>
-                </svg>
-              </div>
-              {/* Legend */}
-              <div className="flex flex-col gap-2 flex-1">
-                {donutData.map(seg => (
-                  <div key={seg.label} className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: seg.color }}></span>
-                      <span className="text-[11px] font-semibold text-text-muted">{seg.label}</span>
-                    </div>
-                    <span className="text-[11px] font-extrabold text-text-main">{formatCurrency(seg.value)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Chart 3: Conversion Funnel Stats */}
-          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-5 flex flex-col gap-4">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-emerald-100 text-emerald-600"><i className="fa-solid fa-filter"></i></span>
-              <div>
-                <h3 className="text-sm font-bold text-text-main">Conversion Funnel</h3>
-                <p className="text-[10px] text-text-muted">Stage-to-stage progression rates</p>
-              </div>
-            </div>
-            <div className="flex flex-col gap-3">
-              {[
-                { label: 'Total Created',  val: quotations.length,                                                                    pct: 100,  color: 'bg-slate-400' },
-                { label: 'Submitted',      val: quotations.filter(q => q.status !== 'draft').length,                                  pct: quotations.length ? Math.round(quotations.filter(q => q.status !== 'draft').length / quotations.length * 100) : 0, color: 'bg-blue-400' },
-                { label: 'In Approval',    val: pendingDeals.length,                                                                  pct: quotations.length ? Math.round(pendingDeals.length / quotations.length * 100) : 0,    color: 'bg-amber-400' },
-                { label: 'Approved',       val: quotations.filter(q => q.status === 'approved' || q.status === 'confirmed').length,   pct: quotations.length ? Math.round(quotations.filter(q => q.status === 'approved' || q.status === 'confirmed').length / quotations.length * 100) : 0, color: 'bg-emerald-500' },
-                { label: 'Won / Confirmed',val: quotations.filter(q => q.status === 'confirmed').length,                              pct: quotations.length ? Math.round(quotations.filter(q => q.status === 'confirmed').length / quotations.length * 100) : 0, color: 'bg-indigo-500' },
-              ].map((row, i, arr) => (
-                <div key={row.label}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] font-bold text-text-muted">{row.label}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-extrabold text-text-main">{row.val}</span>
-                      <span className="text-[10px] font-semibold text-text-muted">({row.pct}%)</span>
-                    </div>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                    <div className={`${row.color} h-full rounded-full transition-all duration-700`} style={{ width: `${row.pct}%` }}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="pt-2 border-t border-slate-100 flex justify-between text-[11px]">
-              <span className="text-text-muted">Win Rate</span>
-              <span className="font-extrabold text-emerald-600">
-                {quotations.length > 0 ? ((quotations.filter(q => q.status === 'confirmed').length / quotations.length) * 100).toFixed(1) : 0}%
-              </span>
-            </div>
-          </div>
-
         </div>
       </div>
 
