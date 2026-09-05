@@ -185,7 +185,7 @@ export default function Pipeline() {
             />
           </div>
 
-          <Link to="/app/quote" className="btn-primary flex items-center shadow-md">
+          <Link to="/app/quote" className="btn-primary flex items-center shadow-md bg-primary text-on-primary shadow-sm p-2 rounded-xl">
             <i className="fa-solid fa-plus mr-2"></i> Create Quotation
           </Link>
         </div>
