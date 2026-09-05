@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 
 const DEMO_USERS = [
@@ -11,9 +10,10 @@ const DEMO_USERS = [
 ];
 
 export default function Layout() {
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : { name: 'Alex Rep', role: 'sales_rep', companyId: '11111111-1111-1111-1111-111111111111' };
   const [siteName, setSiteName] = useState('DealFlow360');
 
   useEffect(() => {
