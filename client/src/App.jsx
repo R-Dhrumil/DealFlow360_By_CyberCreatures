@@ -1,0 +1,51 @@
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
+import Marketplace from './pages/Marketplace';
+import QuotationBuilder from './pages/QuotationBuilder';
+import QuotationView from './pages/QuotationView';
+import ApprovalQueue from './pages/ApprovalQueue';
+import FulfillmentSplit from './pages/FulfillmentSplit';
+import CustomerPortal from './pages/CustomerPortal';
+import DealHealthDashboard from './pages/DealHealthDashboard';
+import Reporting from './pages/Reporting';
+import SuperAdminConsole from './pages/SuperAdminConsole';
+import ProtectedRoute from './components/ProtectedRoute';
+import Layout from './components/Layout';
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/portal/:id" element={<CustomerPortal />} />
+        
+        {/* Auth Routes (placeholders for now) */}
+        <Route path="/login" element={<div>Business Login Page</div>} />
+        <Route path="/customer/login" element={<div>Customer Login Page</div>} />
+
+        {/* Internal Protected Routes */}
+        <Route path="/app" element={<ProtectedRoute allowedRoles={['sales_rep', 'sales_manager', 'finance', 'admin', 'super_admin']} />}>
+          <Route element={<Layout />}>
+            <Route path="dashboard" element={<DealHealthDashboard />} />
+            <Route path="quote" element={<QuotationBuilder />} />
+            <Route path="quote/:id" element={<QuotationView />} />
+            <Route path="approvals" element={<ApprovalQueue />} />
+            <Route path="fulfillment/:id" element={<FulfillmentSplit />} />
+            <Route path="reporting" element={<Reporting />} />
+            <Route path="superadmin" element={<SuperAdminConsole />} />
+            {/* Redirect /app to dashboard for now */}
+            <Route index element={<Navigate to="dashboard" replace />} />
+          </Route>
+        </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;
