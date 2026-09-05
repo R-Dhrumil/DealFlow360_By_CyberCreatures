@@ -264,13 +264,6 @@ export default function CustomerPortal() {
       <header className="bg-white text-text-main border-b border-surface-soft sticky top-0 z-10 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <button
-              onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = '/customer/dashboard'}
-              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all flex items-center justify-center border border-surface-soft shadow-2xs"
-              title="Go Back"
-            >
-              <i className="fa-solid fa-arrow-left text-sm"></i>
-            </button>
             <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center font-bold text-lg text-white">
               {quotation.company_name.charAt(0)}
             </div>
