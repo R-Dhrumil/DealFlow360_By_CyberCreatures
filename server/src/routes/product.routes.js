@@ -9,5 +9,7 @@ const asyncWrap = require('../utils/asyncWrap');
 router.use(authenticate, attachCompanyScope);
 
 router.get('/', checkRole('sales_rep', 'sales_manager', 'admin'), asyncWrap((req, res) => productController.getCompanyProducts(req, res)));
+router.post('/', checkRole('admin'), asyncWrap((req, res) => productController.createProduct(req, res)));
 
 module.exports = router;
+
