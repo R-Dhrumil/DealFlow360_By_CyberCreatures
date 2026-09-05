@@ -121,19 +121,32 @@ class QuotationRepository {
       `SELECT * FROM (
          SELECT 
            q.id, q.status, q.blended_risk_score, q.created_at, q.updated_at,
-           c.name as customer_name, c.email as customer_email,
+           c.name as customer_name, c.email as customer_email, c.customer_tier,
            u.name as sales_rep_name,
            u.role as sales_rep_role,
            COALESCE(STRING_AGG(DISTINCT p.name, ', '), 'Custom Proposal') as product_summary,
            COALESCE(SUM(ql.unit_price * ql.quantity * (1 - ql.discount_percent/100)), 0) as total_amount,
            COALESCE(SUM(ql.unit_price * ql.quantity), 0) as base_amount,
            COALESCE(SUM(ql.unit_price * ql.quantity * (ql.discount_percent/100)), 0) as total_discount,
-           COUNT(ql.id) as lines_count
+           COUNT(ql.id) as lines_count,
+           q.approval_level,
+           latest_appr.approver_name,
+           latest_appr.reason as approval_reason,
+           latest_appr.action as approval_action,
+           latest_appr.timestamp as approval_timestamp
          FROM quotations q
          LEFT JOIN customers c ON q.customer_id = c.id
          LEFT JOIN users u ON q.sales_rep_id = u.id
          LEFT JOIN quotation_lines ql ON q.id = ql.quotation_id
          LEFT JOIN products p ON ql.product_id = p.id
+         LEFT JOIN LATERAL (
+           SELECT al.action, al.reason, al.timestamp, au.name as approver_name
+           FROM approvals_log al
+           LEFT JOIN users au ON al.approver_id = au.id
+           WHERE al.quotation_id = q.id
+           ORDER BY al.timestamp DESC
+           LIMIT 1
+         ) latest_appr ON true
          WHERE ($1::text IS NOT NULL AND q.customer_id = $1::text)
             OR ($2::text IS NOT NULL AND LOWER(c.email) = LOWER($2::text))
             OR ($3::text IS NOT NULL AND c.name IS NOT NULL AND TRIM(c.name) != '' AND (
@@ -141,20 +154,26 @@ class QuotationRepository {
                OR LOWER($3::text) ILIKE '%' || LOWER(c.name) || '%'
             ))
             OR ($4::text IS NOT NULL AND LOWER(c.email) ILIKE '%@' || $4::text)
-         GROUP BY q.id, c.name, c.email, u.name, u.role
+         GROUP BY q.id, c.name, c.email, c.customer_tier, u.name, u.role, q.approval_level,
+                  latest_appr.approver_name, latest_appr.reason, latest_appr.action, latest_appr.timestamp
          
          UNION ALL
          
          SELECT 
            i.id, 'pending_rep_quote' as status, 0 as blended_risk_score, i.created_at, i.updated_at,
-           c.name as customer_name, c.email as customer_email,
+           c.name as customer_name, c.email as customer_email, c.customer_tier,
            'Pending Assignment' as sales_rep_name,
            'sales_rep' as sales_rep_role,
            p.name as product_summary,
            (p.base_price * i.quantity) as total_amount,
            (p.base_price * i.quantity) as base_amount,
            0 as total_discount,
-           1 as lines_count
+           1 as lines_count,
+           NULL as approval_level,
+           NULL as approver_name,
+           NULL as approval_reason,
+           NULL as approval_action,
+           NULL as approval_timestamp
          FROM inquiries i
          LEFT JOIN customers c ON i.customer_id = c.id
          LEFT JOIN products p ON i.product_id = p.id

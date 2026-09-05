@@ -5,56 +5,115 @@ import { formatQuoteCode, formatSKU } from '../utils/formatters';
 import { useCurrency } from '../contexts/CurrencyContext';
 import CurrencyPicker from '../components/CurrencyPicker';
 
-const getQuoteStageInfo = (status) => {
+const getQuoteStageInfo = (q) => {
+  const isObj = typeof q === 'object' && q !== null;
+  const status = isObj ? (q.status || 'draft') : (q || 'draft');
+  const repName = isObj && q.sales_rep_name ? q.sales_rep_name : 'Assigned Sales Rep';
+  const approver = isObj && q.approver_name ? q.approver_name : null;
+  const reason = isObj && q.approval_reason ? q.approval_reason : null;
+  const approvalLevel = isObj && q.approval_level ? q.approval_level : null;
+
+  const formatDate = (ts) => {
+    if (!ts) return null;
+    try {
+      return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return null;
+    }
+  };
+
+  const createdDate = isObj ? formatDate(q.created_at) : null;
+  const updatedDate = isObj ? formatDate(q.updated_at || q.approval_timestamp) : null;
+
   switch (status) {
     case 'draft':
       return {
         step: 1, // Salesperson Quotation
         label: 'Salesperson Drafting',
         badgeClass: 'bg-blue-100 text-blue-800 border-blue-200',
-        desc: 'Inquiry routed to eligible salespeople. Preparing quote.',
+        desc: `Proposal drafted by ${repName}${createdDate ? ` on ${createdDate}` : ''}. Pricing & specs are being finalized.`,
         canAccept: false
       };
+
+    case 'pending_rep_quote':
+      return {
+        step: 1,
+        label: 'Inquiry in Assignment',
+        badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+        desc: `Inquiry submitted${createdDate ? ` on ${createdDate}` : ''}. Routed to eligible sales reps.`,
+        canAccept: false
+      };
+
     case 'pending_approval':
       return {
         step: 2, // Manager Review
         label: 'Under Manager Review',
         badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
-        desc: 'Requires escalation: custom discount currently under Manager review.',
+        desc: approver
+          ? `Submitted by ${repName}. Assigned to Manager (${approver}) for discount verification.`
+          : `Submitted by ${repName}. Custom discount requires Sales Manager authorization before release.`,
         canAccept: false
       };
+
     case 'pending_admin_approval':
     case 'pending_finance_approval':
       return {
         step: 3, // Company Admin
-        label: 'Under Company Admin Review',
+        label: status === 'pending_finance_approval' ? 'Under Finance Review' : 'Under Company Admin Review',
         badgeClass: 'bg-purple-100 text-purple-800 border-purple-200',
-        desc: 'Below floor price: escalated to Company Admin for executive clearance.',
+        desc: approvalLevel === 'admin'
+          ? `Escalated by management to Company Admin for floor price or executive clearance.`
+          : `Escalated for executive administration review prior to customer sign-off.`,
         canAccept: false
       };
+
     case 'approved':
     case 'sent':
       return {
         step: 4, // Ready for Customer
         label: 'Approved • Ready to Accept',
         badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-        desc: 'Quotation fully approved! Ready for your review and acceptance.',
+        desc: approver
+          ? `Approved by ${approver}${updatedDate ? ` on ${updatedDate}` : ''}. Verified and ready for your acceptance.`
+          : `Quotation verified by ${repName}${updatedDate ? ` on ${updatedDate}` : ''}. Ready for your review and acceptance.`,
         canAccept: true
       };
+
     case 'confirmed':
       return {
         step: 5, // Confirmed
         label: 'Deal Confirmed',
         badgeClass: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-        desc: 'Accepted & locked for order fulfillment.',
+        desc: `Deal locked and verified for fulfillment${updatedDate ? ` on ${updatedDate}` : ''}.`,
         canAccept: false
       };
+
+    case 'negotiating':
+      return {
+        step: 2,
+        label: 'Under Negotiation',
+        badgeClass: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+        desc: `Counter-discount requested. In direct negotiation with ${repName}.`,
+        canAccept: false
+      };
+
+    case 'rejected':
+      return {
+        step: 1,
+        label: 'Proposal Declined',
+        badgeClass: 'bg-rose-100 text-rose-800 border-rose-200',
+        desc: reason
+          ? `Proposal declined${approver ? ` by ${approver}` : ''}: "${reason}"`
+          : `Proposal declined${approver ? ` by ${approver}` : ''}.`,
+        canAccept: false
+      };
+
     default:
       return {
         step: 1,
         label: status ? status.replace(/_/g, ' ') : 'Processing',
         badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
-        desc: 'Processing proposal in CPQ workflow.',
+        desc: `Processing proposal with ${repName}${updatedDate ? ` (last update: ${updatedDate})` : ''}.`,
         canAccept: false
       };
   }
@@ -374,7 +433,7 @@ export default function CustomerDashboard() {
                   const discountVal = Number(q.total_discount || q.totalDiscount || Math.max(0, baseVal - totalVal));
                   const discountPercent = baseVal > 0 && discountVal > 0 ? Math.round((discountVal / baseVal) * 100) : 0;
                   const quoteCode = formatQuoteCode(q.id);
-                  const stage = getQuoteStageInfo(q.status);
+                  const stage = getQuoteStageInfo(q);
 
                   return (
                     <div
@@ -399,7 +458,19 @@ export default function CustomerDashboard() {
                         </div>
 
                         <h3 className="font-bold text-text-main text-base">{q.product_summary || q.title || 'Quotation Proposal'}</h3>
-                        <p className="text-xs text-text-muted">Account: <strong>{q.customer_name || 'Acme Corp'}</strong> &bull; Assigned Rep: <strong>{q.sales_rep_name || 'Eligible Sales Team'}</strong> &bull; {q.lines_count || 1} item(s)</p>
+                        <p className="text-xs text-text-muted flex flex-wrap items-center gap-1.5">
+                          <span>Account: <strong>{q.customer_name || 'Acme Corp'}</strong></span>
+                          {q.customer_tier && (
+                            <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded text-[10px] font-bold border border-slate-200">
+                              {q.customer_tier}
+                            </span>
+                          )}
+                          <span>&bull; Rep: <strong>{q.sales_rep_name || 'Eligible Sales Team'}</strong></span>
+                          {q.approver_name && (
+                            <span>&bull; Approver: <strong className="text-emerald-700">{q.approver_name}</strong></span>
+                          )}
+                          <span>&bull; {q.lines_count || 1} item(s)</span>
+                        </p>
 
                         {/* Hierarchy Progress Flowchart */}
                         <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/70 text-[11px] space-y-2">
