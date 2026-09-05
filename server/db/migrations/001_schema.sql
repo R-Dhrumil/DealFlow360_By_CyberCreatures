@@ -136,6 +136,7 @@ CREATE TABLE IF NOT EXISTS quotations (
   sales_rep_id VARCHAR(100) REFERENCES users(id) ON DELETE SET NULL,
   status VARCHAR(50) NOT NULL CHECK (status IN ('draft', 'pending_approval', 'pending_finance_approval', 'approved', 'rejected', 'negotiating', 'confirmed')),
   blended_risk_score NUMERIC(10, 4) DEFAULT 0,
+  discount_percent NUMERIC(5, 2) DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

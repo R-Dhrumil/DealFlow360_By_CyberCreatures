@@ -169,13 +169,32 @@ class QuotationService {
       const effectiveCompanyId = companyId || 'c1';
       const effectiveRepId = salesRepId || 'u4';
 
+      let totalBase = 0;
+      let totalNet = 0;
+      for (const line of lines) {
+        const truePrice = securePrices[line.productId] !== undefined
+          ? securePrices[line.productId]
+          : parseFloat(line.unitPrice || line.basePrice || 0);
+
+        const safeDiscount = Math.max(0, Math.min(100, parseFloat(line.discountPercent || 0)));
+        const qty = line.quantity || 1;
+        totalBase += truePrice * qty;
+        totalNet += truePrice * (1 - safeDiscount / 100) * qty;
+      }
+      
+      let overallDiscount = 0;
+      if (totalBase > 0) {
+        overallDiscount = ((totalBase - totalNet) / totalBase) * 100;
+      }
+      const finalDiscount = parseFloat(overallDiscount.toFixed(2));
+
       // Create quotation record (with inquiry_id if provided)
       const qId = 'q_' + Math.floor(1000 + Math.random() * 9000);
       const quotationRes = await client.query(
-        `INSERT INTO quotations (id, company_id, customer_id, sales_rep_id, status, inquiry_id)
-         VALUES ($1, $2, $3, $4, 'draft', $5)
+        `INSERT INTO quotations (id, company_id, customer_id, sales_rep_id, status, inquiry_id, discount_percent)
+         VALUES ($1, $2, $3, $4, 'draft', $5, $6)
          RETURNING *`,
-        [qId, effectiveCompanyId, customerId, effectiveRepId, inquiryId || null]
+        [qId, effectiveCompanyId, customerId, effectiveRepId, inquiryId || null, finalDiscount]
       );
       const quotation = quotationRes.rows[0];
 
