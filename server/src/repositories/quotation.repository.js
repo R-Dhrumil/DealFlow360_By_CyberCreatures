@@ -83,11 +83,18 @@ class QuotationRepository {
 
   async findByCustomer(customerId, customerEmail = null, limit = 50, offset = 0) {
     const countRes = await db.query(
-      `SELECT COUNT(DISTINCT q.id) 
-       FROM quotations q 
-       LEFT JOIN customers c ON q.customer_id = c.id
-       WHERE ($1::text IS NOT NULL AND q.customer_id = $1::text)
-          OR ($2::text IS NOT NULL AND LOWER(c.email) = LOWER($2::text))`,
+      `SELECT COUNT(*) as count FROM (
+         SELECT q.id FROM quotations q 
+         LEFT JOIN customers c ON q.customer_id = c.id
+         WHERE ($1::text IS NOT NULL AND q.customer_id = $1::text)
+            OR ($2::text IS NOT NULL AND LOWER(c.email) = LOWER($2::text))
+         UNION ALL
+         SELECT i.id FROM inquiries i
+         LEFT JOIN customers c ON i.customer_id = c.id
+         WHERE (($1::text IS NOT NULL AND i.customer_id = $1::text)
+            OR ($2::text IS NOT NULL AND LOWER(c.email) = LOWER($2::text)))
+           AND NOT EXISTS (SELECT 1 FROM quotations q WHERE q.inquiry_id = i.id)
+       ) as total`,
       [customerId || null, customerEmail ? customerEmail.trim() : null]
     );
     const totalCount = parseInt(countRes.rows[0]?.count || 0, 10);
@@ -108,7 +115,24 @@ class QuotationRepository {
        WHERE ($1::text IS NOT NULL AND q.customer_id = $1::text)
           OR ($2::text IS NOT NULL AND LOWER(c.email) = LOWER($2::text))
        GROUP BY q.id, c.name, c.email, u.name
-       ORDER BY q.created_at DESC
+       
+       UNION ALL
+       
+       SELECT 
+         i.id, 'pending_rep_quote' as status, 0 as blended_risk_score, i.created_at, i.updated_at,
+         c.name as customer_name, c.email as customer_email,
+         'Pending Assignment' as sales_rep_name,
+         p.name as product_summary,
+         (p.base_price * i.quantity) as total_amount,
+         1 as lines_count
+       FROM inquiries i
+       LEFT JOIN customers c ON i.customer_id = c.id
+       LEFT JOIN products p ON i.product_id = p.id
+       WHERE (($1::text IS NOT NULL AND i.customer_id = $1::text)
+          OR ($2::text IS NOT NULL AND LOWER(c.email) = LOWER($2::text)))
+         AND NOT EXISTS (SELECT 1 FROM quotations q WHERE q.inquiry_id = i.id)
+       
+       ORDER BY created_at DESC
        LIMIT $3 OFFSET $4`,
       [customerId || null, customerEmail ? customerEmail.trim() : null, limit, offset]
     );
