@@ -22,7 +22,7 @@ export default function CustomerDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [inquirySuccess, setInquirySuccess] = useState('');
   const [quotations, setQuotations] = useState([]);
-  
+
   // Product Detail Modal State
   const [selectedProductDetail, setSelectedProductDetail] = useState(null);
   const [modalQuantity, setModalQuantity] = useState(1);
@@ -140,7 +140,7 @@ export default function CustomerDashboard() {
             <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-2 inline-block">
               Customer Account Active
             </span>
-            <h1 className="text-2xl font-bold">Welcome back, {customer.name}!</h1>
+            <h1 className="text-2xl font-white font-bold">Welcome back, {customer.name}!</h1>
             <p className="text-sm text-text-muted mt-1">Browse admin products catalog, request quote proposals, or negotiate custom discounts with your sales rep.</p>
           </div>
 
@@ -148,31 +148,28 @@ export default function CustomerDashboard() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => handleTabChange('products')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'products'
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'products'
                   ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
                   : 'bg-surface-soft text-text-muted hover:bg-slate-700'
-              }`}
+                }`}
             >
               <i className="fa-solid fa-boxes-stacked mr-1.5"></i> Browse Product Catalog
             </button>
             <button
               onClick={() => handleTabChange('quotations')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'quotations'
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'quotations'
                   ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
                   : 'bg-surface-soft text-text-muted hover:bg-slate-700'
-              }`}
+                }`}
             >
               <i className="fa-solid fa-file-invoice mr-1.5"></i> My Proposals & Records ({quotations.length})
             </button>
             <button
               onClick={() => handleTabChange('profile')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'profile'
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'profile'
                   ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
                   : 'bg-surface-soft text-text-muted hover:bg-slate-700'
-              }`}
+                }`}
             >
               <i className="fa-solid fa-id-card mr-1.5"></i> Personal Profile
             </button>
@@ -212,11 +209,10 @@ export default function CustomerDashboard() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                    selectedCategory === cat
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${selectedCategory === cat
                       ? 'bg-emerald-600 text-text-main shadow'
                       : 'bg-white text-slate-700 hover:bg-slate-100 border border-surface-soft'
-                  }`}
+                    }`}
                 >
                   {cat}
                 </button>
@@ -226,7 +222,7 @@ export default function CustomerDashboard() {
             {/* Product Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProducts.map(p => (
-                <div 
+                <div
                   key={p.id}
                   onClick={() => {
                     setSelectedProductDetail(p);
@@ -253,7 +249,7 @@ export default function CustomerDashboard() {
                       <span>{p.name}</span>
                       <i className="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400 group-hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition-all"></i>
                     </h3>
-                    
+
                     <p className="text-xs text-text-muted line-clamp-2">{p.description || 'No detailed description available.'}</p>
 
                     <div className="pt-2 border-t border-slate-100 flex justify-between items-baseline">
@@ -313,7 +309,7 @@ export default function CustomerDashboard() {
                   const totalVal = Number(q.total_amount || q.totalAmount || 0);
                   const quoteCode = formatQuoteCode(q.id);
                   return (
-                    <div 
+                    <div
                       key={q.id}
                       className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4 hover:shadow-md hover:border-emerald-300 transition-all flex flex-col justify-between"
                     >
@@ -322,11 +318,10 @@ export default function CustomerDashboard() {
                           <span className="font-mono font-bold text-emerald-700 text-xs bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
                             {quoteCode}
                           </span>
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                            q.status === 'accepted' || q.status === 'approved' || q.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' :
-                            q.status === 'pending_approval' ? 'bg-amber-100 text-amber-800' :
-                            'bg-blue-100 text-blue-800'
-                          }`}>
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${q.status === 'accepted' || q.status === 'approved' || q.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' :
+                              q.status === 'pending_approval' ? 'bg-amber-100 text-amber-800' :
+                                'bg-blue-100 text-blue-800'
+                            }`}>
                             {statusLabel}
                           </span>
                         </div>
@@ -403,11 +398,11 @@ export default function CustomerDashboard() {
 
       {/* Product Detail Modal */}
       {selectedProductDetail && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={() => setSelectedProductDetail(null)}
         >
-          <div 
+          <div
             className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-surface-soft p-6 sm:p-8 space-y-6"
             onClick={(e) => e.stopPropagation()}
           >
@@ -429,7 +424,7 @@ export default function CustomerDashboard() {
                 </div>
                 <h2 className="text-2xl font-black text-slate-800 pt-1">{selectedProductDetail.name}</h2>
               </div>
-              <button 
+              <button
                 onClick={() => setSelectedProductDetail(null)}
                 className="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 rounded-full flex items-center justify-center transition-colors"
               >
