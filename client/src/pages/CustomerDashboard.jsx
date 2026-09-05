@@ -172,15 +172,15 @@ export default function CustomerDashboard() {
             >
               <i className="fa-solid fa-file-invoice mr-1.5"></i> My Proposals & Records ({quotations.length})
             </button>
-            <button
+            {/* <button
               onClick={() => handleTabChange('profile')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'profile'
                 ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
                 : 'bg-surface-soft text-text-muted hover:bg-slate-700'
                 }`}
             >
-              {/* <i className="fa-solid fa-id-card mr-1.5"></i> Personal Profile */}
-            </button>
+              <i className="fa-solid fa-id-card mr-1.5"></i> Personal Profile
+            </button> */}
           </div>
         </div>
 
