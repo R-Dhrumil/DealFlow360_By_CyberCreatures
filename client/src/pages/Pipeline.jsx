@@ -4,6 +4,7 @@ import { io } from 'socket.io-client';
 import api from '../api/client';
 import { formatQuoteCode } from '../utils/formatters';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 const STAGES = [
   { name: 'Draft', color: 'border-slate-300 bg-slate-100 text-slate-700' },
@@ -24,6 +25,7 @@ const getSocketUrl = () => {
 
 export default function Pipeline() {
   const { formatMoney } = useCurrency();
+  const { showNotification } = useNotification();
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState('');
@@ -173,26 +175,46 @@ export default function Pipeline() {
       if (newStatus === 'pending_approval') {
         try {
           await api.put(`/quotations/${deal.rawId || deal.id}/submit`);
+          showNotification('info', `Quotation #${deal.quote_number || deal.id} submitted for approval.`);
         } catch (e) {
-          await api.put(`/quotations/${deal.rawId || deal.id}/counter`, { lines: [], status: newStatus });
+          const errMsg = e.response?.data?.error || 'Failed to submit quotation';
+          showNotification('error', errMsg);
+          await fetchQuotations(false);
+          return;
         }
       } else if (newStatus === 'approved') {
         try {
-          await api.put(`/quotations/${deal.rawId || deal.id}/approve`);
+          const res = await api.put(`/quotations/${deal.rawId || deal.id}/approve`);
+          if (res.data?.status === 'pending_admin_approval') {
+            showNotification('warning', 'Quotation is below floor price and has been escalated to Company Admin for final override.');
+          } else {
+            showNotification('success', `Quotation #${deal.quote_number || deal.id} approved successfully!`);
+          }
         } catch (e) {
-          await api.put(`/quotations/${deal.rawId || deal.id}/counter`, { lines: [], status: newStatus });
+          const errMsg = e.response?.data?.error || 'Failed to approve quotation';
+          showNotification('error', errMsg);
+          await fetchQuotations(false);
+          return;
         }
       } else if (newStatus === 'rejected') {
         try {
           await api.put(`/quotations/${deal.rawId || deal.id}/reject`, { reason: 'Moved to Rejected via Deal Pipeline Drag & Drop' });
+          showNotification('info', `Quotation #${deal.quote_number || deal.id} rejected.`);
         } catch (e) {
-          await api.put(`/quotations/${deal.rawId || deal.id}/counter`, { lines: [], status: newStatus });
+          const errMsg = e.response?.data?.error || 'Failed to reject quotation';
+          showNotification('error', errMsg);
+          await fetchQuotations(false);
+          return;
         }
       } else if (newStatus === 'confirmed') {
         try {
           await api.put(`/quotations/${deal.rawId || deal.id}/confirm`);
+          showNotification('success', `Quotation #${deal.quote_number || deal.id} confirmed.`);
         } catch (e) {
-          await api.put(`/quotations/${deal.rawId || deal.id}/counter`, { lines: [], status: newStatus });
+          const errMsg = e.response?.data?.error || 'Failed to confirm quotation';
+          showNotification('error', errMsg);
+          await fetchQuotations(false);
+          return;
         }
       } else {
         await api.put(`/quotations/${deal.rawId || deal.id}/counter`, { lines: [], status: newStatus });
@@ -201,6 +223,8 @@ export default function Pipeline() {
       await fetchQuotations(false);
     } catch (err) {
       console.error('Failed to update deal stage via drag & drop:', err);
+      const errMsg = err.response?.data?.error || 'Failed to update deal stage';
+      showNotification('error', errMsg);
       await fetchQuotations(false);
     } finally {
       setIsSubmitting(false);

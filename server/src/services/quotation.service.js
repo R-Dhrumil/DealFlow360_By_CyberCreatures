@@ -13,28 +13,39 @@ const crypto = require('crypto');
 //  Priority: users.max_discount_percent (per-user) → discount_tiers (role-level)
 // ─────────────────────────────────────────────────────────────────────────────
 async function getUserDiscountAuthority(companyId, userId) {
+  const roleDefaults = {
+    sales_rep: 10,
+    sales_manager: 20,
+    finance: 35,
+    finance_manager: 35,
+    admin: 100,
+    super_admin: 100
+  };
+
   // 1. Check per-user override first
   const userRes = await db.query(
-    'SELECT role, max_discount_percent FROM users WHERE id = $1 AND company_id = $2',
+    'SELECT role, max_discount_percent FROM users WHERE id = $1 AND (company_id = $2 OR company_id IS NULL)',
     [userId, companyId]
   );
-  if (userRes.rows.length === 0) return { maxDiscount: 100, role: 'sales_rep' };
+  if (userRes.rows.length === 0) return { maxDiscount: 10, role: 'sales_rep' };
 
   const user = userRes.rows[0];
+  if (user.role === 'super_admin') return { maxDiscount: 100, role: 'super_admin' };
+
   if (user.max_discount_percent !== null && user.max_discount_percent !== undefined) {
     return { maxDiscount: parseFloat(user.max_discount_percent), role: user.role };
   }
 
   // 2. Fall back to role-level discount_tiers
   const tierRes = await db.query(
-    'SELECT max_discount_percent FROM discount_tiers WHERE company_id = $1 AND tier_name = $2',
+    'SELECT max_discount_percent FROM discount_tiers WHERE company_id = $1 AND LOWER(tier_name) = LOWER($2)',
     [companyId, user.role]
   );
   if (tierRes.rows.length > 0) {
     return { maxDiscount: parseFloat(tierRes.rows[0].max_discount_percent), role: user.role };
   }
 
-  return { maxDiscount: 100, role: user.role };
+  return { maxDiscount: roleDefaults[user.role] ?? 20, role: user.role };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -321,8 +332,10 @@ class QuotationService {
 
   /**
    * Approve a quotation.
-   * Manager approval: re-checks floor price — if still below, escalates to Admin.
-   * Admin approval: final approval regardless of floor price.
+   * Higher priority accounts (Sales Manager, Finance Manager, Admin, Super Admin)
+   * can give approval to any active quotation (draft, inquiry, pending_approval, etc.).
+   * Constraint: Cannot approve if any quotation line discount exceeds the approver's set limit.
+   * Floor price override: Admin / Super Admin can override floor price; Managers escalate to Admin.
    */
   async approveQuotation(companyId, quotationId, userRole, userId, modifiedLines = null) {
     const client = await db.pool.connect();
@@ -333,20 +346,32 @@ class QuotationService {
       quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
       if (!quotation) throw ApiError.notFound('Quotation not found');
 
-      const allowedStatuses = ['pending_approval', 'pending_finance_approval', 'pending_admin_approval'];
-      if (!allowedStatuses.includes(quotation.status)) {
-        throw ApiError.conflict(`Cannot approve a quotation with status: ${quotation.status}`);
+      // 1. Role validation: Higher priority accounts can approve
+      const higherPriorityRoles = ['sales_manager', 'finance', 'finance_manager', 'admin', 'super_admin'];
+      if (!higherPriorityRoles.includes(userRole)) {
+        throw ApiError.forbidden('Sales Reps cannot directly approve quotations. Please submit the quotation for review.');
       }
 
-      // Role-based access
-      if (quotation.status === 'pending_finance_approval' && !['finance_manager', 'admin', 'super_admin'].includes(userRole)) {
-        throw ApiError.forbidden('Only Finance Manager or Admin can approve this high-risk quotation');
+      // 2. Status validation: Terminal statuses cannot be re-approved
+      if (['accepted', 'signed', 'cancelled'].includes(quotation.status)) {
+        throw ApiError.conflict(`Cannot approve a quotation that is already ${quotation.status}`);
+      }
+
+      // If already approved, return gracefully
+      if (quotation.status === 'approved') {
+        await client.query('COMMIT');
+        return { quotationId, status: 'approved', approvalLevel: null, message: 'Quotation is already approved.' };
+      }
+
+      // Specific escalated role gates
+      if (quotation.status === 'pending_finance_approval' && !['finance_manager', 'finance', 'admin', 'super_admin'].includes(userRole)) {
+        throw ApiError.forbidden('Only Finance Manager or Admin can approve this quotation');
       }
       if (quotation.status === 'pending_admin_approval' && !['admin', 'super_admin'].includes(userRole)) {
-        throw ApiError.forbidden('Only Company Admin can approve this below-floor quotation');
+        throw ApiError.forbidden('Only Company Admin or Super Admin can approve this below-floor quotation');
       }
 
-      // If modifier sent updated line discounts, apply them first
+      // 3. If modifier sent updated line discounts, apply them first
       if (modifiedLines && Array.isArray(modifiedLines)) {
         for (const l of modifiedLines) {
           const safeDiscount = Math.max(0, Math.min(100, parseFloat(l.discountPercent || 0)));
@@ -361,38 +386,62 @@ class QuotationService {
         });
       }
 
-      // Manager check: re-run floor price after any modifications
+      // 4. Fetch approver's discount limit
+      const { maxDiscount: approverLimit } = await getUserDiscountAuthority(companyId, userId);
+
+      // 5. Fetch all quotation lines
+      const linesRes = await client.query(
+        `SELECT ql.*, p.name as product_name, p.floor_price,
+                (ql.unit_price * (1 - ql.discount_percent / 100)) as net_unit_price
+         FROM quotation_lines ql
+         JOIN products p ON ql.product_id = p.id
+         WHERE ql.quotation_id = $1`,
+        [quotationId]
+      );
+
+      if (linesRes.rows.length === 0) {
+        throw ApiError.badRequest('Cannot approve an empty quotation without products. Please add products and pricing first.');
+      }
+
+      // 6. ENFORCE: Cannot give more discount than their limit
+      const discountViolations = linesRes.rows.filter(l => parseFloat(l.discount_percent || 0) > approverLimit);
+      if (discountViolations.length > 0) {
+        const maxRequestedDiscount = Math.max(...discountViolations.map(l => parseFloat(l.discount_percent)));
+        const offendingProduct = discountViolations[0].product_name || 'Product';
+        throw ApiError.badRequest(
+          `Approval limit exceeded: Your role limit allows up to ${approverLimit}% discount, but this quote offers ${maxRequestedDiscount}% on "${offendingProduct}". Please reduce the discount or request approval from a higher priority account.`
+        );
+      }
+
+      // 7. Floor price check
+      const floorCheck = await checkFloorPrice(quotationId);
       let newStatus = 'approved';
       let newApprovalLevel = null;
 
-      if (['sales_manager', 'finance_manager'].includes(userRole)) {
-        // Check manager's own discount authority
-        const { maxDiscount: mgMaxDiscount } = await getUserDiscountAuthority(companyId, userId);
-        const authorityCheck = await checkDiscountAuthority(quotationId, mgMaxDiscount);
-
-        // Floor price re-check
-        const floorCheck = await checkFloorPrice(quotationId);
-
-        if (floorCheck.belowFloor || authorityCheck.exceedsAuthority) {
+      if (floorCheck.belowFloor) {
+        // Only Admin or Super Admin has floor override authority
+        if (!['admin', 'super_admin'].includes(userRole)) {
           // Escalate to Admin
           newStatus = 'pending_admin_approval';
           newApprovalLevel = 'admin';
         }
       }
-      // Admin approving: final decision, no further escalation
 
+      // 8. Commit update to DB
       await client.query(
         `UPDATE quotations
-         SET status = $1, approval_level = $2, blended_risk_score = $3, updated_at = CURRENT_TIMESTAMP
-         WHERE id = $4`,
-        [newStatus, newApprovalLevel, quotation.blended_risk_score, quotationId]
+         SET status = $1, approval_level = $2, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $3`,
+        [newStatus, newApprovalLevel, quotationId]
       );
 
       await client.query('COMMIT');
 
       await logAction('quotation', quotationId, userId, `approved_by_${userRole}`, {
         new_status: newStatus,
-        approval_level: newApprovalLevel
+        approval_level: newApprovalLevel,
+        approver_limit: approverLimit,
+        below_floor: floorCheck.belowFloor
       });
     } catch (error) {
       await client.query('ROLLBACK');
@@ -418,10 +467,10 @@ class QuotationService {
           link: `/app/quote/${quotationId}`
         });
       } else if (newStatus === 'pending_admin_approval') {
-        emitCompanyRoleNotification(companyId, ['admin'], {
+        emitCompanyRoleNotification(companyId, ['admin', 'super_admin'], {
           type: 'warning',
           title: '⚠️ Admin Approval Required',
-          message: `Quote #${quotationId} exceeds floor price — requires Company Admin approval.`,
+          message: `Quote #${quotationId} is below floor price and requires Company Admin override.`,
           link: `/app/approvals`
         });
         emitUserNotification(quotation.sales_rep_id, {
@@ -444,15 +493,15 @@ class QuotationService {
       quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
       if (!quotation) throw ApiError.notFound('Quotation not found');
 
+      if (['accepted', 'signed', 'cancelled'].includes(quotation.status)) {
+        throw ApiError.conflict(`Cannot reject a quotation that is already ${quotation.status}`);
+      }
+
       if (quotation.status === 'pending_finance_approval' && !['finance_manager', 'admin', 'super_admin'].includes(userRole)) {
         throw ApiError.forbidden('Only Finance Manager or Admin can reject this high-risk quotation');
       }
       if (quotation.status === 'pending_admin_approval' && !['admin', 'super_admin'].includes(userRole)) {
         throw ApiError.forbidden('Only Admin can reject this quotation');
-      }
-      const rejectableStatuses = ['pending_approval', 'pending_finance_approval', 'pending_admin_approval'];
-      if (!rejectableStatuses.includes(quotation.status)) {
-        throw ApiError.conflict(`Cannot reject a quotation with status: ${quotation.status}`);
       }
 
       await quotationRepository.updateQuotationStatusAndScore(
