@@ -15,7 +15,18 @@ export default function ApprovalQueue() {
 
   useEffect(() => {
     fetchApprovals();
+    const interval = setInterval(fetchApprovalsSilent, 3500);
+    return () => clearInterval(interval);
   }, []);
+
+  const fetchApprovalsSilent = async () => {
+    try {
+      const response = await api.get('/approvals/pending');
+      setApprovals(response.data);
+    } catch (error) {
+      // silent
+    }
+  };
 
   useEffect(() => {
     if (!expandedId) return;

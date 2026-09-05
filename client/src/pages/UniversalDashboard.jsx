@@ -69,7 +69,18 @@ const UniversalDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
+    const interval = setInterval(fetchDashboardDataSilent, 3500);
+    return () => clearInterval(interval);
   }, []);
+
+  const fetchDashboardDataSilent = async () => {
+    try {
+      const res = await api.get('/quotations');
+      setQuotations(res.data || []);
+    } catch (err) {
+      // silent fail during background polling
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {

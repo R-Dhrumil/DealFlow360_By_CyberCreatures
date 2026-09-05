@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import api from '../api/client';
+import { useNotification } from '../contexts/NotificationContext';
+import { formatQuoteCode } from '../utils/formatters';
 
 const DEMO_USERS = [
   { name: 'Alex Rep', email: 'rep@dealflow360.com', role: 'sales_rep', label: 'Sales Rep' },
@@ -12,8 +15,44 @@ const DEMO_USERS = [
 export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { showNotification } = useNotification();
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
+  const knownApprovalsRef = useRef(null);
+
+  // Background real-time listener for incoming approvals
+  useEffect(() => {
+    if (!user) return;
+    const canViewApprovals = ['sales_manager', 'admin', 'super_admin', 'finance', 'sales_rep'].includes(user.role);
+    if (!canViewApprovals) return;
+
+    const checkNewApprovals = async () => {
+      try {
+        const res = await api.get('/approvals/pending');
+        if (res.data && Array.isArray(res.data)) {
+          const currentSet = new Set(res.data.map(item => item.id));
+          
+          if (knownApprovalsRef.current !== null) {
+            const newRequests = res.data.filter(item => !knownApprovalsRef.current.has(item.id));
+            newRequests.forEach(req => {
+              showNotification(
+                'warning',
+                `🔔 New Approval Request: Quote ${formatQuoteCode(req.id)} (${req.customer_name || 'Customer'}) requires management review!`,
+                6000
+              );
+            });
+          }
+          knownApprovalsRef.current = currentSet;
+        }
+      } catch (err) {
+        // silent fail during polling
+      }
+    };
+
+    checkNewApprovals();
+    const interval = setInterval(checkNewApprovals, 3500);
+    return () => clearInterval(interval);
+  }, [user?.role, showNotification]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');

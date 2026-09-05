@@ -151,6 +151,13 @@ export default function QuotationView() {
     <div className="p-6 md:p-12 space-y-6">
       <header className="mb-8 flex flex-wrap justify-between items-end gap-4">
         <div>
+          <button
+            onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = '/app/pipeline'}
+            className="mb-3 px-3.5 py-1.5 rounded-xl bg-white border border-surface-soft text-slate-700 hover:bg-slate-50 transition-all font-bold text-xs flex items-center gap-1.5 shadow-2xs"
+          >
+            <i className="fa-solid fa-arrow-left text-xs"></i>
+            <span>Back to Workspace</span>
+          </button>
           <div className="flex items-center space-x-3 mb-2 flex-wrap gap-y-1">
             <h1 className="text-2xl font-bold text-slate-800">Quotation #{formatQuoteCode(quotation.id)}</h1>
             <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider print:hidden ${

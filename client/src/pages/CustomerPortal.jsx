@@ -60,12 +60,12 @@ export default function CustomerPortal() {
           setMessages(msgRes.data);
         } else {
           setMessages([
-            { id: 1, sender_type: 'sales_rep', content: `Proposal #${quotationId.split('-')[0]} loaded. Feel free to review line items, propose counter discounts, or e-sign below.`, created_at: new Date().toISOString() }
+            { id: 1, sender_type: 'sales_rep', content: `Proposal #${formatQuoteCode(quotationId)} loaded. Feel free to review line items, propose counter discounts, or e-sign below.`, created_at: new Date().toISOString() }
           ]);
         }
       } catch (err) {
         setMessages([
-          { id: 1, sender_type: 'sales_rep', content: `Proposal #${quotationId.split('-')[0]} loaded. Feel free to review line items, propose counter discounts, or e-sign below.`, created_at: new Date().toISOString() }
+          { id: 1, sender_type: 'sales_rep', content: `Proposal #${formatQuoteCode(quotationId)} loaded. Feel free to review line items, propose counter discounts, or e-sign below.`, created_at: new Date().toISOString() }
         ]);
       }
       setLoading(false);
@@ -235,7 +235,14 @@ export default function CustomerPortal() {
       <header className="bg-white text-text-main border-b border-surface-soft sticky top-0 z-10 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center font-bold text-lg text-text-main">
+            <button
+              onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = '/customer/dashboard'}
+              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all flex items-center justify-center border border-surface-soft shadow-2xs"
+              title="Go Back"
+            >
+              <i className="fa-solid fa-arrow-left text-sm"></i>
+            </button>
+            <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center font-bold text-lg text-white">
               {quotation.company_name.charAt(0)}
             </div>
             <div>
@@ -245,6 +252,13 @@ export default function CustomerPortal() {
           </div>
 
           <div className="flex items-center space-x-3">
+            <button
+              onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = '/customer/dashboard'}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all font-bold text-xs flex items-center gap-1.5 border border-surface-soft shadow-2xs"
+            >
+              <i className="fa-solid fa-arrow-left text-xs"></i>
+              <span>Back</span>
+            </button>
             <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
               quotation.status === 'accepted' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
               quotation.status === 'pending_approval' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
