@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
+import { copyTextToClipboard } from '../utils/clipboard';
 
 export default function QuotationBuilder() {
   const { showNotification } = useNotification();
@@ -9,6 +10,7 @@ export default function QuotationBuilder() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [dismissedUpsells, setDismissedUpsells] = useState([]);
+  const [copied, setCopied] = useState(false);
 
   // Form State
   const [customerName, setCustomerName] = useState('');
@@ -127,10 +129,16 @@ export default function QuotationBuilder() {
     }
   };
 
-  const copyToClipboard = () => {
+  const copyToClipboard = async () => {
     if (generatedLiveUrl) {
-      navigator.clipboard.writeText(generatedLiveUrl);
-      showNotification('success', 'Live Document link copied to clipboard!');
+      const success = await copyTextToClipboard(generatedLiveUrl);
+      if (success) {
+        setCopied(true);
+        showNotification('success', 'Live Document link copied to clipboard!');
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        showNotification('error', 'Could not copy link to clipboard. Please copy manually.');
+      }
     }
   };
 
@@ -491,10 +499,12 @@ export default function QuotationBuilder() {
                 <button 
                   type="button"
                   onClick={copyToClipboard}
-                  className="px-3.5 py-2 text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-xl transition-colors shrink-0 flex items-center space-x-1"
+                  className={`px-3.5 py-2 text-xs font-bold text-white rounded-xl transition-all shrink-0 flex items-center space-x-1 ${
+                    copied ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-800 hover:bg-slate-900'
+                  }`}
                 >
-                  <i className="fa-solid fa-copy"></i>
-                  <span>Copy</span>
+                  <i className={`fa-solid ${copied ? 'fa-check' : 'fa-copy'}`}></i>
+                  <span>{copied ? 'Copied!' : 'Copy'}</span>
                 </button>
               </div>
             </div>

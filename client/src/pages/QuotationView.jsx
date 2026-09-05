@@ -3,11 +3,13 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuoteCode } from '../utils/formatters';
 import { useNotification } from '../contexts/NotificationContext';
+import { copyTextToClipboard } from '../utils/clipboard';
 
 export default function QuotationView() {
   const { showNotification } = useNotification();
   const { id: quotationId } = useParams();
   const [quotation, setQuotation] = useState(null);
+  const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -189,15 +191,23 @@ export default function QuotationView() {
           </Link>
           <button 
             type="button"
-            onClick={() => {
+            onClick={async () => {
               const publicUrl = `${window.location.origin}/portal/${quotation.id}`;
-              navigator.clipboard.writeText(publicUrl);
-              showNotification('success', 'Public quotation link copied to clipboard!');
+              const success = await copyTextToClipboard(publicUrl);
+              if (success) {
+                setCopied(true);
+                showNotification('success', 'Public quotation link copied to clipboard!');
+                setTimeout(() => setCopied(false), 2000);
+              } else {
+                showNotification('error', 'Could not copy link to clipboard. Please copy manually.');
+              }
             }}
-            className="px-3.5 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5"
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+              copied ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+            }`}
           >
-            <i className="fa-solid fa-copy"></i>
-            <span>Copy Link</span>
+            <i className={`fa-solid ${copied ? 'fa-check' : 'fa-copy'}`}></i>
+            <span>{copied ? 'Copied!' : 'Copy Link'}</span>
           </button>
           <button onClick={() => window.print()} className="btn-secondary text-xs">
             <i className="fa-solid fa-file-pdf mr-1.5"></i>
