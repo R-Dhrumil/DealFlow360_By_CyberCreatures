@@ -1,8 +1,13 @@
 /**
- * Computes the blended risk score for a quotation based on line-item discounts
- * compared against customer tier ceilings and product category ceilings.
+ * Computes the blended risk score for a quotation based on line-item discounts,
+ * customer tier ceilings, category ceilings, and customer history risk factor (new vs existing).
+ * 
+ * Auto-Approval & Escalation Rules:
+ * - If Final Risk Score == 0: Status = 'approved' (Auto-Approved!)
+ * - If 0 < Final Risk Score <= 10: Status = 'pending_approval' (Manager Approval Queue)
+ * - If Final Risk Score > 10: Status = 'pending_finance_approval' (Auto-Escalated to Finance)
  */
-function computeBlendedRiskScore(lines, customerTierCeiling, categoryCeilings, approvalChains) {
+function computeBlendedRiskScore(lines, customerTierCeiling, categoryCeilings, approvalChains, customerContext = {}) {
   let totalQuoteValue = 0;
   let totalWeightedExcess = 0;
   
@@ -37,33 +42,37 @@ function computeBlendedRiskScore(lines, customerTierCeiling, categoryCeilings, a
     });
   }
 
-  const blendedScore = parseFloat(totalWeightedExcess.toFixed(4));
+  // Customer History Risk Factor:
+  // Existing long-term customer (ordersCount > 0 or isNewCustomer = false) => 0.8x multiplier (lower risk)
+  // New customer (isNewCustomer = true or ordersCount == 0) => 1.5x multiplier (higher risk)
+  const isNewCustomer = customerContext.isNewCustomer !== undefined ? customerContext.isNewCustomer : true;
+  const customerRiskMultiplier = isNewCustomer ? 1.5 : 0.8;
+
+  const rawScore = totalWeightedExcess * customerRiskMultiplier;
+  const blendedScore = parseFloat(rawScore.toFixed(4));
   
   let requiredApproval = { requiresManager: false, requiresFinance: false };
   let status = 'approved';
 
-  if (blendedScore > 0) {
+  if (blendedScore <= 0) {
+    // Auto-Approved without manager intervention!
+    status = 'approved';
+  } else if (blendedScore > 0 && blendedScore <= 10.0) {
+    // Escalated to Sales Manager
     status = 'pending_approval';
-    
-    for (const chain of approvalChains) {
-      const min = parseFloat(chain.min_discount);
-      const max = chain.max_discount ? parseFloat(chain.max_discount) : 100;
-      
-      if (blendedScore >= min && blendedScore <= max) {
-        requiredApproval = {
-          requiresManager: chain.requires_manager,
-          requiresFinance: chain.requires_finance
-        };
-      }
-    }
-    
-    if (!requiredApproval.requiresManager && !requiredApproval.requiresFinance) {
-      requiredApproval.requiresManager = true;
-    }
+    requiredApproval.requiresManager = true;
+  } else {
+    // High Risk (> 10%) => Auto-Escalated to Finance 2nd level approval
+    status = 'pending_finance_approval';
+    requiredApproval.requiresManager = true;
+    requiredApproval.requiresFinance = true;
   }
 
   return {
     blendedScore,
+    rawScore: parseFloat(totalWeightedExcess.toFixed(4)),
+    customerRiskMultiplier,
+    isNewCustomer,
     lineDetails,
     requiredApproval,
     status

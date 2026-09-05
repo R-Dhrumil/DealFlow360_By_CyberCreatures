@@ -46,6 +46,8 @@ export default function Layout() {
     { name: 'Dashboard', path: '/app/dashboard', icon: 'fa-chart-pie', roles: ['sales_rep', 'sales_manager', 'admin', 'super_admin'] },
     { name: 'Quotation Builder', path: '/app/quote', icon: 'fa-file-invoice-dollar', roles: ['sales_rep', 'sales_manager', 'admin'] },
     { name: 'Approvals', path: '/app/approvals', icon: 'fa-check-double', roles: ['sales_manager', 'admin', 'finance', 'sales_rep'] },
+    { name: 'Finance Hub', path: '/app/finance', icon: 'fa-coins', roles: ['finance', 'admin', 'sales_manager'] },
+    { name: 'Admin Operations', path: '/app/admin', icon: 'fa-user-gear', roles: ['admin', 'super_admin'] },
     { name: 'Reporting', path: '/app/reporting', icon: 'fa-chart-bar', roles: ['sales_manager', 'admin', 'super_admin'] },
     { name: 'Global Tenants', path: '/app/superadmin', icon: 'fa-globe', roles: ['super_admin', 'admin'] },
   ];
