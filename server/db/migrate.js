@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const pool = require('./pool');
 
-async function migrate() {
+async function migrate(shouldClosePool = true) {
   try {
     console.log('Starting migration...');
     const migrationsDir = path.join(__dirname, 'migrations');
@@ -20,8 +20,15 @@ async function migrate() {
   } catch (error) {
     console.error('Migration failed:', error);
   } finally {
-    await pool.end();
+    if (shouldClosePool) {
+      await pool.end();
+    }
   }
 }
 
-migrate();
+if (require.main === module) {
+  migrate(true);
+}
+
+module.exports = migrate;
+

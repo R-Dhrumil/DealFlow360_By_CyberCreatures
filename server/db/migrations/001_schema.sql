@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS global_settings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE companies (
+CREATE TABLE IF NOT EXISTS companies (
   id VARCHAR(100) PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   logo_url VARCHAR(1024),
@@ -29,7 +29,7 @@ CREATE TABLE companies (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id VARCHAR(100) PRIMARY KEY,
   company_id VARCHAR(100) REFERENCES companies(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE users (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE customers (
+CREATE TABLE IF NOT EXISTS customers (
   id VARCHAR(100) PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE customers (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
   id VARCHAR(100) PRIMARY KEY,
   company_id VARCHAR(100) REFERENCES companies(id) ON DELETE CASCADE NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -63,7 +63,7 @@ CREATE TABLE products (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE product_variants (
+CREATE TABLE IF NOT EXISTS product_variants (
   id VARCHAR(100) PRIMARY KEY,
   product_id VARCHAR(100) REFERENCES products(id) ON DELETE CASCADE NOT NULL,
   attribute_name VARCHAR(100) NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE product_variants (
   extra_price NUMERIC(15, 2) DEFAULT 0
 );
 
-CREATE TABLE price_lists (
+CREATE TABLE IF NOT EXISTS price_lists (
   id VARCHAR(100) PRIMARY KEY,
   company_id VARCHAR(100) REFERENCES companies(id) ON DELETE CASCADE NOT NULL,
   customer_tier VARCHAR(50) NOT NULL,
@@ -79,7 +79,7 @@ CREATE TABLE price_lists (
   rules JSONB
 );
 
-CREATE TABLE warehouses (
+CREATE TABLE IF NOT EXISTS warehouses (
   id VARCHAR(100) PRIMARY KEY,
   company_id VARCHAR(100) REFERENCES companies(id) ON DELETE CASCADE NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -87,7 +87,7 @@ CREATE TABLE warehouses (
   shipping_cost_weight NUMERIC(10, 2) DEFAULT 1.0
 );
 
-CREATE TABLE warehouse_stock (
+CREATE TABLE IF NOT EXISTS warehouse_stock (
   id VARCHAR(100) PRIMARY KEY,
   warehouse_id VARCHAR(100) REFERENCES warehouses(id) ON DELETE CASCADE NOT NULL,
   product_id VARCHAR(100) REFERENCES products(id) ON DELETE CASCADE NOT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE warehouse_stock (
   UNIQUE(warehouse_id, product_id)
 );
 
-CREATE TABLE discount_tiers (
+CREATE TABLE IF NOT EXISTS discount_tiers (
   id VARCHAR(100) PRIMARY KEY,
   company_id VARCHAR(100) REFERENCES companies(id) ON DELETE CASCADE NOT NULL,
   tier_name VARCHAR(50) NOT NULL,
@@ -103,7 +103,7 @@ CREATE TABLE discount_tiers (
   UNIQUE(company_id, tier_name)
 );
 
-CREATE TABLE category_discount_ceiling (
+CREATE TABLE IF NOT EXISTS category_discount_ceiling (
   id VARCHAR(100) PRIMARY KEY,
   company_id VARCHAR(100) REFERENCES companies(id) ON DELETE CASCADE NOT NULL,
   category VARCHAR(255) NOT NULL,
@@ -111,7 +111,7 @@ CREATE TABLE category_discount_ceiling (
   UNIQUE(company_id, category)
 );
 
-CREATE TABLE approval_chains (
+CREATE TABLE IF NOT EXISTS approval_chains (
   id VARCHAR(100) PRIMARY KEY,
   company_id VARCHAR(100) REFERENCES companies(id) ON DELETE CASCADE NOT NULL,
   min_discount NUMERIC(5, 2) NOT NULL,
@@ -120,7 +120,7 @@ CREATE TABLE approval_chains (
   requires_finance BOOLEAN DEFAULT false
 );
 
-CREATE TABLE subscription_plans (
+CREATE TABLE IF NOT EXISTS subscription_plans (
   id VARCHAR(100) PRIMARY KEY,
   company_id VARCHAR(100) REFERENCES companies(id) ON DELETE CASCADE NOT NULL,
   product_id VARCHAR(100) REFERENCES products(id) ON DELETE CASCADE NOT NULL,
@@ -129,7 +129,7 @@ CREATE TABLE subscription_plans (
   UNIQUE(company_id, product_id, cycle)
 );
 
-CREATE TABLE quotations (
+CREATE TABLE IF NOT EXISTS quotations (
   id VARCHAR(100) PRIMARY KEY,
   company_id VARCHAR(100) REFERENCES companies(id) ON DELETE CASCADE NOT NULL,
   customer_id VARCHAR(100) REFERENCES customers(id) ON DELETE CASCADE NOT NULL,
@@ -140,7 +140,7 @@ CREATE TABLE quotations (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE quotation_lines (
+CREATE TABLE IF NOT EXISTS quotation_lines (
   id VARCHAR(100) PRIMARY KEY,
   quotation_id VARCHAR(100) REFERENCES quotations(id) ON DELETE CASCADE NOT NULL,
   product_id VARCHAR(100) REFERENCES products(id) ON DELETE RESTRICT NOT NULL,
@@ -150,7 +150,7 @@ CREATE TABLE quotation_lines (
   line_type VARCHAR(50) NOT NULL CHECK (line_type IN ('one_time', 'recurring'))
 );
 
-CREATE TABLE approvals_log (
+CREATE TABLE IF NOT EXISTS approvals_log (
   id VARCHAR(100) PRIMARY KEY,
   quotation_id VARCHAR(100) REFERENCES quotations(id) ON DELETE CASCADE NOT NULL,
   approver_id VARCHAR(100) REFERENCES users(id) ON DELETE SET NULL,
@@ -159,7 +159,7 @@ CREATE TABLE approvals_log (
   timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE fulfillment_splits (
+CREATE TABLE IF NOT EXISTS fulfillment_splits (
   id VARCHAR(100) PRIMARY KEY,
   quotation_id VARCHAR(100) REFERENCES quotations(id) ON DELETE CASCADE NOT NULL,
   warehouse_id VARCHAR(100) REFERENCES warehouses(id) ON DELETE RESTRICT NOT NULL,
@@ -167,7 +167,7 @@ CREATE TABLE fulfillment_splits (
   shipment_cost NUMERIC(15, 2) DEFAULT 0
 );
 
-CREATE TABLE billing_schedules (
+CREATE TABLE IF NOT EXISTS billing_schedules (
   id VARCHAR(100) PRIMARY KEY,
   quotation_line_id VARCHAR(100) REFERENCES quotation_lines(id) ON DELETE CASCADE NOT NULL,
   billing_date DATE NOT NULL,
@@ -175,7 +175,7 @@ CREATE TABLE billing_schedules (
   status VARCHAR(50) DEFAULT 'pending'
 );
 
-CREATE TABLE negotiation_messages (
+CREATE TABLE IF NOT EXISTS negotiation_messages (
   id VARCHAR(100) PRIMARY KEY,
   quotation_id VARCHAR(100) REFERENCES quotations(id) ON DELETE CASCADE NOT NULL,
   sender_type VARCHAR(50) NOT NULL CHECK (sender_type IN ('customer', 'rep')),
@@ -184,7 +184,7 @@ CREATE TABLE negotiation_messages (
   timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE audit_log (
+CREATE TABLE IF NOT EXISTS audit_log (
   id VARCHAR(100) PRIMARY KEY,
   entity_type VARCHAR(100) NOT NULL,
   entity_id VARCHAR(100) NOT NULL,
@@ -195,9 +195,9 @@ CREATE TABLE audit_log (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_users_company ON users(company_id);
-CREATE INDEX idx_products_company ON products(company_id);
-CREATE INDEX idx_quotations_company ON quotations(company_id);
-CREATE INDEX idx_quotations_customer ON quotations(customer_id);
-CREATE INDEX idx_quotations_rep ON quotations(sales_rep_id);
-CREATE INDEX idx_quotation_lines_quotation ON quotation_lines(quotation_id);
+CREATE INDEX IF NOT EXISTS idx_users_company ON users(company_id);
+CREATE INDEX IF NOT EXISTS idx_products_company ON products(company_id);
+CREATE INDEX IF NOT EXISTS idx_quotations_company ON quotations(company_id);
+CREATE INDEX IF NOT EXISTS idx_quotations_customer ON quotations(customer_id);
+CREATE INDEX IF NOT EXISTS idx_quotations_rep ON quotations(sales_rep_id);
+CREATE INDEX IF NOT EXISTS idx_quotation_lines_quotation ON quotation_lines(quotation_id);

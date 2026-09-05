@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const pool = require('./pool');
 
-async function seed() {
+async function seed(shouldClosePool = true) {
   try {
     console.log('Starting seed...');
     const sqlPath = path.join(__dirname, 'seeds', '001_seed.sql');
@@ -13,8 +13,15 @@ async function seed() {
   } catch (error) {
     console.error('Seed failed:', error);
   } finally {
-    await pool.end();
+    if (shouldClosePool) {
+      await pool.end();
+    }
   }
 }
 
-seed();
+if (require.main === module) {
+  seed(true);
+}
+
+module.exports = seed;
+
