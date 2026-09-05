@@ -9,7 +9,10 @@ const { globalRateLimiter } = require('./middleware/rateLimiter');
 const app = express();
 
 // Security Headers
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: false
+}));
 
 // CORS configuration - Allow dynamic origins for local dev, IP network, and production
 app.use(cors({

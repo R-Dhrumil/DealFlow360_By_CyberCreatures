@@ -10,10 +10,11 @@ let io = null;
 function initSocket(httpServer) {
   io = new Server(httpServer, {
     cors: {
-      origin: '*',
+      origin: true,
       methods: ['GET', 'POST'],
       credentials: true,
     },
+    allowEIO3: true,
     pingTimeout: 60000,
   });
 
