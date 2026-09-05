@@ -428,22 +428,22 @@ export default function CustomerDashboard() {
 
                           <div className="pt-2 border-t border-slate-200/80 flex justify-between items-baseline">
                             <div>
-                              <span className={`text-xs ${q.status === 'approved' ? 'text-emerald-950 font-black' : 'text-slate-700 font-bold'}`}>
-                                {q.status === 'approved' ? 'Total Payable Amount:' : 'Total Proposal Value:'}
+                              <span className={`text-xs ${['approved', 'confirmed'].includes(q.status) ? 'text-emerald-950 font-black' : 'text-slate-700 font-bold'}`}>
+                                {['approved', 'confirmed'].includes(q.status) ? 'Total Payable Amount:' : 'Total Proposal Value:'}
                               </span>
-                              {q.status === 'approved' && (
+                              {['approved', 'confirmed'].includes(q.status) && (
                                 <span className="block text-[10px] text-emerald-600 font-bold uppercase tracking-wider">
-                                  Approved &bull; Discount Locked
+                                  {q.status === 'confirmed' ? 'Confirmed • Order Locked' : 'Approved • Discount Locked'}
                                 </span>
                               )}
                             </div>
                             <div className="text-right">
-                              <span className={`text-2xl font-black font-mono ${q.status === 'approved' ? 'text-emerald-700' : 'text-slate-800'}`}>
+                              <span className={`text-2xl font-black font-mono ${['approved', 'confirmed'].includes(q.status) ? 'text-emerald-700' : 'text-slate-800'}`}>
                                 {formatMoney(totalVal)}
                               </span>
-                              {q.status === 'approved' && (
+                              {['approved', 'confirmed'].includes(q.status) && (
                                 <span className="block text-[9px] font-bold text-emerald-600 uppercase tracking-wider">
-                                  Net Payable
+                                  {q.status === 'confirmed' ? 'Order Confirmed' : 'Net Payable'}
                                 </span>
                               )}
                             </div>

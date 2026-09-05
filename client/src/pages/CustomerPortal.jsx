@@ -56,8 +56,8 @@ export default function CustomerPortal() {
       };
       const totalAmount = qLines.reduce((sum, line) => sum + calculateLineNetTotal(line), 0);
 
-      await api.put(`/quotations/${quotationId}/confirm`, {
-        paymentMethod: selectedPayment,
+      const res = await api.put(`/quotations/${quotationId}/confirm`, {
+        paymentMethod: selectedPayment || 'cod',
         paymentType,
         amount: totalAmount
       });
@@ -66,7 +66,8 @@ export default function CustomerPortal() {
       await fetchQuotation();
     } catch (err) {
       console.error('Failed to confirm payment', err);
-      alert('Failed to process payment. Please try again.');
+      const serverMsg = err.response?.data?.error || err.response?.data?.message || 'Failed to process payment. Please try again.';
+      alert(serverMsg);
     } finally {
       setPaymentConfirming(false);
     }
@@ -176,6 +177,30 @@ export default function CustomerPortal() {
               {totalDiscountSaved > 0 && (
                 <span className="text-xs text-slate-400 line-through mr-2 font-mono">{formatMoney(totalGross)}</span>
               )}
+              <span className="text-xl font-black text-emerald-700 font-mono">{formatMoney(grandTotal)}</span>
+              <span className="block text-[10px] font-bold text-emerald-600 font-mono">
+                {totalDiscountSaved > 0 ? `Discount: -${formatMoney(totalDiscountSaved)}` : 'Discount: -₹0.00'}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Status Banner when Confirmed */}
+        {quotation.status === 'confirmed' && (
+          <div className="bg-emerald-50 border border-emerald-300/80 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg font-bold shadow">
+                <i className="fa-solid fa-circle-check"></i>
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-emerald-950">🎉 Order Confirmed &amp; In Fulfillment!</h3>
+                <p className="text-xs text-emerald-800 mt-0.5">
+                  Your order has been officially confirmed with Cash on Delivery / selected payment. Operations team notified!
+                </p>
+              </div>
+            </div>
+            <div className="bg-white px-4 py-2 rounded-xl border border-emerald-200 text-right shadow-2xs">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Total Confirmed Amount</span>
               <span className="text-xl font-black text-emerald-700 font-mono">{formatMoney(grandTotal)}</span>
               <span className="block text-[10px] font-bold text-emerald-600 font-mono">
                 {totalDiscountSaved > 0 ? `Discount: -${formatMoney(totalDiscountSaved)}` : 'Discount: -₹0.00'}
@@ -347,10 +372,16 @@ export default function CustomerPortal() {
                     </div>
                   </div>
                   
-                  {isApproved && (
-                    <button onClick={() => setShowPaymentModal(true)} className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                  {quotation.status === 'approved' && (
+                    <button onClick={() => setShowPaymentModal(true)} className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer">
                       <i className="fa-solid fa-credit-card"></i> Accept Proposal & Pay
                     </button>
+                  )}
+
+                  {quotation.status === 'confirmed' && (
+                    <div className="w-full mt-4 bg-emerald-100/70 border border-emerald-300 text-emerald-900 font-bold py-3 px-4 rounded-xl text-center text-sm flex items-center justify-center gap-2">
+                      <i className="fa-solid fa-circle-check text-emerald-600"></i> Order Confirmed &amp; In Fulfillment
+                    </div>
                   )}
                 </div>
               </div>

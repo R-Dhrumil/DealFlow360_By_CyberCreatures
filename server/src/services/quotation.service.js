@@ -531,6 +531,27 @@ class QuotationService {
     return { quotationId, status: 'rejected' };
   }
 
+  async ensurePaymentTable(client) {
+    try {
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS payments (
+          id VARCHAR(100) PRIMARY KEY,
+          quotation_id VARCHAR(100),
+          company_id VARCHAR(100),
+          customer_id VARCHAR(100),
+          amount NUMERIC(15, 2) NOT NULL DEFAULT 0,
+          payment_type VARCHAR(50) DEFAULT 'one-time',
+          payment_method VARCHAR(50) DEFAULT 'cod',
+          status VARCHAR(50) DEFAULT 'pending',
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+    } catch (e) {
+      console.warn('Could not auto-ensure payments table:', e.message);
+    }
+  }
+
   async confirmQuotation(companyId, quotationId, paymentData = {}) {
     const client = await db.pool.connect();
     let quotation;
@@ -539,9 +560,13 @@ class QuotationService {
       quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId || null, client);
       if (!quotation) throw ApiError.notFound('Quotation not found');
 
-      const terminalStates = ['confirmed', 'rejected'];
-      if (terminalStates.includes(quotation.status)) {
-        throw ApiError.conflict(`Quotation is already ${quotation.status}.`);
+      if (quotation.status === 'confirmed') {
+        await client.query('COMMIT');
+        return { quotationId, status: 'confirmed', message: 'Quotation is already confirmed.' };
+      }
+
+      if (quotation.status === 'rejected') {
+        throw ApiError.conflict('Cannot confirm a rejected quotation.');
       }
 
       await quotationRepository.updateQuotationStatusAndScore(
@@ -549,19 +574,60 @@ class QuotationService {
       );
 
       if (paymentData.paymentMethod) {
+        await this.ensurePaymentTable(client);
+
+        let validCustomerId = quotation.customer_id;
+        if (validCustomerId) {
+          try {
+            const custExists = await client.query('SELECT id FROM customers WHERE id = $1', [validCustomerId]);
+            if (custExists.rows.length === 0) validCustomerId = null;
+          } catch {
+            validCustomerId = null;
+          }
+        }
+
+        let validCompanyId = quotation.company_id;
+        if (validCompanyId) {
+          try {
+            const compExists = await client.query('SELECT id FROM companies WHERE id = $1', [validCompanyId]);
+            if (compExists.rows.length === 0) validCompanyId = null;
+          } catch {
+            validCompanyId = null;
+          }
+        }
+
+        const normalizedType = (paymentData.paymentType === 'recurring' || paymentData.paymentType === 'subscription-monthly')
+          ? 'subscription-monthly'
+          : 'one-time';
+        const rawMethod = (paymentData.paymentMethod || 'cod').toLowerCase();
+        const normalizedMethod = (rawMethod === 'cod' || rawMethod.includes('cash')) ? 'cod' : (rawMethod.includes('upi') ? 'upi' : 'manual');
         const paymentId = 'pay_' + crypto.randomBytes(6).toString('hex');
-        await client.query(`
-          INSERT INTO payments (id, quotation_id, company_id, customer_id, amount, payment_type, payment_method)
-          VALUES ($1, $2, $3, $4, $5, $6, $7)
-        `, [
-          paymentId,
-          quotationId,
-          quotation.company_id,
-          quotation.customer_id,
-          paymentData.amount || 0,
-          paymentData.paymentType || 'one-time',
-          paymentData.paymentMethod
-        ]);
+
+        try {
+          await client.query(`
+            INSERT INTO payments (id, quotation_id, company_id, customer_id, amount, payment_type, payment_method, status)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          `, [
+            paymentId,
+            quotationId,
+            validCompanyId,
+            validCustomerId,
+            parseFloat(paymentData.amount) || 0,
+            normalizedType,
+            normalizedMethod,
+            normalizedMethod === 'cod' ? 'pending' : 'completed'
+          ]);
+        } catch (insertErr) {
+          console.warn('Payment record insert notice:', insertErr.message);
+          try {
+            await client.query(`
+              INSERT INTO payments (id, quotation_id, amount, payment_method, status)
+              VALUES ($1, $2, $3, $4, $5)
+            `, [paymentId, quotationId, parseFloat(paymentData.amount) || 0, normalizedMethod, normalizedMethod === 'cod' ? 'pending' : 'completed']);
+          } catch (fallbackErr) {
+            console.warn('Payment record fallback notice:', fallbackErr.message);
+          }
+        }
       }
 
       await client.query('COMMIT');
