@@ -10,6 +10,7 @@ import QuotationView from './pages/QuotationView';
 import ApprovalQueue from './pages/ApprovalQueue';
 import FulfillmentSplit from './pages/FulfillmentSplit';
 import CustomerPortal from './pages/CustomerPortal';
+import CustomerDashboard from './pages/CustomerDashboard';
 import DealHealthDashboard from './pages/DealHealthDashboard';
 import Reporting from './pages/Reporting';
 import SuperAdminConsole from './pages/SuperAdminConsole';
@@ -50,6 +51,12 @@ function App() {
         <Route path="/portal/:id" element={<CustomerPortal />} />
         <Route path="/login" element={<Login />} />
         <Route path="/customer/login" element={<Login />} />
+
+        {/* Customer Protected Workspace */}
+        <Route path="/customer" element={<ProtectedRoute allowedRoles={['customer']} />}>
+          <Route path="dashboard" element={<CustomerDashboard />} />
+          <Route index element={<Navigate to="dashboard" replace />} />
+        </Route>
 
         {/* Internal Protected Routes */}
         <Route path="/app" element={<ProtectedRoute allowedRoles={['sales_rep', 'sales_manager', 'finance', 'admin', 'super_admin']} />}>

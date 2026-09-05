@@ -5,30 +5,12 @@ import api from '../api/client';
 export default function Login() {
   const navigate = useNavigate();
   const [isCustomerMode, setIsCustomerMode] = useState(false);
-  const [email, setEmail] = useState('rep@dealflow360.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [isSignup, setIsSignup] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const demoAccounts = [
-    { role: 'sales_rep', name: 'Alex Rep', email: 'rep@dealflow360.com', title: 'Sales Rep' },
-    { role: 'sales_manager', name: 'Sarah Manager', email: 'manager@dealflow360.com', title: 'Sales Manager' },
-    { role: 'finance', name: 'David Finance', email: 'finance@dealflow360.com', title: 'Finance' },
-    { role: 'admin', name: 'Elena Admin', email: 'admin@dealflow360.com', title: 'Admin' }
-  ];
-
-  const handleQuickDemoLogin = (demoUser) => {
-    const user = {
-      id: 'demo-' + demoUser.role,
-      name: demoUser.name,
-      email: demoUser.email,
-      role: demoUser.role,
-      companyId: '11111111-1111-1111-1111-111111111111'
-    };
-    localStorage.setItem('token', 'demo-jwt-token-' + demoUser.role);
-    localStorage.setItem('user', JSON.stringify(user));
-    navigate('/app/dashboard');
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,26 +18,32 @@ export default function Login() {
     setLoading(true);
 
     try {
+      if (isCustomerMode && isSignup) {
+        const res = await api.post('/auth/customer/signup', { name, email, password });
+        if (res.data.token) {
+          localStorage.setItem('token', res.data.token);
+          localStorage.setItem('user', JSON.stringify(res.data.customer));
+          navigate('/customer/dashboard');
+          return;
+        }
+      }
+
       const endpoint = isCustomerMode ? '/auth/customer/login' : '/auth/login';
       const res = await api.post(endpoint, { email, password });
       
       if (res.data.token) {
         localStorage.setItem('token', res.data.token);
-        localStorage.setItem('user', JSON.stringify(res.data.user || res.data.customer));
-        if (isCustomerMode) {
-          navigate('/portal/demo-quote-1');
+        const userData = res.data.user || res.data.customer;
+        localStorage.setItem('user', JSON.stringify(userData));
+
+        if (isCustomerMode || userData.role === 'customer') {
+          navigate('/customer/dashboard');
         } else {
-          navigate('/app/dashboard');
+          navigate('/app/pipeline');
         }
       }
     } catch (err) {
-      // Fallback for demo mode if backend DB credentials aren't configured yet
-      const matched = demoAccounts.find(a => a.email === email);
-      if (matched) {
-        handleQuickDemoLogin(matched);
-        return;
-      }
-      setError(err.response?.data?.error || 'Authentication failed. Try demo accounts below.');
+      setError(err.response?.data?.error || 'Invalid credentials or server unavailable');
     } finally {
       setLoading(false);
     }
@@ -64,25 +52,26 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="w-12 h-12 bg-primary-600 rounded-xl mx-auto flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary-900/50 mb-4">
+        <div className="w-12 h-12 bg-primary-600 rounded-2xl mx-auto flex items-center justify-center text-white text-2xl font-black shadow-lg mb-4">
           DF
         </div>
         <h2 className="text-3xl font-extrabold text-white tracking-tight">
           DealFlow360
         </h2>
-        <p className="mt-2 text-sm text-slate-400">
-          Intelligent, Self-Governing Sales Operations Engine
+        <p className="mt-2 text-xs text-slate-400">
+          Enterprise Sales Operations Engine
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-slate-800 border border-slate-700 py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10">
           
-          {/* Mode Switcher */}
+          {/* Portal Switcher */}
           <div className="flex border-b border-slate-700 mb-6">
             <button
-              onClick={() => setIsCustomerMode(false)}
-              className={`flex-1 py-2 text-center text-sm font-semibold border-b-2 transition-all ${
+              type="button"
+              onClick={() => { setIsCustomerMode(false); setIsSignup(false); setError(''); }}
+              className={`flex-1 py-2.5 text-center text-xs font-bold border-b-2 transition-all ${
                 !isCustomerMode 
                   ? 'border-primary-500 text-primary-400' 
                   : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -91,8 +80,9 @@ export default function Login() {
               Internal Sales Portal
             </button>
             <button
-              onClick={() => setIsCustomerMode(true)}
-              className={`flex-1 py-2 text-center text-sm font-semibold border-b-2 transition-all ${
+              type="button"
+              onClick={() => { setIsCustomerMode(true); setError(''); }}
+              className={`flex-1 py-2.5 text-center text-xs font-bold border-b-2 transition-all ${
                 isCustomerMode 
                   ? 'border-emerald-500 text-emerald-400' 
                   : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -103,34 +93,56 @@ export default function Login() {
           </div>
 
           {error && (
-            <div className="mb-4 bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-lg text-sm">
+            <div className="mb-4 bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-xl text-xs font-semibold">
               <i className="fa-solid fa-triangle-exclamation mr-2"></i>
               {error}
             </div>
           )}
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            {isCustomerMode && isSignup && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Full Name / Organization
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Acme Corporation"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xs"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+            )}
+
             <div>
-              <label className="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
                 Email Address
               </label>
               <input
                 type="email"
                 required
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                placeholder="name@company.com"
+                className={`w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 text-xs ${
+                  isCustomerMode ? 'focus:ring-emerald-500' : 'focus:ring-primary-500'
+                }`}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
                 Password
               </label>
               <input
                 type="password"
                 required
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                placeholder="••••••••"
+                className={`w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 text-xs ${
+                  isCustomerMode ? 'focus:ring-emerald-500' : 'focus:ring-primary-500'
+                }`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -139,7 +151,11 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 rounded-lg bg-primary-600 hover:bg-primary-500 text-white font-semibold shadow-md transition-all text-sm flex justify-center items-center"
+              className={`w-full py-3 px-4 rounded-xl text-white font-bold shadow-md transition-all text-xs flex justify-center items-center ${
+                isCustomerMode 
+                  ? 'bg-emerald-600 hover:bg-emerald-500' 
+                  : 'bg-primary-600 hover:bg-primary-500'
+              }`}
             >
               {loading ? (
                 <i className="fa-solid fa-circle-notch fa-spin"></i>
@@ -149,24 +165,17 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Quick Hackathon Presets */}
-          <div className="mt-6 pt-6 border-t border-slate-700">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 text-center">
-              ⚡ 1-Click Hackathon Presets
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {demoAccounts.map(demo => (
-                <button
-                  key={demo.role}
-                  onClick={() => handleQuickDemoLogin(demo)}
-                  className="bg-slate-900/80 hover:bg-slate-700 border border-slate-700 text-slate-200 py-2 px-3 rounded-lg text-xs font-medium text-left transition-all flex items-center justify-between"
-                >
-                  <span>{demo.title}</span>
-                  <i className="fa-solid fa-chevron-right text-[10px] text-slate-500"></i>
-                </button>
-              ))}
+          {isCustomerMode && (
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => setIsSignup(!isSignup)}
+                className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold"
+              >
+                {isSignup ? 'Already have a customer account? Sign in' : "Don't have a customer account? Sign up"}
+              </button>
             </div>
-          </div>
+          )}
 
         </div>
       </div>
