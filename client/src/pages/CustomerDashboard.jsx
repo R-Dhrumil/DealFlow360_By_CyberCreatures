@@ -19,6 +19,10 @@ export default function CustomerDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [inquirySuccess, setInquirySuccess] = useState('');
   const [quotations, setQuotations] = useState([]);
+  
+  // Product Detail Modal State
+  const [selectedProductDetail, setSelectedProductDetail] = useState(null);
+  const [modalQuantity, setModalQuantity] = useState(1);
 
   useEffect(() => {
     fetchCatalogProducts();
@@ -54,19 +58,21 @@ export default function CustomerDashboard() {
     navigate('/login');
   };
 
-  const handleRequestQuoteForProduct = async (product) => {
+  const handleRequestQuoteForProduct = async (product, quantity = 1) => {
     try {
-      const res = await api.post('/quotations/customer-request', { productId: product.id, quantity: 1 });
+      const res = await api.post('/quotations/customer-request', { productId: product.id, quantity });
       const newQuote = res.data?.quotation;
       const quoteCode = newQuote ? formatQuoteCode(newQuote.id) : 'QT-2026-1001';
-      setInquirySuccess(`Success! ${quoteCode} generated for ${product.name} and assigned to your sales rep.`);
+      setInquirySuccess(`Success! ${quoteCode} generated for ${product.name} (Qty: ${quantity}) and assigned to your sales rep.`);
       await fetchQuotations();
+      if (selectedProductDetail) setSelectedProductDetail(null);
       setActiveTab('quotations');
     } catch (err) {
       console.error('Failed to request quote:', err);
       setInquirySuccess(`Quote request for ${product.name} submitted! Switching to proposals...`);
       setTimeout(() => setInquirySuccess(''), 4000);
       await fetchQuotations();
+      if (selectedProductDetail) setSelectedProductDetail(null);
       setActiveTab('quotations');
     }
   };
@@ -207,35 +213,59 @@ export default function CustomerDashboard() {
               {filteredProducts.map(p => (
                 <div 
                   key={p.id}
-                  className="bg-white rounded-2xl border border-surface-soft shadow-sm hover:shadow-md hover:border-emerald-300 transition-all p-6 flex flex-col justify-between space-y-4"
+                  onClick={() => {
+                    setSelectedProductDetail(p);
+                    setModalQuantity(1);
+                  }}
+                  className="bg-white rounded-2xl border border-surface-soft shadow-sm hover:shadow-md hover:border-emerald-400 transition-all p-6 flex flex-col justify-between space-y-4 cursor-pointer group relative overflow-hidden"
                 >
+                  {p.is_promoted && (
+                    <div className="bg-emerald-500 text-white text-[9px] font-extrabold uppercase tracking-widest px-8 py-1 absolute -right-7 top-3 rotate-45 shadow-sm text-center">
+                      Featured
+                    </div>
+                  )}
+
                   <div className="space-y-3">
-                    <div className="flex justify-between items-start">
+                    <div className="flex justify-between items-start pr-4">
                       <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                         {p.category}
                       </span>
                       <span className="text-[11px] font-mono text-text-muted">{formatSKU(p.sku, p.id)}</span>
                     </div>
 
-                    <h3 className="font-extrabold text-text-main text-base leading-snug">{p.name}</h3>
-                    <p className="text-xs text-text-muted line-clamp-2">{p.description}</p>
+                    <h3 className="font-extrabold text-text-main text-base leading-snug group-hover:text-emerald-700 transition-colors flex items-center justify-between">
+                      <span>{p.name}</span>
+                      <i className="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400 group-hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition-all"></i>
+                    </h3>
+                    
+                    <p className="text-xs text-text-muted line-clamp-2">{p.description || 'No detailed description available.'}</p>
 
                     <div className="pt-2 border-t border-slate-100 flex justify-between items-baseline">
                       <span className="text-xs text-text-muted font-medium">List Price:</span>
                       <span className="text-xl font-black text-emerald-700">
-                        ${typeof p.base_price === 'number' ? p.base_price.toLocaleString() : p.base_price}
+                        ${typeof p.base_price === 'number' ? p.base_price.toLocaleString(undefined, { minimumFractionDigits: 2 }) : parseFloat(p.base_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         <span className="text-xs text-text-muted font-normal"> / {p.unit || 'unit'}</span>
                       </span>
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => handleRequestQuoteForProduct(p)}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <i className="fa-solid fa-paper-plane"></i>
-                    <span>Request Quotation for Product</span>
-                  </button>
+                  <div className="space-y-2 pt-2">
+                    <div className="text-[11px] font-semibold text-emerald-600 text-center flex items-center justify-center space-x-1 opacity-80 group-hover:opacity-100">
+                      <i className="fa-solid fa-eye text-xs"></i>
+                      <span>Click card for full details</span>
+                    </div>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRequestQuoteForProduct(p, 1);
+                      }}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <i className="fa-solid fa-paper-plane"></i>
+                      <span>Request Quotation for Product</span>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -354,6 +384,169 @@ export default function CustomerDashboard() {
         )}
 
       </main>
+
+      {/* Product Detail Modal */}
+      {selectedProductDetail && (
+        <div 
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedProductDetail(null)}
+        >
+          <div 
+            className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-surface-soft p-6 sm:p-8 space-y-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex justify-between items-start border-b border-slate-100 pb-4">
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                  <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                    {selectedProductDetail.category}
+                  </span>
+                  <span className="text-xs font-mono text-text-muted bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                    SKU: {formatSKU(selectedProductDetail.sku, selectedProductDetail.id)}
+                  </span>
+                  {selectedProductDetail.is_promoted && (
+                    <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200">
+                      <i className="fa-solid fa-star mr-1 text-amber-500"></i> Featured Product
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-2xl font-black text-slate-800 pt-1">{selectedProductDetail.name}</h2>
+              </div>
+              <button 
+                onClick={() => setSelectedProductDetail(null)}
+                className="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 rounded-full flex items-center justify-center transition-colors"
+              >
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="space-y-6">
+              {/* Product Overview Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-emerald-50/70 border border-emerald-200 p-4 rounded-2xl">
+                  <span className="text-xs text-emerald-700 font-semibold block">Base List Price</span>
+                  <span className="text-2xl font-black text-emerald-800">
+                    ${parseFloat(selectedProductDetail.base_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+                  <span className="text-[11px] text-emerald-600 block font-medium">per {selectedProductDetail.unit || 'unit'}</span>
+                </div>
+
+                <div className="bg-slate-50 border border-surface-soft p-4 rounded-2xl">
+                  <span className="text-xs text-text-muted font-semibold block">Applicable Tax Rate</span>
+                  <span className="text-2xl font-black text-slate-800">
+                    {selectedProductDetail.tax_rate !== undefined && selectedProductDetail.tax_rate !== null ? `${selectedProductDetail.tax_rate}%` : '0%'}
+                  </span>
+                  <span className="text-[11px] text-text-muted block font-medium">Standard B2B Sales Tax</span>
+                </div>
+
+                <div className="bg-slate-50 border border-surface-soft p-4 rounded-2xl">
+                  <span className="text-xs text-text-muted font-semibold block">Pricing Tier Eligible</span>
+                  <span className="text-xl font-bold text-slate-800 flex items-center mt-1">
+                    <i className="fa-solid fa-tags text-emerald-600 mr-1.5 text-sm"></i>
+                    <span>Gold Discount</span>
+                  </span>
+                  <span className="text-[11px] text-text-muted block font-medium">Negotiable in quote</span>
+                </div>
+              </div>
+
+              {/* Product Description */}
+              <div className="space-y-2">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center">
+                  <i className="fa-solid fa-circle-info text-emerald-600 mr-2"></i>
+                  Product Overview & Specifications
+                </h3>
+                <div className="bg-slate-50 p-4 rounded-2xl border border-surface-soft text-slate-700 text-xs leading-relaxed">
+                  {selectedProductDetail.description || 'No extended description has been published for this item. Contact sales for technical specifications.'}
+                </div>
+              </div>
+
+              {/* Vendor & Metadata Details */}
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                    <i className="fa-solid fa-building"></i>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-text-muted block font-semibold">Vendor / Supplier</span>
+                    <span className="text-slate-800 font-bold">{selectedProductDetail.company_name || 'CyberCreatures Authorized'}</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
+                    <i className="fa-solid fa-boxes-packing"></i>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-text-muted block font-semibold">Availability Status</span>
+                    <span className="text-emerald-700 font-bold">In Stock & Ready for Quote</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Box: Select Quantity & Request Quote */}
+              <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-5 rounded-2xl text-white space-y-4">
+                <div className="flex flex-wrap justify-between items-center gap-4">
+                  <div>
+                    <h4 className="font-bold text-sm text-white">Ready to place a formal inquiry?</h4>
+                    <p className="text-xs text-slate-300">Select quantity below to generate a negotiable proposal instantly.</p>
+                  </div>
+
+                  <div className="flex items-center space-x-3 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700">
+                    <span className="text-xs font-semibold text-slate-300">Qty:</span>
+                    <button
+                      onClick={() => setModalQuantity(prev => Math.max(1, prev - 1))}
+                      className="w-7 h-7 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center text-xs transition-colors"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      value={modalQuantity}
+                      onChange={(e) => setModalQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-12 text-center bg-slate-900 border border-slate-700 rounded-lg text-xs font-bold text-emerald-400 py-1 focus:outline-none"
+                    />
+                    <button
+                      onClick={() => setModalQuantity(prev => prev + 1)}
+                      className="w-7 h-7 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center text-xs transition-colors"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-700/80 flex flex-wrap justify-between items-center gap-4">
+                  <div>
+                    <span className="text-[11px] text-slate-400 block">Est. Base Subtotal:</span>
+                    <span className="text-xl font-black text-emerald-400">
+                      ${(parseFloat(selectedProductDetail.base_price || 0) * modalQuantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setSelectedProductDetail(null)}
+                      className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                    >
+                      Close
+                    </button>
+                    <button
+                      onClick={() => handleRequestQuoteForProduct(selectedProductDetail, modalQuantity)}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-extrabold shadow-md transition-all flex items-center space-x-2"
+                    >
+                      <i className="fa-solid fa-paper-plane"></i>
+                      <span>Request Quotation ({modalQuantity})</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }
