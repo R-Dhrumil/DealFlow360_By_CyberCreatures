@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAlert } from '../contexts/AlertContext';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const APPROVAL_LEVEL_META = {
   pending_approval: { label: 'Manager Review', cls: 'bg-amber-100 text-amber-700 border-amber-200', icon: 'fa-user-tie' },
@@ -11,6 +12,7 @@ const APPROVAL_LEVEL_META = {
 };
 
 export default function ApprovalQueue() {
+  const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
   const { showAlert } = useAlert();
   const [approvals, setApprovals] = useState([]);
@@ -125,7 +127,7 @@ export default function ApprovalQueue() {
     }));
   };
 
-  const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+  const fmt = (n) => formatMoney(n);
 
   if (loading) {
     return (

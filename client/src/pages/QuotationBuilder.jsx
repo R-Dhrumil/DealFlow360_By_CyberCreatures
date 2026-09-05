@@ -3,11 +3,11 @@ import { useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
 import { copyTextToClipboard } from '../utils/clipboard';
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+import { useCurrency } from '../contexts/CurrencyContext';
 
 export default function QuotationBuilder() {
+  const { formatMoney } = useCurrency();
+  const fmt = (n) => formatMoney(n);
   const { showNotification } = useNotification();
   const [searchParams] = useSearchParams();
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAlert } from '../contexts/AlertContext';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 // ── Role-Level Discount Authority Configuration Panel ──────────────────────────
 function DiscountAuthorityPanel({ showNotification }) {
@@ -106,6 +107,7 @@ function DiscountAuthorityPanel({ showNotification }) {
 }
 
 export default function AdminWorkspace() {
+  const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
   const { showAlert } = useAlert();
   const [activeTab, setActiveTab] = useState('products'); // 'products' | 'tiers' | 'team' | 'warehouses' | 'audit'
@@ -820,7 +822,7 @@ export default function AdminWorkspace() {
                           <div className="flex items-center justify-end space-x-1.5">
                             <div className="text-right">
                               <span className="font-black text-purple-700 block">
-                                ${typeof p.base_price === 'number' ? p.base_price.toLocaleString() : p.base_price}
+                                {formatMoney(p.base_price)}
                               </span>
                               <span className="text-[10px] text-text-muted font-normal block">/ {p.unit || 'unit'}</span>
                             </div>

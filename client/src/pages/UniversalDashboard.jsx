@@ -2,16 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuoteCode } from '../utils/formatters';
-
-const formatCurrency = (val) => {
-  const num = Number(val) || 0;
-  if (num >= 1000000) {
-    return `$${(num / 1000000).toFixed(2)}M`;
-  } else if (num >= 1000) {
-    return `$${(num / 1000).toFixed(1)}K`;
-  }
-  return `$${num.toLocaleString()}`;
-};
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const getStageBadge = (status) => {
   switch (status?.toLowerCase()) {
@@ -62,6 +53,8 @@ const getStageBadge = (status) => {
 };
 
 const UniversalDashboard = () => {
+  const { formatMoney } = useCurrency();
+  const formatCurrency = (val, compact = true) => formatMoney(val, { compact });
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState('');
@@ -598,11 +591,7 @@ const UniversalDashboard = () => {
                         <div className="text-center border border-slate-200 rounded-xl px-3 py-1.5 bg-white shadow-xs min-w-[90px]">
                           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Deal Value</p>
                           <p className="text-sm font-black text-slate-900 mt-0.5">
-                            ${dealValue >= 1000000
-                              ? `${(dealValue / 1000000).toFixed(2)}M`
-                              : dealValue >= 1000
-                              ? `${(dealValue / 1000).toFixed(1)}K`
-                              : dealValue.toFixed(0)}
+                            {formatMoney(dealValue, { compact: true })}
                           </p>
                         </div>
 

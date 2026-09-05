@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 export default function FulfillmentSplit() {
+  const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
   const { id: quotationId } = useParams();
   const navigate = useNavigate();
@@ -161,7 +163,7 @@ export default function FulfillmentSplit() {
           </div>
           <div>
             <p className="text-xs text-text-muted font-medium">Est. Freight Cost</p>
-            <p className="text-xl font-black text-text-main">${totalShipmentCost.toFixed(2)}</p>
+            <p className="text-xl font-black text-text-main">{formatMoney(totalShipmentCost)}</p>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const INITIAL_FINANCE_APPROVALS = [
   { id: 'Q-103', customer: 'CyberNet Systems', amount: 112000, riskScore: 18.20, rep: 'John Sales', status: 'pending_finance_approval', reason: 'Discount 18% requested on high-volume hardware & subscription bundle' },
@@ -16,6 +17,7 @@ const CREDIT_NOTES_LOG = [
 ];
 
 export default function FinanceOperations() {
+  const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
   const [approvals, setApprovals] = useState(INITIAL_FINANCE_APPROVALS);
 
@@ -61,7 +63,7 @@ export default function FinanceOperations() {
                       Risk: {app.riskScore}%
                     </span>
                   </div>
-                  <p className="text-xs text-slate-600">Rep: <strong>{app.rep}</strong> &bull; Total Value: <strong>${app.amount.toLocaleString()}</strong></p>
+                  <p className="text-xs text-slate-600">Rep: <strong>{app.rep}</strong> &bull; Total Value: <strong>{formatMoney(app.amount)}</strong></p>
                   <p className="text-xs text-purple-900 italic"><i className="fa-solid fa-circle-info mr-1"></i> {app.reason}</p>
                 </div>
 
@@ -114,7 +116,7 @@ export default function FinanceOperations() {
                   <tr key={s.id} className="hover:bg-slate-50">
                     <td className="p-2.5 font-mono font-bold text-primary">{s.id}</td>
                     <td className="p-2.5 font-bold text-text-main">{s.customer}</td>
-                    <td className="p-2.5 font-black text-text-main">${s.amount.toFixed(2)}</td>
+                    <td className="p-2.5 font-black text-text-main">{formatMoney(s.amount)}</td>
                     <td className="p-2.5"><span className="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded text-[10px]">{s.cycle}</span></td>
                     <td className="p-2.5 font-mono text-slate-600">{s.nextBillingDate}</td>
                   </tr>
@@ -147,7 +149,7 @@ export default function FinanceOperations() {
                   <tr key={cn.id} className="hover:bg-slate-50">
                     <td className="p-2.5 font-mono font-bold text-emerald-600">{cn.id}</td>
                     <td className="p-2.5 font-bold text-text-main">{cn.customer}</td>
-                    <td className="p-2.5 font-black text-emerald-700">${cn.amount.toFixed(2)}</td>
+                    <td className="p-2.5 font-black text-emerald-700">{formatMoney(cn.amount)}</td>
                     <td className="p-2.5 text-slate-600">{cn.reason}</td>
                     <td className="p-2.5 font-mono text-text-muted">{cn.issuedDate}</td>
                   </tr>
