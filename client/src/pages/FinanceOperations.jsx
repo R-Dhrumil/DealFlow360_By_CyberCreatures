@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useNotification } from '../contexts/NotificationContext';
 
 const INITIAL_FINANCE_APPROVALS = [
   { id: 'Q-103', customer: 'CyberNet Systems', amount: 112000, riskScore: 18.20, rep: 'John Sales', status: 'pending_finance_approval', reason: 'Discount 18% requested on high-volume hardware & subscription bundle' },
@@ -15,11 +16,12 @@ const CREDIT_NOTES_LOG = [
 ];
 
 export default function FinanceOperations() {
+  const { showNotification } = useNotification();
   const [approvals, setApprovals] = useState(INITIAL_FINANCE_APPROVALS);
 
   const handleFinanceAction = (quoteId, action) => {
     setApprovals(approvals.filter(a => a.id !== quoteId));
-    alert(`Finance ${action} action recorded for Quote ${quoteId}! Reconciled in accounting ledger.`);
+    showNotification('success', `Finance ${action} action recorded for Quote ${quoteId}! Reconciled in accounting ledger.`);
   };
 
   return (

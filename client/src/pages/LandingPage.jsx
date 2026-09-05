@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
+import { useNotification } from '../contexts/NotificationContext';
 
 const LandingPage = () => {
+  const { showNotification } = useNotification();
   const [scrolled, setScrolled] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [siteSettings, setSiteSettings] = useState({ site_name: 'DealFlow360', tagline: '', logo_url: '' });
@@ -312,7 +314,7 @@ const LandingPage = () => {
               {/* Email form */}
               <form
                 className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto pt-4"
-                onSubmit={(e) => { e.preventDefault(); alert('Demo environment credentials dispatched to your enterprise inbox.'); }}
+                onSubmit={(e) => { e.preventDefault(); showNotification('success', 'Demo environment credentials dispatched to your enterprise inbox.'); }}
               >
                 <input
                   className="w-full sm:flex-1 px-4 py-3 rounded-lg bg-white text-text-main placeholder:text-text-muted text-sm focus:outline-none focus:ring-2 focus:ring-on-primary/30 shadow-sm"

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
+import { useNotification } from '../contexts/NotificationContext';
 
 export default function QuotationBuilder() {
+  const { showNotification } = useNotification();
   const [products, setProducts] = useState([]);
   const [lines, setLines] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,11 +89,11 @@ export default function QuotationBuilder() {
           lineType: 'one_time'
         }))
       });
-      alert('Quotation submitted successfully! Auto-governance evaluator active.');
+      showNotification('success', 'Quotation submitted successfully! Auto-governance evaluator active.');
       setLines([]);
     } catch (error) {
       console.error('Failed to submit quotation', error);
-      alert('Quotation submitted successfully! (Saved in local demo pipeline)');
+      showNotification('success', 'Quotation submitted successfully! (Saved in local demo pipeline)');
       setLines([]);
     }
   };
@@ -117,7 +119,7 @@ export default function QuotationBuilder() {
           <p className="text-sm text-text-muted">Live order cart, upsell margin recommendations & governance check</p>
         </div>
         <div className="space-x-3">
-          <button className="btn-secondary text-xs" onClick={() => alert('Quotation saved as draft')}>Save Draft</button>
+          <button className="btn-secondary text-xs" onClick={() => showNotification('success', 'Quotation saved as draft')}>Save Draft</button>
           <button className="btn-primary text-xs font-bold shadow-md" onClick={submitQuotation} disabled={lines.length === 0}>
             Submit & Route Approval
           </button>

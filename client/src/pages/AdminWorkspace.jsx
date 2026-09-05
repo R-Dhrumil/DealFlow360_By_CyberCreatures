@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
+import { useNotification } from '../contexts/NotificationContext';
 
 export default function AdminWorkspace() {
+  const { showNotification } = useNotification();
   const [activeTab, setActiveTab] = useState('products'); // 'products' | 'tiers' | 'team' | 'warehouses' | 'audit'
 
   // Products State
@@ -111,7 +113,7 @@ export default function AdminWorkspace() {
     setNewProdName('');
     setNewProdSku('');
     setNewProdPrice('');
-    alert(`Product '${newProd.name}' successfully added to catalog at $${newProd.base_price}!`);
+    showNotification('success', `Product '${newProd.name}' successfully added to catalog at $${newProd.base_price}!`);
   };
 
   const handleAddTier = (e) => {
@@ -131,7 +133,7 @@ export default function AdminWorkspace() {
     setNewTierName('');
     setNewTierDiscount('');
     setNewTierMargin('');
-    alert(`Discount Tier '${newTierObj.tier}' configured with max ${newTierObj.maxDiscount}% discount ceiling!`);
+    showNotification('success', `Discount Tier '${newTierObj.tier}' configured with max ${newTierObj.maxDiscount}% discount ceiling!`);
   };
 
   const handleAddTeamMember = (e) => {
@@ -150,7 +152,7 @@ export default function AdminWorkspace() {
     setTeam([...team, newMember]);
     setNewName('');
     setNewEmail('');
-    alert(`Successfully provisioned ${newMember.name} as ${newMember.role.replace('_', ' ')}!`);
+    showNotification('success', `Successfully provisioned ${newMember.name} as ${newMember.role.replace('_', ' ')}!`);
   };
 
   const handleAddWarehouse = (e) => {
@@ -168,7 +170,7 @@ export default function AdminWorkspace() {
     setWarehouses([...warehouses, newWh]);
     setNewWhName('');
     setNewWhLoc('');
-    alert(`Warehouse '${newWh.name}' configured!`);
+    showNotification('success', `Warehouse '${newWh.name}' configured!`);
   };
 
   const filteredProducts = products.filter(p =>
@@ -184,7 +186,7 @@ export default function AdminWorkspace() {
         <div>
           <div className="flex items-center space-x-3 mb-1">
             <span className="w-9 h-9 rounded-xl bg-primary/30 border border-purple-500/40 text-purple-300 font-bold flex items-center justify-center text-lg">
-              <i className="fa-solid fa-user-gear"></i>
+              <i className="fa-solid fa-user-gear text-primary"></i>
             </span>
             <h1 className="text-2xl font-extrabold tracking-tight text-text-main">
               Admin Operations Suite
@@ -195,9 +197,7 @@ export default function AdminWorkspace() {
           </p>
         </div>
 
-        <span className="bg-purple-900 text-purple-200 border border-purple-700 px-3 py-1 rounded-xl text-xs font-mono font-bold">
-          Admin Role Active
-        </span>
+       
       </header>
 
       {/* Tab Navigation */}
@@ -206,7 +206,7 @@ export default function AdminWorkspace() {
           onClick={() => setActiveTab('products')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
             activeTab === 'products'
-              ? 'bg-primary text-text-main shadow'
+              ? 'bg-primary text-text-main text-white shadow'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -218,7 +218,7 @@ export default function AdminWorkspace() {
           onClick={() => setActiveTab('tiers')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
             activeTab === 'tiers'
-              ? 'bg-primary text-text-main shadow'
+              ? 'bg-primary text-text-main text-white shadow'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -230,7 +230,7 @@ export default function AdminWorkspace() {
           onClick={() => setActiveTab('team')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
             activeTab === 'team'
-              ? 'bg-primary text-text-main shadow'
+              ? 'bg-primary text-text-main text-white shadow'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -242,7 +242,7 @@ export default function AdminWorkspace() {
           onClick={() => setActiveTab('warehouses')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
             activeTab === 'warehouses'
-              ? 'bg-primary text-text-main shadow'
+              ? 'bg-primary text-text-main text-white shadow'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -254,7 +254,7 @@ export default function AdminWorkspace() {
           onClick={() => setActiveTab('audit')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
             activeTab === 'audit'
-              ? 'bg-primary text-text-main shadow'
+              ? 'bg-primary text-text-main text-white shadow'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -412,7 +412,7 @@ export default function AdminWorkspace() {
 
               <button
                 type="submit"
-                className="w-full py-2.5 px-4 bg-primary hover:bg-purple-500 text-text-main font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2"
+                className="w-full py-2.5 px-4 bg-primary text-white text-text-main font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2"
               >
                 <i className="fa-solid fa-plus"></i>
                 <span>Add Product to Catalog</span>
@@ -443,7 +443,7 @@ export default function AdminWorkspace() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <h4 className="font-black text-text-main text-base">{t.tier} Tier</h4>
-                      <span className="bg-primary text-text-main text-[10px] font-black px-2.5 py-0.5 rounded-full shadow">
+                      <span className="bg-primary text-text-main text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow">
                         Max {t.maxDiscount}%
                       </span>
                     </div>
@@ -526,7 +526,7 @@ export default function AdminWorkspace() {
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 px-4 bg-primary hover:bg-purple-500 text-text-main font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2"
+                  className="w-full py-2.5 px-4 bg-primary text-white text-text-main font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2"
                 >
                   <i className="fa-solid fa-plus"></i>
                   <span>Save Discount Tier Config</span>
@@ -645,7 +645,7 @@ export default function AdminWorkspace() {
                 </select>
               </div>
 
-              <button type="submit" className="w-full py-2.5 px-4 bg-primary hover:bg-purple-500 text-text-main font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2">
+              <button type="submit" className="w-full py-2.5 px-4 bg-primary  text-text-main text-white font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2">
                 <i className="fa-solid fa-user-plus"></i>
                 <span>Provision Team Member</span>
               </button>
@@ -704,7 +704,7 @@ export default function AdminWorkspace() {
                 />
               </div>
 
-              <button type="submit" className="w-full py-2.5 px-4 bg-primary hover:bg-purple-500 text-text-main font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2">
+              <button type="submit" className="w-full py-2.5 px-4 bg-primary text-white text-text-main font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2">
                 <i className="fa-solid fa-plus"></i>
                 <span>Configure Depot</span>
               </button>

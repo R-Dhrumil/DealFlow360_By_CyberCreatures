@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
+import { useNotification } from '../contexts/NotificationContext';
+import { useAlert } from '../contexts/AlertContext';
 
 export default function ApprovalQueue() {
+  const { showNotification } = useNotification();
+  const { showAlert } = useAlert();
   const [approvals, setApprovals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
@@ -25,19 +29,19 @@ export default function ApprovalQueue() {
 
   const handleAction = async (quotationId, action) => {
     if ((action === 'reject' || action === 'return') && !reason) {
-      alert(`Please provide a reason for ${action === 'reject' ? 'rejection' : 'returning'}.`);
+      showAlert('Action Required', `Please provide a reason for ${action === 'reject' ? 'rejection' : 'returning'}.`, 'warning');
       return;
     }
 
     try {
       await api.post(`/approvals/${quotationId}/action`, { action, reason });
-      alert(`Quotation ${action}ed successfully.`);
+      showNotification('success', `Quotation ${action}ed successfully.`);
       setReason('');
       setExpandedId(null);
       fetchApprovals();
     } catch (error) {
       console.error(`Failed to ${action} quotation`, error);
-      alert('Action failed.');
+      showNotification('error', 'Action failed.');
     }
   };
 

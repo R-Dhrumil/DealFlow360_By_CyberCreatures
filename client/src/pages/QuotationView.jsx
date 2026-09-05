@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuoteCode } from '../utils/formatters';
+import { useNotification } from '../contexts/NotificationContext';
 
 export default function QuotationView() {
+  const { showNotification } = useNotification();
   const { id: quotationId } = useParams();
   const [quotation, setQuotation] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -84,10 +86,10 @@ export default function QuotationView() {
       await api.put(`/quotations/${quotationId}/approve`);
       const res = await api.get(`/quotations/${quotationId}`);
       if (res.data) setQuotation(res.data);
-      alert('Quotation approved successfully!');
+      showNotification('success', 'Quotation approved successfully!');
     } catch (err) {
       console.error('Failed to approve quotation:', err);
-      alert('Failed to approve quotation.');
+      showNotification('error', 'Failed to approve quotation.');
     }
   };
 
@@ -98,10 +100,10 @@ export default function QuotationView() {
       await api.put(`/quotations/${quotationId}/reject`, { reason });
       const res = await api.get(`/quotations/${quotationId}`);
       if (res.data) setQuotation(res.data);
-      alert('Quotation rejected.');
+      showNotification('success', 'Quotation rejected.');
     } catch (err) {
       console.error('Failed to reject quotation:', err);
-      alert('Failed to reject quotation.');
+      showNotification('error', 'Failed to reject quotation.');
     }
   };
 

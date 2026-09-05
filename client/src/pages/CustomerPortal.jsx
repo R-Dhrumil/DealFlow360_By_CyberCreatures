@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuoteCode } from '../utils/formatters';
+import { useNotification } from '../contexts/NotificationContext';
 
 export default function CustomerPortal() {
+  const { showNotification } = useNotification();
   const { id: quotationId } = useParams();
   const [quotation, setQuotation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -164,7 +166,7 @@ export default function CustomerPortal() {
       if (refreshed.data) {
         setQuotation(refreshed.data);
       }
-      alert('Quotation accepted and digitally signed! Sales manager and fulfillment team notified.');
+      showNotification('success', 'Quotation accepted and digitally signed! Sales manager and fulfillment team notified.');
       setShowSignModal(false);
     } catch (err) {
       console.error('Failed to sign quotation', err);

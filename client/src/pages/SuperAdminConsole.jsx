@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import { useNotification } from '../contexts/NotificationContext';
 
 export default function SuperAdminConsole({ defaultTab }) {
+  const { showNotification } = useNotification();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentTabFromUrl = searchParams.get('tab') || defaultTab || 'tenants';
 
@@ -46,7 +48,6 @@ export default function SuperAdminConsole({ defaultTab }) {
 
   const [savingSettings, setSavingSettings] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
     fetchData();
@@ -89,11 +90,6 @@ export default function SuperAdminConsole({ defaultTab }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const showNotification = (type, text) => {
-    setMessage({ type, text });
-    setTimeout(() => setMessage({ type: '', text: '' }), 5000);
   };
 
   const handleSettingsSubmit = async (e) => {
@@ -189,22 +185,6 @@ export default function SuperAdminConsole({ defaultTab }) {
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Global Notifications Alert */}
-      {message.text && (
-        <div className={`p-4 rounded-xl shadow-xs border flex items-center justify-between ${
-          message.type === 'success' 
-            ? 'bg-emerald-50 text-emerald-900 border-emerald-200' 
-            : 'bg-rose-50 text-rose-900 border-rose-200'
-        }`}>
-          <div className="flex items-center space-x-3">
-            <i className={`fa-solid ${message.type === 'success' ? 'fa-circle-check text-emerald-600' : 'fa-circle-exclamation text-rose-600'} text-lg`}></i>
-            <span className="text-xs font-bold">{message.text}</span>
-          </div>
-          <button onClick={() => setMessage({ type: '', text: '' })} className="text-slate-400 hover:text-slate-600">
-            <i className="fa-solid fa-xmark text-sm"></i>
-          </button>
-        </div>
-      )}
 
       {/* SECTION 1: GLOBAL TENANTS */}
       {activeTab === 'tenants' && (
