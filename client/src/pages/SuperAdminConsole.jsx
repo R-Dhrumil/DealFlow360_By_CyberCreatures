@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api/client';
 
 export default function SuperAdminConsole() {
@@ -118,6 +119,13 @@ export default function SuperAdminConsole() {
             <i className="fa-solid fa-users"></i>
             <span>All Tenant Users ({tenantUsers.length})</span>
           </button>
+          <Link
+            to="/app/settings"
+            className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-slate-700"
+          >
+            <i className="fa-solid fa-gear"></i>
+            <span>Platform Settings</span>
+          </Link>
         </div>
       </header>
 
