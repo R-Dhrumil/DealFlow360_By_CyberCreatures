@@ -32,18 +32,92 @@ class QuotationRepository {
          q.id, q.status, q.blended_risk_score, q.created_at, q.updated_at,
          c.name as customer_name, c.email as customer_email,
          u.name as sales_rep_name,
+         COALESCE(STRING_AGG(DISTINCT p.name, ', '), 'Custom Proposal') as product_summary,
          COALESCE(SUM(ql.unit_price * ql.quantity * (1 - ql.discount_percent/100)), 0) as total_amount,
          COUNT(ql.id) as lines_count
        FROM quotations q
        LEFT JOIN customers c ON q.customer_id = c.id
        LEFT JOIN users u ON q.sales_rep_id = u.id
        LEFT JOIN quotation_lines ql ON q.id = ql.quotation_id
+       LEFT JOIN products p ON ql.product_id = p.id
        WHERE q.company_id = $1
        GROUP BY q.id, c.name, c.email, u.name
        ORDER BY q.created_at DESC`,
       [companyId]
     );
     return result.rows;
+  }
+
+  async findByCustomer(customerId) {
+    const result = await db.query(
+      `SELECT 
+         q.id, q.status, q.blended_risk_score, q.created_at, q.updated_at,
+         c.name as customer_name, c.email as customer_email,
+         u.name as sales_rep_name,
+         COALESCE(STRING_AGG(DISTINCT p.name, ', '), 'Custom Proposal') as product_summary,
+         COALESCE(SUM(ql.unit_price * ql.quantity * (1 - ql.discount_percent/100)), 0) as total_amount,
+         COUNT(ql.id) as lines_count
+       FROM quotations q
+       LEFT JOIN customers c ON q.customer_id = c.id
+       LEFT JOIN users u ON q.sales_rep_id = u.id
+       LEFT JOIN quotation_lines ql ON q.id = ql.quotation_id
+       LEFT JOIN products p ON ql.product_id = p.id
+       WHERE q.customer_id = $1
+       GROUP BY q.id, c.name, c.email, u.name
+       ORDER BY q.created_at DESC`,
+      [customerId]
+    );
+    return result.rows;
+  }
+
+  async findAll() {
+    const result = await db.query(
+      `SELECT 
+         q.id, q.status, q.blended_risk_score, q.created_at, q.updated_at,
+         c.name as customer_name, c.email as customer_email,
+         u.name as sales_rep_name,
+         COALESCE(STRING_AGG(DISTINCT p.name, ', '), 'Custom Proposal') as product_summary,
+         COALESCE(SUM(ql.unit_price * ql.quantity * (1 - ql.discount_percent/100)), 0) as total_amount,
+         COUNT(ql.id) as lines_count
+       FROM quotations q
+       LEFT JOIN customers c ON q.customer_id = c.id
+       LEFT JOIN users u ON q.sales_rep_id = u.id
+       LEFT JOIN quotation_lines ql ON q.id = ql.quotation_id
+       LEFT JOIN products p ON ql.product_id = p.id
+       GROUP BY q.id, c.name, c.email, u.name
+       ORDER BY q.created_at DESC`
+    );
+    return result.rows;
+  }
+
+  async findDetailById(quotationId) {
+    const qRes = await db.query(
+      `SELECT 
+         q.id, q.status, q.company_id, q.customer_id, q.sales_rep_id, q.blended_risk_score, q.created_at,
+         c.name as customer_name, c.email as customer_email,
+         u.name as sales_rep_name,
+         comp.name as company_name, comp.logo_url as company_logo
+       FROM quotations q
+       LEFT JOIN customers c ON q.customer_id = c.id
+       LEFT JOIN users u ON q.sales_rep_id = u.id
+       LEFT JOIN companies comp ON q.company_id = comp.id
+       WHERE q.id = $1`,
+      [quotationId]
+    );
+
+    if (qRes.rows.length === 0) return null;
+    const quote = qRes.rows[0];
+
+    const linesRes = await db.query(
+      `SELECT ql.*, p.name as product_name, p.category, p.margin_percent
+       FROM quotation_lines ql
+       JOIN products p ON ql.product_id = p.id
+       WHERE ql.quotation_id = $1`,
+      [quotationId]
+    );
+
+    quote.lines = linesRes.rows;
+    return quote;
   }
 
   async findByIdAndCompany(quotationId, companyId) {

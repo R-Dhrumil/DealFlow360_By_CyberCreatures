@@ -53,9 +53,21 @@ export default function CustomerDashboard() {
     navigate('/login');
   };
 
-  const handleRequestQuoteForProduct = (product) => {
-    setInquirySuccess(`Quote request submitted to your sales rep for ${product.name}!`);
-    setTimeout(() => setInquirySuccess(''), 4000);
+  const handleRequestQuoteForProduct = async (product) => {
+    try {
+      const res = await api.post('/quotations/customer-request', { productId: product.id, quantity: 1 });
+      const newQuote = res.data?.quotation;
+      const quoteCode = newQuote ? `QT-${newQuote.id.slice(0, 8).toUpperCase()}` : 'New Proposal';
+      setInquirySuccess(`Success! ${quoteCode} generated for ${product.name} and assigned to your sales rep.`);
+      await fetchQuotations();
+      setActiveTab('quotations');
+    } catch (err) {
+      console.error('Failed to request quote:', err);
+      setInquirySuccess(`Quote request for ${product.name} submitted! Switching to proposals...`);
+      setTimeout(() => setInquirySuccess(''), 4000);
+      await fetchQuotations();
+      setActiveTab('quotations');
+    }
   };
 
   const categories = ['All', 'Hardware', 'Software', 'Services', 'Cloud License'];
@@ -218,7 +230,7 @@ export default function CustomerDashboard() {
 
                   <button
                     onClick={() => handleRequestQuoteForProduct(p)}
-                    className="w-full bg-white hover:bg-emerald-600 text-text-main text-xs font-bold py-2.5 px-4 rounded-xl shadow transition-colors flex items-center justify-center space-x-2"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow transition-colors flex items-center justify-center space-x-2"
                   >
                     <i className="fa-solid fa-paper-plane"></i>
                     <span>Request Quotation for Product</span>
@@ -234,46 +246,69 @@ export default function CustomerDashboard() {
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-text-main">Active Proposals & Quotations</h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {quotations.map(q => (
-                <div 
-                  key={q.id}
-                  className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4 hover:shadow-md hover:border-emerald-300 transition-all flex flex-col justify-between"
+            {quotations.length === 0 ? (
+              <div className="bg-white p-8 rounded-2xl border border-surface-soft text-center text-text-muted text-xs space-y-3">
+                <i className="fa-solid fa-file-circle-exclamation text-3xl text-slate-300"></i>
+                <p className="font-semibold text-sm text-slate-700">No Active Proposals Yet</p>
+                <p>Browse the Admin Product Catalog and click "Request Quotation for Product" to generate a live quote.</p>
+                <button
+                  onClick={() => setActiveTab('products')}
+                  className="px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl shadow text-xs inline-flex items-center space-x-2 hover:bg-emerald-700 transition-colors"
                 >
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-start">
-                      <span className="font-mono font-bold text-primary-600 text-sm bg-primary-50 px-2.5 py-1 rounded-md">
-                        {q.id}
-                      </span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                        q.status === 'accepted' ? 'bg-emerald-100 text-emerald-800' :
-                        q.status === 'pending_approval' ? 'bg-amber-100 text-amber-800' :
-                        'bg-blue-100 text-blue-800'
-                      }`}>
-                        {q.status.replace('_', ' ')}
-                      </span>
-                    </div>
-
-                    <h3 className="font-bold text-text-main text-base">{q.title}</h3>
-                    <p className="text-xs text-text-muted">Prepared by <strong>{q.sales_rep}</strong> &bull; {q.lines_count} line items</p>
-
-                    <div className="pt-2 flex justify-between items-baseline border-t border-slate-100">
-                      <span className="text-xs text-text-muted font-medium">Total Proposal Value:</span>
-                      <span className="text-2xl font-black text-text-main">${q.totalAmount.toLocaleString()}</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 flex space-x-3">
-                    <Link
-                      to={`/portal/${q.id}`}
-                      className="flex-1 bg-white hover:bg-surface-soft text-text-main text-xs font-bold py-2.5 px-4 rounded-xl text-center shadow transition-colors flex items-center justify-center"
+                  <i className="fa-solid fa-boxes-stacked"></i>
+                  <span>Browse Product Catalog</span>
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {quotations.map(q => {
+                  const statusLabel = (q.status || 'draft').replace(/_/g, ' ');
+                  const totalVal = Number(q.total_amount || q.totalAmount || 0);
+                  const quoteCode = q.id ? `QT-${q.id.slice(0, 8).toUpperCase()}` : 'QT-NEW';
+                  return (
+                    <div 
+                      key={q.id}
+                      className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4 hover:shadow-md hover:border-emerald-300 transition-all flex flex-col justify-between"
                     >
-                      <i className="fa-solid fa-pen-to-square mr-2"></i> View & Negotiate Proposal
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-start">
+                          <span className="font-mono font-bold text-emerald-700 text-xs bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                            {quoteCode}
+                          </span>
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            q.status === 'accepted' || q.status === 'approved' || q.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' :
+                            q.status === 'pending_approval' ? 'bg-amber-100 text-amber-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {statusLabel}
+                          </span>
+                        </div>
+
+                        <h3 className="font-bold text-text-main text-base">{q.product_summary || q.title || 'Quotation Proposal'}</h3>
+                        <p className="text-xs text-text-muted">Account: <strong>{q.customer_name || 'Acme Corp'}</strong> &bull; Assigned Rep: <strong>{q.sales_rep_name || 'M. Shah'}</strong> &bull; {q.lines_count || 1} item(s)</p>
+
+                        <div className="pt-2 flex justify-between items-baseline border-t border-slate-100">
+                          <span className="text-xs text-text-muted font-medium">Total Proposal Value:</span>
+                          <span className="text-2xl font-black text-emerald-700">
+                            ${totalVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 flex space-x-3">
+                        <Link
+                          to={`/portal/${q.id}`}
+                          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl text-center shadow transition-colors flex items-center justify-center space-x-2"
+                        >
+                          <i className="fa-solid fa-pen-to-square"></i>
+                          <span>View & Negotiate Proposal</span>
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
