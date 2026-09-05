@@ -11,7 +11,7 @@ import ApprovalQueue from './pages/ApprovalQueue';
 import FulfillmentSplit from './pages/FulfillmentSplit';
 import CustomerPortal from './pages/CustomerPortal';
 import CustomerDashboard from './pages/CustomerDashboard';
-import DealHealthDashboard from './pages/DealHealthDashboard';
+import UniversalDashboard from './pages/UniversalDashboard';
 import Reporting from './pages/Reporting';
 import SuperAdminConsole from './pages/SuperAdminConsole';
 import SuperAdminSettings from './pages/SuperAdminSettings';
@@ -65,7 +65,7 @@ function App() {
         <Route path="/app" element={<ProtectedRoute allowedRoles={['sales_rep', 'sales_manager', 'finance', 'admin', 'super_admin', 'operations']} />}>
           <Route element={<Layout />}>
             <Route path="pipeline" element={<Pipeline />} />
-            <Route path="dashboard" element={<DealHealthDashboard />} />
+            <Route path="dashboard" element={<UniversalDashboard />} />
             <Route path="quote" element={<QuotationBuilder />} />
             <Route path="quote/:id" element={<QuotationView />} />
             <Route path="approvals" element={<ApprovalQueue />} />
