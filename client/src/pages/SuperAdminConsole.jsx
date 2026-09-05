@@ -159,6 +159,7 @@ export default function SuperAdminConsole({ defaultTab }) {
 
     showNotification('success', `Updated role for ${user.name} to ${newRole.replace('_', ' ').toUpperCase()}`);
   };
+
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-slate-50 space-y-3">
@@ -172,14 +173,14 @@ export default function SuperAdminConsole({ defaultTab }) {
   const totalQuotes = companies.reduce((acc, c) => acc + parseInt(c.quotation_count || 0), 0);
 
   const filteredUsers = tenantUsers.filter(u => {
-    const matchesSearch = 
+    const matchesSearch =
       !searchQuery ||
       u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.subdomain_slug?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.role?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesRole = roleFilter === 'all' || u.role === roleFilter;
     const matchesCompany = companyFilter === 'all' || u.company_name === companyFilter;
 
@@ -238,14 +239,14 @@ export default function SuperAdminConsole({ defaultTab }) {
               const winRate = totalQ > 0 ? ((wonQ / totalQ) * 100).toFixed(0) : 0;
               const lossRate = totalQ > 0 ? ((lostQ / totalQ) * 100).toFixed(0) : 0;
 
-              const companyUserList = tenantUsers.filter(u => 
+              const companyUserList = tenantUsers.filter(u =>
                 u.company_name?.toLowerCase() === company.name?.toLowerCase() ||
                 u.subdomain_slug === company.subdomain_slug
               );
 
               return (
-                <div 
-                  key={company.id} 
+                <div
+                  key={company.id}
                   className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md hover:border-purple-300 transition-all p-5 flex flex-col justify-between space-y-4"
                 >
                   <div className="space-y-3">
@@ -290,7 +291,7 @@ export default function SuperAdminConsole({ defaultTab }) {
 
                   <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
                     <span className="text-[11px] text-slate-500 font-medium">Tenant ID: #{company.id}</span>
-                    <button 
+                    <button
                       onClick={() => setSelectedCompanyUsers({ company, users: companyUserList })}
                       className="px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-bold rounded-lg transition-all border border-purple-200 flex items-center space-x-1.5"
                     >
@@ -340,193 +341,193 @@ export default function SuperAdminConsole({ defaultTab }) {
                   <p className="text-xs text-slate-500">Configure global website title, tagline, logo, and icons</p>
                 </div>
 
-              <form onSubmit={handleSettingsSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <form onSubmit={handleSettingsSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Site Name</label>
+                      <input
+                        type="text"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
+                        value={settings.site_name}
+                        onChange={(e) => setSettings({ ...settings, site_name: e.target.value })}
+                        placeholder="e.g. DealFlow360"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Tagline</label>
+                      <input
+                        type="text"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
+                        value={settings.tagline}
+                        onChange={(e) => setSettings({ ...settings, tagline: e.target.value })}
+                        placeholder="e.g. Next-Gen B2B Sales Operations Platform"
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Site Name</label>
-                    <input
-                      type="text"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
-                      value={settings.site_name}
-                      onChange={(e) => setSettings({...settings, site_name: e.target.value})}
-                      placeholder="e.g. DealFlow360"
-                      required
-                    />
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Logo URL or Upload</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="https://example.com/logo.png"
+                        value={settings.logo_url}
+                        onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })}
+                      />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        id="logo-upload-input"
+                        onChange={(e) => handleFileUpload(e, 'logo_url')}
+                      />
+                      <label
+                        htmlFor="logo-upload-input"
+                        className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold px-4 py-2 rounded-xl text-xs flex items-center shrink-0 transition-colors"
+                      >
+                        <i className="fa-solid fa-cloud-arrow-up mr-1.5"></i> Upload
+                      </label>
+                    </div>
                   </div>
+
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Tagline</label>
-                    <input
-                      type="text"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
-                      value={settings.tagline}
-                      onChange={(e) => setSettings({...settings, tagline: e.target.value})}
-                      placeholder="e.g. Next-Gen B2B Sales Operations Platform"
-                    />
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Favicon URL or Upload (.ico, .png)</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="https://example.com/favicon.ico"
+                        value={settings.favicon_url}
+                        onChange={(e) => setSettings({ ...settings, favicon_url: e.target.value })}
+                      />
+                      <input
+                        type="file"
+                        accept=".ico,.png,image/*"
+                        className="hidden"
+                        id="favicon-upload-input"
+                        onChange={(e) => handleFileUpload(e, 'favicon_url')}
+                      />
+                      <label
+                        htmlFor="favicon-upload-input"
+                        className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold px-4 py-2 rounded-xl text-xs flex items-center shrink-0 transition-colors"
+                      >
+                        <i className="fa-solid fa-cloud-arrow-up mr-1.5"></i> Upload
+                      </label>
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Logo URL or Upload</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="url"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
-                      placeholder="https://example.com/logo.png"
-                      value={settings.logo_url}
-                      onChange={(e) => setSettings({...settings, logo_url: e.target.value})}
-                    />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      id="logo-upload-input"
-                      onChange={(e) => handleFileUpload(e, 'logo_url')}
-                    />
-                    <label 
-                      htmlFor="logo-upload-input" 
-                      className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold px-4 py-2 rounded-xl text-xs flex items-center shrink-0 transition-colors"
+                  <div className="pt-2 border-t border-slate-100">
+                    <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-3">SEO & Analytics Integrations</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Google Analytics ID (GA4)</label>
+                        <input
+                          type="text"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
+                          placeholder="G-XXXXXXXXXX"
+                          value={settings.google_analytics_id}
+                          onChange={(e) => setSettings({ ...settings, google_analytics_id: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Google Search Console Verification Token</label>
+                        <input
+                          type="text"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
+                          placeholder="Verification token content attribute"
+                          value={settings.google_search_console_id}
+                          onChange={(e) => setSettings({ ...settings, google_search_console_id: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Meta Pixel ID</label>
+                        <input
+                          type="text"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
+                          placeholder="123456789012345"
+                          value={settings.meta_pixel_id}
+                          onChange={(e) => setSettings({ ...settings, meta_pixel_id: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 flex justify-end border-t border-slate-100">
+                    <button
+                      type="submit"
+                      disabled={savingSettings}
+                      className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all flex items-center space-x-2"
                     >
-                      <i className="fa-solid fa-cloud-arrow-up mr-1.5"></i> Upload
-                    </label>
+                      {savingSettings ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-floppy-disk"></i>}
+                      <span>Save Platform Settings</span>
+                    </button>
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Favicon URL or Upload (.ico, .png)</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="url"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
-                      placeholder="https://example.com/favicon.ico"
-                      value={settings.favicon_url}
-                      onChange={(e) => setSettings({...settings, favicon_url: e.target.value})}
-                    />
-                    <input
-                      type="file"
-                      accept=".ico,.png,image/*"
-                      className="hidden"
-                      id="favicon-upload-input"
-                      onChange={(e) => handleFileUpload(e, 'favicon_url')}
-                    />
-                    <label 
-                      htmlFor="favicon-upload-input" 
-                      className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold px-4 py-2 rounded-xl text-xs flex items-center shrink-0 transition-colors"
-                    >
-                      <i className="fa-solid fa-cloud-arrow-up mr-1.5"></i> Upload
-                    </label>
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-slate-100">
-                  <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-3">SEO & Analytics Integrations</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Google Analytics ID (GA4)</label>
-                      <input
-                        type="text"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="G-XXXXXXXXXX"
-                        value={settings.google_analytics_id}
-                        onChange={(e) => setSettings({...settings, google_analytics_id: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Google Search Console Verification Token</label>
-                      <input
-                        type="text"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="Verification token content attribute"
-                        value={settings.google_search_console_id}
-                        onChange={(e) => setSettings({...settings, google_search_console_id: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Meta Pixel ID</label>
-                      <input
-                        type="text"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="123456789012345"
-                        value={settings.meta_pixel_id}
-                        onChange={(e) => setSettings({...settings, meta_pixel_id: e.target.value})}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-3 flex justify-end border-t border-slate-100">
-                  <button 
-                    type="submit" 
-                    disabled={savingSettings} 
-                    className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all flex items-center space-x-2"
-                  >
-                    {savingSettings ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-floppy-disk"></i>}
-                    <span>Save Platform Settings</span>
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-
-          <div className="lg:col-span-1 space-y-6">
-            {/* Super Admin Security Card */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-              <div className="border-b border-slate-100 pb-3">
-                <h2 className="text-base font-extrabold text-slate-900 flex items-center space-x-2">
-                  <i className="fa-solid fa-shield-halved text-purple-600"></i>
-                  <span>Super Admin Security</span>
-                </h2>
-                <p className="text-xs text-slate-500">Update root administrative password credentials</p>
+                </form>
               </div>
+            </div>
 
-              <form onSubmit={handlePasswordSubmit} className="space-y-3.5">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Current Password</label>
-                  <input
-                    type="password"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                    value={passwords.currentPassword}
-                    onChange={(e) => setPasswords({...passwords, currentPassword: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">New Password</label>
-                  <input
-                    type="password"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                    placeholder="Min 8 chars, 1 uppercase, 1 number"
-                    value={passwords.newPassword}
-                    onChange={(e) => setPasswords({...passwords, newPassword: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Confirm New Password</label>
-                  <input
-                    type="password"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                    value={passwords.confirmPassword}
-                    onChange={(e) => setPasswords({...passwords, confirmPassword: e.target.value})}
-                  />
+            <div className="lg:col-span-1 space-y-6">
+              {/* Super Admin Security Card */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+                <div className="border-b border-slate-100 pb-3">
+                  <h2 className="text-base font-extrabold text-slate-900 flex items-center space-x-2">
+                    <i className="fa-solid fa-shield-halved text-purple-600"></i>
+                    <span>Super Admin Security</span>
+                  </h2>
+                  <p className="text-xs text-slate-500">Update root administrative password credentials</p>
                 </div>
 
-                <div className="pt-2">
-                  <button 
-                    type="submit" 
-                    disabled={savingPassword} 
-                    className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-extrabold transition-all flex items-center justify-center space-x-2"
-                  >
-                    {savingPassword ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-lock"></i>}
-                    <span>Update Super Admin Password</span>
-                  </button>
-                </div>
-              </form>
+                <form onSubmit={handlePasswordSubmit} className="space-y-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Current Password</label>
+                    <input
+                      type="password"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                      value={passwords.currentPassword}
+                      onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">New Password</label>
+                    <input
+                      type="password"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                      placeholder="Min 8 chars, 1 uppercase, 1 number"
+                      value={passwords.newPassword}
+                      onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Confirm New Password</label>
+                    <input
+                      type="password"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                      value={passwords.confirmPassword}
+                      onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={savingPassword}
+                      className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-extrabold transition-all flex items-center justify-center space-x-2"
+                    >
+                      {savingPassword ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-lock"></i>}
+                      <span>Update Super Admin Password</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
       {/* SECTION 3: DETAILS OF THE USER */}
       {activeTab === 'users' && (
@@ -552,136 +553,135 @@ export default function SuperAdminConsole({ defaultTab }) {
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-5">
-          <div className="flex flex-wrap justify-between items-center gap-4 border-b border-slate-100 pb-4">
-            <div>
-              <h2 className="text-base font-extrabold text-slate-900">Details of Users Across Tenants</h2>
-              <p className="text-xs text-slate-500">Comprehensive directory of registered users, roles, and tenant organization affiliations</p>
-            </div>
-            <span className="bg-emerald-50 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200">
-              Showing {filteredUsers.length} of {tenantUsers.length} Users
-            </span>
-          </div>
-
-          {/* Search and Filters Bar */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-            <div className="md:col-span-2">
-              <input
-                type="text"
-                placeholder="Search by name, email, tenant, subdomain, role..."
-                className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="flex flex-wrap justify-between items-center gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <h2 className="text-base font-extrabold text-slate-900">Details of Users Across Tenants</h2>
+                <p className="text-xs text-slate-500">Comprehensive directory of registered users, roles, and tenant organization affiliations</p>
+              </div>
+              <span className="bg-emerald-50 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200">
+                Showing {filteredUsers.length} of {tenantUsers.length} Users
+              </span>
             </div>
 
-            <div>
-              <select
-                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary"
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-              >
-                <option value="all">All User Roles</option>
-                <option value="super_admin">Super Admin</option>
-                <option value="admin">Admin</option>
-                <option value="sales_manager">Sales Manager</option>
-                <option value="sales_rep">Sales Rep</option>
-                <option value="finance_manager">Finance Manager</option>
-                <option value="operations">Operations</option>
-                <option value="customer">Customer</option>
-              </select>
+            {/* Search and Filters Bar */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <div className="md:col-span-2">
+                <input
+                  type="text"
+                  placeholder="Search by name, email, tenant, subdomain, role..."
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <select
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                >
+                  <option value="all">All User Roles</option>
+                  <option value="super_admin">Super Admin</option>
+                  <option value="admin">Admin</option>
+                  <option value="sales_manager">Sales Manager</option>
+                  <option value="sales_rep">Sales Rep</option>
+                  <option value="finance_manager">Finance Manager</option>
+                  <option value="operations">Operations</option>
+                  <option value="customer">Customer</option>
+                </select>
+              </div>
+
+              <div>
+                <select
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={companyFilter}
+                  onChange={(e) => setCompanyFilter(e.target.value)}
+                >
+                  <option value="all">All Tenant Companies</option>
+                  {uniqueCompanyNames.map(cName => (
+                    <option key={cName} value={cName}>{cName}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div>
-              <select
-                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary"
-                value={companyFilter}
-                onChange={(e) => setCompanyFilter(e.target.value)}
-              >
-                <option value="all">All Tenant Companies</option>
-                {uniqueCompanyNames.map(cName => (
-                  <option key={cName} value={cName}>{cName}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Users Table */}
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-50 text-slate-500 uppercase tracking-wider font-extrabold border-b border-slate-200">
-                  <th className="p-3.5">User Details</th>
-                  <th className="p-3.5">Email Address</th>
-                  <th className="p-3.5">Role</th>
-                  <th className="p-3.5">Tenant Company</th>
-                  <th className="p-3.5">Subdomain Slug</th>
-                  <th className="p-3.5">Joined Date</th>
-                  <th className="p-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredUsers.length > 0 ? (
-                  filteredUsers.map(user => (
-                    <tr key={user.id} className="hover:bg-purple-50/40 transition-colors">
-                      <td className="p-3.5 font-bold text-slate-900">
-                        <div className="flex items-center space-x-2.5">
-                          <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-800 font-extrabold flex items-center justify-center text-xs border border-purple-200 shrink-0">
-                            {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            {/* Users Table */}
+            <div className="overflow-x-auto border border-slate-200 rounded-xl">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-500 uppercase tracking-wider font-extrabold border-b border-slate-200">
+                    <th className="p-3.5">User Details</th>
+                    <th className="p-3.5">Email Address</th>
+                    <th className="p-3.5">Role</th>
+                    <th className="p-3.5">Tenant Company</th>
+                    <th className="p-3.5">Subdomain Slug</th>
+                    <th className="p-3.5">Joined Date</th>
+                    <th className="p-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredUsers.length > 0 ? (
+                    filteredUsers.map(user => (
+                      <tr key={user.id} className="hover:bg-purple-50/40 transition-colors">
+                        <td className="p-3.5 font-bold text-slate-900">
+                          <div className="flex items-center space-x-2.5">
+                            <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-800 font-extrabold flex items-center justify-center text-xs border border-purple-200 shrink-0">
+                              {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                            </div>
+                            <span className="font-bold text-slate-900">{user.name}</span>
                           </div>
-                          <span className="font-bold text-slate-900">{user.name}</span>
-                        </div>
-                      </td>
-                      <td className="p-3.5 text-slate-600 font-mono text-[11px]">{user.email}</td>
-                      <td className="p-3.5">
-                        <div className="relative inline-flex items-center group" title="Click to change user role">
-                          <select
-                            value={user.role}
-                            onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                            className={`cursor-pointer appearance-none pl-3 pr-7 py-1 rounded-full text-[10px] font-extrabold uppercase border focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all ${
-                              user.role === 'super_admin' ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200' :
-                              user.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200' :
-                              user.role === 'sales_manager' ? 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200' :
-                              user.role === 'finance_manager' ? 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200' :
-                              user.role === 'operations' ? 'bg-indigo-100 text-indigo-800 border-indigo-200 hover:bg-indigo-200' :
-                              'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
-                            }`}
+                        </td>
+                        <td className="p-3.5 text-slate-600 font-mono text-[11px]">{user.email}</td>
+                        <td className="p-3.5">
+                          <div className="relative inline-flex items-center group" title="Click to change user role">
+                            <select
+                              value={user.role}
+                              onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                              className={`cursor-pointer appearance-none pl-3 pr-7 py-1 rounded-full text-[10px] font-extrabold uppercase border focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all ${user.role === 'super_admin' ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200' :
+                                user.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200' :
+                                  user.role === 'sales_manager' ? 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200' :
+                                    user.role === 'finance_manager' ? 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200' :
+                                      user.role === 'operations' ? 'bg-indigo-100 text-indigo-800 border-indigo-200 hover:bg-indigo-200' :
+                                        'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                                }`}
+                            >
+                              <option value="super_admin" className="bg-white text-slate-800 font-bold">SUPER ADMIN</option>
+                              <option value="admin" className="bg-white text-slate-800 font-bold">ADMIN</option>
+                              <option value="sales_manager" className="bg-white text-slate-800 font-bold">SALES MANAGER</option>
+                              <option value="sales_rep" className="bg-white text-slate-800 font-bold">SALES REP</option>
+                              <option value="finance_manager" className="bg-white text-slate-800 font-bold">FINANCE MANAGER</option>
+                              <option value="operations" className="bg-white text-slate-800 font-bold">OPERATIONS</option>
+                            </select>
+                            <i className="fa-solid fa-chevron-down text-[8px] pointer-events-none absolute right-2.5 opacity-60 text-current"></i>
+                          </div>
+                        </td>
+                        <td className="p-3.5 text-slate-800 font-bold">{user.company_name || 'CyberCreatures Operations'}</td>
+                        <td className="p-3.5 text-purple-600 font-mono text-[11px]">{user.subdomain_slug || 'main'}</td>
+                        <td className="p-3.5 text-slate-500 font-mono text-[11px]">{user.created_at?.slice(0, 10) || '2026-02-01'}</td>
+                        <td className="p-3.5 text-right">
+                          <button
+                            onClick={() => setSelectedUser(user)}
+                            className="px-3 py-1 bg-slate-100 hover:bg-purple-600 hover:text-white text-slate-700 rounded-lg font-bold text-[11px] transition-colors"
                           >
-                            <option value="super_admin" className="bg-white text-slate-800 font-bold">SUPER ADMIN</option>
-                            <option value="admin" className="bg-white text-slate-800 font-bold">ADMIN</option>
-                            <option value="sales_manager" className="bg-white text-slate-800 font-bold">SALES MANAGER</option>
-                            <option value="sales_rep" className="bg-white text-slate-800 font-bold">SALES REP</option>
-                            <option value="finance_manager" className="bg-white text-slate-800 font-bold">FINANCE MANAGER</option>
-                            <option value="operations" className="bg-white text-slate-800 font-bold">OPERATIONS</option>
-                          </select>
-                          <i className="fa-solid fa-chevron-down text-[8px] pointer-events-none absolute right-2.5 opacity-60 text-current"></i>
-                        </div>
-                      </td>
-                      <td className="p-3.5 text-slate-800 font-bold">{user.company_name || 'CyberCreatures Operations'}</td>
-                      <td className="p-3.5 text-purple-600 font-mono text-[11px]">{user.subdomain_slug || 'main'}</td>
-                      <td className="p-3.5 text-slate-500 font-mono text-[11px]">{user.created_at?.slice(0, 10) || '2026-02-01'}</td>
-                      <td className="p-3.5 text-right">
-                        <button
-                          onClick={() => setSelectedUser(user)}
-                          className="px-3 py-1 bg-slate-100 hover:bg-purple-600 hover:text-white text-slate-700 rounded-lg font-bold text-[11px] transition-colors"
-                        >
-                          Details
-                        </button>
+                            Details
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="7" className="text-center py-8 text-slate-400 font-medium">
+                        No matching user details found. Try adjusting your search query or filters.
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="7" className="text-center py-8 text-slate-400 font-medium">
-                      No matching user details found. Try adjusting your search query or filters.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
       {/* MODAL 1: Individual User Details Modal */}
       {selectedUser && (

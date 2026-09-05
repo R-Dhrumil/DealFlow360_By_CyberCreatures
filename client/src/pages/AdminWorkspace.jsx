@@ -24,7 +24,7 @@ function DiscountAuthorityPanel({ showNotification }) {
         res.data.forEach(t => { loaded[t.tier_name] = parseFloat(t.max_discount_percent); });
         setRoleLimits(prev => ({ ...prev, ...loaded }));
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   const saveRoleLimit = async (roleKey) => {
@@ -273,7 +273,8 @@ export default function AdminWorkspace() {
       } else {
         setTeam(INITIAL_TEAM);
       }
-    } catch (_err) {
+    } catch (err) {
+      console.warn('Failed to fetch team from API, using fallback:', err);
       setTeam(INITIAL_TEAM);
     }
   };
@@ -525,7 +526,7 @@ export default function AdminWorkspace() {
 
         showNotification('success', `Product '${prod.name}' was removed from catalog.`);
       },
-      () => {} // Cancelled, do nothing
+      () => { } // Cancelled, do nothing
     );
   };
 
@@ -576,7 +577,7 @@ export default function AdminWorkspace() {
         minMarginPercent: parseFloat(newTierMargin || 20),
         approver: newTierApprover
       });
-    } catch {}
+    } catch { }
 
     setTiers(prev => [...prev.filter(t => t.tier !== newTierName), newTierObj]);
     setNewTierName('');
@@ -694,18 +695,17 @@ export default function AdminWorkspace() {
           </p>
         </div>
 
-       
+
       </header>
 
       {/* Tab Navigation */}
       <div className="flex flex-wrap border-b border-surface-soft bg-white rounded-2xl p-1.5 shadow-sm gap-1">
         <button
           onClick={() => setActiveTab('products')}
-          className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
-            activeTab === 'products'
+          className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${activeTab === 'products'
               ? 'bg-primary text-white shadow'
               : 'text-slate-600 hover:bg-slate-100'
-          }`}
+            }`}
         >
           <i className="fa-solid fa-boxes-stacked"></i>
           <span>Product &amp; Price Listing</span>
@@ -713,11 +713,10 @@ export default function AdminWorkspace() {
 
         <button
           onClick={() => setActiveTab('tiers')}
-          className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
-            activeTab === 'tiers'
+          className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${activeTab === 'tiers'
               ? 'bg-primary text-white shadow'
               : 'text-slate-600 hover:bg-slate-100'
-          }`}
+            }`}
         >
           <i className="fa-solid fa-tags"></i>
           <span>Discount Tier Config</span>
@@ -725,11 +724,10 @@ export default function AdminWorkspace() {
 
         <button
           onClick={() => setActiveTab('team')}
-          className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
-            activeTab === 'team'
+          className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${activeTab === 'team'
               ? 'bg-primary text-white shadow'
               : 'text-slate-600 hover:bg-slate-100'
-          }`}
+            }`}
         >
           <i className="fa-solid fa-users-gear"></i>
           <span>Team &amp; Role Access</span>
@@ -737,11 +735,10 @@ export default function AdminWorkspace() {
 
         <button
           onClick={() => setActiveTab('warehouses')}
-          className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
-            activeTab === 'warehouses'
+          className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${activeTab === 'warehouses'
               ? 'bg-primary text-white shadow'
               : 'text-slate-600 hover:bg-slate-100'
-          }`}
+            }`}
         >
           <i className="fa-solid fa-warehouse"></i>
           <span>Warehouses &amp; Stock</span>
@@ -749,11 +746,10 @@ export default function AdminWorkspace() {
 
         <button
           onClick={() => setActiveTab('audit')}
-          className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${
-            activeTab === 'audit'
+          className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${activeTab === 'audit'
               ? 'bg-primary text-white shadow'
               : 'text-slate-600 hover:bg-slate-100'
-          }`}
+            }`}
         >
           <i className="fa-solid fa-list-check"></i>
           <span>Audit Log</span>
@@ -829,7 +825,7 @@ export default function AdminWorkspace() {
                               <span className="text-[10px] text-text-muted font-normal block">/ {p.unit || 'unit'}</span>
                             </div>
                             <div className="flex flex-col ml-1">
-                              <button 
+                              <button
                                 type="button"
                                 onClick={() => handleAdjustPrice(p.id, 10)}
                                 title="Quick increment price (+$10)"
@@ -837,7 +833,7 @@ export default function AdminWorkspace() {
                               >
                                 <i className="fa-solid fa-chevron-up"></i>
                               </button>
-                              <button 
+                              <button
                                 type="button"
                                 onClick={() => handleAdjustPrice(p.id, -10)}
                                 title="Quick decrement price (-$10)"
@@ -883,13 +879,12 @@ export default function AdminWorkspace() {
                           </div>
                         </td>
                         <td className="p-3 text-center">
-                          <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
-                            p.status === 'Inactive' 
-                              ? 'bg-slate-100 text-slate-600' 
-                              : p.status === 'Archived' 
-                                ? 'bg-red-100 text-red-700' 
+                          <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${p.status === 'Inactive'
+                              ? 'bg-slate-100 text-slate-600'
+                              : p.status === 'Archived'
+                                ? 'bg-red-100 text-red-700'
                                 : 'bg-emerald-100 text-emerald-800'
-                          }`}>
+                            }`}>
                             {p.status || 'Active'}
                           </span>
                         </td>
@@ -1262,15 +1257,14 @@ export default function AdminWorkspace() {
                           <select
                             value={m.role}
                             onChange={(e) => handleRoleChange(m.id, e.target.value)}
-                            className={`cursor-pointer appearance-none pl-3 pr-7 py-1 rounded-full text-[10px] font-extrabold uppercase border focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all ${
-                              m.role === 'super_admin' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
-                              m.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
-                              m.role === 'sales_manager' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
-                              m.role === 'sales_rep' ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200' :
-                              m.role === 'finance' ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' :
-                              m.role === 'finance_manager' ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' :
-                              'bg-slate-200 text-slate-800 border-slate-300 hover:bg-slate-300'
-                            }`}
+                            className={`cursor-pointer appearance-none pl-3 pr-7 py-1 rounded-full text-[10px] font-extrabold uppercase border focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all ${m.role === 'super_admin' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
+                                m.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
+                                  m.role === 'sales_manager' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
+                                    m.role === 'sales_rep' ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200' :
+                                      m.role === 'finance' ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' :
+                                        m.role === 'finance_manager' ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' :
+                                          'bg-slate-200 text-slate-800 border-slate-300 hover:bg-slate-300'
+                              }`}
                           >
                             <option value="super_admin" className="bg-white text-slate-800 font-bold">SUPER ADMIN</option>
                             <option value="admin" className="bg-white text-slate-800 font-bold">ADMIN</option>
