@@ -78,7 +78,7 @@ function App() {
             </Route>
 
             {/* Internal Protected Routes */}
-            <Route path="/app" element={<ProtectedRoute allowedRoles={['sales_rep', 'sales_manager', 'finance', 'admin', 'super_admin', 'operations']} />}>
+            <Route path="/app" element={<ProtectedRoute allowedRoles={['sales_rep', 'sales_manager', 'finance_manager', 'admin', 'super_admin', 'operations']} />}>
               <Route element={<Layout />}>
                 <Route path="pipeline" element={<Pipeline />} />
                 <Route path="dashboard" element={<UniversalDashboard />} />

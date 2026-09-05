@@ -8,7 +8,6 @@ function DiscountAuthorityPanel({ showNotification }) {
   const ROLES = [
     { key: 'sales_rep', label: 'Sales Rep', icon: 'fa-user', color: 'blue', defaultMax: 10 },
     { key: 'sales_manager', label: 'Sales Manager', icon: 'fa-user-tie', color: 'purple', defaultMax: 20 },
-    { key: 'finance', label: 'Finance Lead', icon: 'fa-chart-line', color: 'orange', defaultMax: 25 },
     { key: 'finance_manager', label: 'Finance Manager', icon: 'fa-user-gear', color: 'amber', defaultMax: 35 },
     { key: 'admin', label: 'Admin (Floor Override)', icon: 'fa-shield-halved', color: 'rose', defaultMax: 100 },
   ];
@@ -1271,7 +1270,6 @@ export default function AdminWorkspace() {
                             <option value="admin" className="bg-white text-slate-800 font-bold">ADMIN</option>
                             <option value="sales_manager" className="bg-white text-slate-800 font-bold">SALES MANAGER</option>
                             <option value="sales_rep" className="bg-white text-slate-800 font-bold">SALES REP</option>
-                            <option value="finance" className="bg-white text-slate-800 font-bold">FINANCE</option>
                             <option value="finance_manager" className="bg-white text-slate-800 font-bold">FINANCE MANAGER</option>
                           </select>
                           <i className="fa-solid fa-chevron-down text-[8px] pointer-events-none absolute right-2.5 opacity-60 text-current"></i>
@@ -1338,7 +1336,6 @@ export default function AdminWorkspace() {
                 >
                   <option value="sales_rep">Sales Rep / Salesperson</option>
                   <option value="sales_manager">Sales Manager / Approver</option>
-                  <option value="finance">Finance User</option>
                   <option value="finance_manager">Finance Manager</option>
                   <option value="admin">System Admin</option>
                 </select>
