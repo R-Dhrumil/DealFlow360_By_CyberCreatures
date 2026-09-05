@@ -1,5 +1,6 @@
 const quotationRepository = require('../repositories/quotation.repository');
 const approvalRepository = require('../repositories/approval.repository');
+const db = require('../config/db');
 const { computeBlendedRiskScore } = require('./riskScore.service');
 const ApiError = require('../utils/apiError');
 
@@ -9,25 +10,37 @@ class QuotationService {
       throw ApiError.badRequest('Customer ID and non-empty quotation lines array are required');
     }
 
-    const quotation = await quotationRepository.createQuotation(
-      companyId,
-      customerId,
-      salesRepId,
-      'draft'
-    );
-
-    for (const line of lines) {
-      await quotationRepository.createQuotationLine(
-        quotation.id,
-        line.productId,
-        line.quantity,
-        line.unitPrice,
-        line.discountPercent || 0,
-        line.lineType || 'one_time'
+    const client = await db.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const quotation = await quotationRepository.createQuotation(
+        companyId,
+        customerId,
+        salesRepId,
+        'draft',
+        client
       );
-    }
 
-    return { quotationId: quotation.id };
+      for (const line of lines) {
+        await quotationRepository.createQuotationLine(
+          quotation.id,
+          line.productId,
+          line.quantity,
+          line.unitPrice,
+          line.discountPercent || 0,
+          line.lineType || 'one_time',
+          client
+        );
+      }
+
+      await client.query('COMMIT');
+      return { quotationId: quotation.id };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async submitQuotation(companyId, quotationId) {
@@ -51,11 +64,22 @@ class QuotationService {
 
     const riskResult = computeBlendedRiskScore(lines, tierCeiling, categoryCeilings, chains);
 
-    await quotationRepository.updateQuotationStatusAndScore(
-      quotationId,
-      riskResult.status,
-      riskResult.blendedScore
-    );
+    const client = await db.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await quotationRepository.updateQuotationStatusAndScore(
+        quotationId,
+        riskResult.status,
+        riskResult.blendedScore,
+        client
+      );
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
 
     return {
       quotationId,
