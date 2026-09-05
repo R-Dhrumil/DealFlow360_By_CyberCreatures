@@ -21,6 +21,15 @@ import OperationsDashboard from './pages/OperationsDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
+function AppIndexRedirect() {
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  if (user?.role === 'super_admin') {
+    return <Navigate to="superadmin" replace />;
+  }
+  return <Navigate to="pipeline" replace />;
+}
+
 function App() {
   useEffect(() => {
     // Fetch and inject global settings on mount
@@ -76,8 +85,8 @@ function App() {
             <Route path="admin" element={<AdminWorkspace />} />
             <Route path="finance" element={<FinanceOperations />} />
             <Route path="operations" element={<OperationsDashboard />} />
-            {/* Redirect /app to pipeline by default */}
-            <Route index element={<Navigate to="pipeline" replace />} />
+            {/* Intelligent Redirect */}
+            <Route index element={<AppIndexRedirect />} />
           </Route>
         </Route>
 
