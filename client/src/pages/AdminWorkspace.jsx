@@ -157,6 +157,9 @@ export default function AdminWorkspace() {
   };
 
   const fetchTeam = async () => {
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    if (user?.role !== 'super_admin') return;
     try {
       const res = await api.get('/superadmin/users');
       setTeam(res.data || []);

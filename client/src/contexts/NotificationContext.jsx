@@ -30,7 +30,8 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     const socketUrl = getSocketUrl();
     const socket = io(socketUrl, {
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
+      withCredentials: true,
       reconnectionAttempts: 10,
     });
 

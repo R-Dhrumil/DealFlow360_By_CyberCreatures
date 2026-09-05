@@ -35,7 +35,8 @@ export default function Pipeline() {
 
     // Socket.IO Listener for real-time pipeline updates across connected clients
     const socket = io(getSocketUrl(), {
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
+      withCredentials: true,
       reconnectionAttempts: 10,
     });
 
