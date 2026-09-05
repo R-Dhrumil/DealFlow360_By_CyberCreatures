@@ -13,6 +13,19 @@ class QuotationService {
     const client = await db.pool.connect();
     try {
       await client.query('BEGIN');
+      
+      // 🚨 FIX: Price Manipulation Vulnerability
+      const productIds = lines.map(l => l.productId);
+      const productsRes = await client.query(
+        'SELECT id, base_price FROM products WHERE id = ANY($1::varchar[]) AND company_id = $2', 
+        [productIds, companyId]
+      );
+      
+      const securePrices = {};
+      productsRes.rows.forEach(p => {
+        securePrices[p.id] = parseFloat(p.base_price);
+      });
+
       const quotation = await quotationRepository.createQuotation(
         companyId,
         customerId,
@@ -22,12 +35,20 @@ class QuotationService {
       );
 
       for (const line of lines) {
+        const truePrice = securePrices[line.productId];
+        if (truePrice === undefined) {
+          throw ApiError.badRequest(`Product ID ${line.productId} is invalid or does not belong to your company.`);
+        }
+
+        // Clamp discount between 0 and 100 to prevent negative discounts (which would increase price)
+        const safeDiscount = Math.max(0, Math.min(100, parseFloat(line.discountPercent || 0)));
+
         await quotationRepository.createQuotationLine(
           quotation.id,
           line.productId,
           line.quantity,
-          line.unitPrice,
-          line.discountPercent || 0,
+          truePrice,
+          safeDiscount,
           line.lineType || 'one_time',
           client
         );
