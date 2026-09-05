@@ -8,12 +8,18 @@ const STAGES = [
   { name: 'Pending Approval', color: 'border-amber-status bg-amber-50 text-amber-800' },
   { name: 'Pending Finance', color: 'border-purple-400 bg-purple-50 text-purple-800' },
   { name: 'Approved', color: 'border-emerald-400 bg-emerald-50 text-emerald-800' },
-  { name: 'Confirmed', color: 'border-blue-400 bg-blue-50 text-blue-800' }
+  { name: 'Confirmed', color: 'border-blue-400 bg-blue-50 text-blue-800' },
+  { name: 'Rejected', color: 'border-rose-400 bg-rose-50 text-rose-800' }
 ];
 
 export default function Pipeline() {
   const [deals, setDeals] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState('');
+  const [draggedDeal, setDraggedDeal] = useState(null);
+  const [dragOverStage, setDragOverStage] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmData, setConfirmData] = useState({ show: false, deal: null, targetStage: null });
 
   useEffect(() => {
     fetchQuotations();
@@ -21,6 +27,7 @@ export default function Pipeline() {
 
   const fetchQuotations = async () => {
     try {
+      setLoading(true);
       const res = await api.get('/quotations');
       if (res.data && res.data.length > 0) {
         const formatted = res.data.map(q => ({
@@ -29,7 +36,12 @@ export default function Pipeline() {
           customer: q.product_summary || q.customer_name || 'Acme Corp',
           amount: parseFloat(q.total_amount || 0),
           riskScore: parseFloat(q.blended_risk_score || 0),
-          stage: q.status === 'draft' ? 'Draft' : q.status === 'pending_approval' ? 'Pending Approval' : q.status === 'pending_finance_approval' ? 'Pending Finance' : q.status === 'approved' ? 'Approved' : 'Confirmed',
+          stage: q.status === 'draft' ? 'Draft' 
+               : q.status === 'pending_approval' ? 'Pending Approval' 
+               : q.status === 'pending_finance_approval' ? 'Pending Finance' 
+               : q.status === 'approved' ? 'Approved' 
+               : q.status === 'rejected' ? 'Rejected'
+               : 'Confirmed',
           rep: q.sales_rep_name || 'Alex Rep',
           linesCount: parseInt(q.lines_count || 1, 10),
           updatedAt: 'Recently'
@@ -40,6 +52,8 @@ export default function Pipeline() {
       }
     } catch (err) {
       setDeals([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -71,7 +85,7 @@ export default function Pipeline() {
       <div className="flex flex-wrap justify-between items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-text-main tracking-tight">Deal Pipeline</h1>
-          <p className="text-sm text-text-muted">Self-Governing Deal Operations Stage Tracker</p>
+          <p className="text-sm text-text-muted">Interactive Kanban Stage Tracker & Self-Governing Pipeline</p>
         </div>
 
         <div className="flex items-center space-x-3">
@@ -92,28 +106,54 @@ export default function Pipeline() {
         </div>
       </div>
 
+      {/* Info Banner */}
+      <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 flex items-center justify-between text-xs text-text-main">
+        <div className="flex items-center gap-2">
+          <i className="fa-solid fa-hand-pointer text-primary text-sm"></i>
+          <span><strong>Tip:</strong> Drag any deal card and drop it into an allowed column. A confirmation modal will appear to request your permission before updating the stage.</span>
+        </div>
+        <button 
+          onClick={fetchQuotations}
+          className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+        >
+          <i className={`fa-solid fa-arrows-rotate ${loading ? 'animate-spin' : ''}`}></i> Refresh
+        </button>
+      </div>
+
       {/* Kanban Board Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 overflow-x-auto pb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 overflow-x-auto pb-6">
         {STAGES.map(stage => {
           const stageDeals = filteredDeals.filter(d => d.stage === stage.name);
           const stageTotal = stageDeals.reduce((sum, d) => sum + d.amount, 0);
+          const isOver = dragOverStage === stage.name;
 
           return (
-            <div key={stage.name} className="bg-slate-100/70 border border-surface-soft/80 rounded-xl p-3 flex flex-col min-h-[500px]">
+            <div 
+              key={stage.name} 
+              className={`rounded-xl p-3 flex flex-col min-h-[520px] transition-all duration-150 border-2 ${
+                isOver 
+                  ? 'border-primary bg-primary/10 ring-2 ring-primary/30 shadow-md' 
+                  : 'bg-slate-100/80 border-surface-soft/80'
+              }`}
+              onDragOver={(e) => handleDragOver(e, stage.name)}
+              onDragEnter={(e) => handleDragOver(e, stage.name)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, stage.name)}
+            >
               {/* Column Header */}
               <div className="flex justify-between items-center pb-3 border-b border-surface-soft mb-3">
                 <div className="flex items-center space-x-2">
                   <span className={`px-2 py-0.5 rounded text-xs font-bold ${stage.color}`}>
                     {stageDeals.length}
                   </span>
-                  <h3 className="font-bold text-slate-800 text-sm">{stage.name}</h3>
+                  <h3 className="font-bold text-slate-800 text-xs tracking-tight">{stage.name}</h3>
                 </div>
                 <span className="text-xs font-semibold text-text-muted">
                   ${(stageTotal / 1000).toFixed(1)}k
                 </span>
               </div>
 
-              {/* Deal Cards */}
+              {/* Deal Cards Container */}
               <div className="flex-1 space-y-3">
                 {stageDeals.map(deal => (
                   <div
@@ -186,8 +226,12 @@ export default function Pipeline() {
                 ))}
 
                 {stageDeals.length === 0 && (
-                  <div className="h-32 border-2 border-dashed border-surface-soft rounded-lg flex items-center justify-center text-xs text-text-muted">
-                    No deals in {stage.name}
+                  <div className={`h-32 border-2 border-dashed rounded-lg flex items-center justify-center text-xs text-center p-2 transition-colors ${
+                    isOver 
+                      ? 'border-primary text-primary font-bold bg-primary/5' 
+                      : 'border-surface-soft text-text-muted'
+                  }`}>
+                    {isOver ? 'Drop deal here' : `No deals in ${stage.name}`}
                   </div>
                 )}
               </div>
@@ -195,6 +239,48 @@ export default function Pipeline() {
           );
         })}
       </div>
+
+      {/* Confirmation Permission Modal */}
+      {confirmData.show && confirmData.deal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md border border-slate-200 animate-in fade-in zoom-in duration-150">
+            <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xl mb-4">
+              <i className="fa-solid fa-arrows-turn-to-dots"></i>
+            </div>
+
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Confirm Pipeline Move</h3>
+            <p className="text-slate-600 text-sm mb-6 leading-relaxed">
+              Are you sure you want to move <strong className="text-primary font-mono">{confirmData.deal.id}</strong> (<em>{confirmData.deal.customer}</em>) 
+              from <span className="inline-block px-2 py-0.5 rounded bg-slate-100 font-semibold text-slate-800">{confirmData.deal.stage}</span> to <span className="inline-block px-2 py-0.5 rounded bg-primary/10 font-bold text-primary">{confirmData.targetStage}</span>?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setConfirmData({ show: false, deal: null, targetStage: null })}
+                disabled={isSubmitting}
+                className="px-4 py-2 rounded-lg font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors disabled:opacity-50 text-sm"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={executeDropAction}
+                disabled={isSubmitting}
+                className="px-5 py-2 rounded-lg font-bold text-white bg-primary hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 text-sm"
+              >
+                {isSubmitting ? (
+                  <>
+                    <i className="fa-solid fa-spinner animate-spin"></i> Moving...
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-check"></i> Yes, Move Deal
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
