@@ -115,11 +115,19 @@ export default function CustomerDashboard() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             <div className="text-right hidden sm:block">
               <p className="text-xs font-semibold text-text-main">{customer.name}</p>
               <p className="text-[11px] text-text-muted">{customer.email}</p>
             </div>
+
+            <button
+              onClick={() => handleTabChange('profile')}
+              className="flex items-center space-x-2 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-semibold text-sm px-4 py-2 rounded-full shadow-md transition-all cursor-pointer"
+            >
+              <i className="fa-solid fa-address-card text-base"></i>
+              <span>Personal Profile</span>
+            </button>
 
             <button
               onClick={handleLogout}
