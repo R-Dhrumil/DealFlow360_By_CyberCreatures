@@ -67,3 +67,211 @@ main> :last-child {
 ::-webkit-scrollbar {
   display: none;
 }
+
+/* ==========================================================================
+   Global Button System - Consistent Cursor, States & Premium Aesthetics
+   ========================================================================== */
+
+/* Universal cursor: pointer and interaction defaults for all buttons */
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-success,
+.btn-ghost {
+  cursor: pointer !important;
+  user-select: none;
+  touch-action: manipulation;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Active tactile feedback on click */
+button:active:not(:disabled),
+[role="button"]:active:not(:disabled),
+.btn-primary:active:not(:disabled),
+.btn-secondary:active:not(:disabled),
+.btn-danger:active:not(:disabled),
+.btn-success:active:not(:disabled) {
+  transform: scale(0.975);
+}
+
+/* Accessible focus ring */
+button:focus-visible,
+[role="button"]:focus-visible,
+input[type="button"]:focus-visible,
+input[type="submit"]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Universal disabled states */
+button:disabled,
+button[disabled],
+[role="button"][aria-disabled="true"],
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.55 !important;
+  pointer-events: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Base button class */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Primary Button */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary) !important;
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0.5rem 1.125rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 1px 3px 0 rgba(112, 41, 99, 0.25), 0 1px 2px -1px rgba(112, 41, 99, 0.2);
+  text-decoration: none;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px 0 rgba(112, 41, 99, 0.38);
+  transform: translateY(-1px);
+}
+
+/* Secondary Button */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #ffffff;
+  color: var(--color-text-main);
+  border: 1px solid var(--color-surface-soft);
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  text-decoration: none;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-border-soft);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: 0 3px 8px 0 rgba(112, 41, 99, 0.12);
+  transform: translateY(-1px);
+}
+
+/* Danger Button */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--color-rose-status);
+  color: #ffffff !important;
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 3px 0 rgba(220, 38, 38, 0.25);
+  text-decoration: none;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #b91c1c;
+  box-shadow: 0 4px 14px 0 rgba(220, 38, 38, 0.38);
+  transform: translateY(-1px);
+}
+
+/* Success Button */
+.btn-success {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--color-emerald-status);
+  color: #ffffff !important;
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 3px 0 rgba(5, 150, 105, 0.25);
+  text-decoration: none;
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #047857;
+  box-shadow: 0 4px 14px 0 rgba(5, 150, 105, 0.38);
+  transform: translateY(-1px);
+}
+
+/* Ghost Button */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid transparent;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--color-border-soft);
+  color: var(--color-primary);
+}
+
+/* Compact & Sizing Modifiers */
+.btn.text-xs,
+.btn-primary.text-xs,
+.btn-secondary.text-xs,
+.btn-danger.text-xs,
+.btn-success.text-xs,
+.btn-xs {
+  font-size: 0.75rem !important;
+  line-height: 1rem !important;
+  padding: 0.375rem 0.75rem !important;
+  border-radius: 0.5rem !important;
+}
+
+.btn.text-sm,
+.btn-primary.text-sm,
+.btn-secondary.text-sm,
+.btn-danger.text-sm,
+.btn-success.text-sm,
+.btn-sm {
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+  padding: 0.5rem 0.875rem !important;
+}
