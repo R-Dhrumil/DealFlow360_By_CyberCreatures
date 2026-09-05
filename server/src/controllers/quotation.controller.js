@@ -132,14 +132,7 @@ class QuotationController {
       return res.status(404).json({ error: 'Quotation not found' });
     }
 
-    // BOLA Protection: Restrict access for specific roles
-    if (req.user && req.user.role === 'sales_rep' && quote.sales_rep_id !== req.user.userId) {
-      return res.status(403).json({ error: 'Forbidden: You do not have access to this quotation.' });
-    }
-    if (req.user && req.user.role === 'customer' && quote.customer_id !== (req.user.customerId || req.user.id)) {
-      return res.status(403).json({ error: 'Forbidden: You do not have access to this quotation.' });
-    }
-
+    // Public Share Link Access: return quotation details for portal view
     return res.json(quote);
   }
 
