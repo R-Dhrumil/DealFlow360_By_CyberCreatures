@@ -531,7 +531,7 @@ class QuotationService {
     return { quotationId, status: 'rejected' };
   }
 
-  async confirmQuotation(companyId, quotationId) {
+  async confirmQuotation(companyId, quotationId, paymentData = {}) {
     const client = await db.pool.connect();
     let quotation;
     try {
@@ -547,6 +547,22 @@ class QuotationService {
       await quotationRepository.updateQuotationStatusAndScore(
         quotationId, 'confirmed', quotation.blended_risk_score || 0, client
       );
+
+      if (paymentData.paymentMethod) {
+        const paymentId = 'pay_' + crypto.randomBytes(6).toString('hex');
+        await client.query(`
+          INSERT INTO payments (id, quotation_id, company_id, customer_id, amount, payment_type, payment_method)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `, [
+          paymentId,
+          quotationId,
+          quotation.company_id,
+          quotation.customer_id,
+          paymentData.amount || 0,
+          paymentData.paymentType || 'one-time',
+          paymentData.paymentMethod
+        ]);
+      }
 
       await client.query('COMMIT');
     } catch (error) {

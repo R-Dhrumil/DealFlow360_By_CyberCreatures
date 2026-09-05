@@ -18,6 +18,7 @@ import UniversalDashboard from './pages/UniversalDashboard';
 import Reporting from './pages/Reporting';
 import SuperAdminConsole from './pages/SuperAdminConsole';
 import CurrencySettings from './pages/CurrencySettings';
+import PaymentSettings from './pages/PaymentSettings';
 import AdminWorkspace from './pages/AdminWorkspace';
 import FinanceOperations from './pages/FinanceOperations';
 import OperationsDashboard from './pages/OperationsDashboard';
@@ -92,6 +93,7 @@ function App() {
                 <Route path="settings" element={<Navigate to="/app/superadmin?tab=settings" replace />} />
                 <Route path="currency" element={<CurrencySettings />} />
                 <Route path="admin" element={<AdminWorkspace />} />
+                <Route path="payment-settings" element={<PaymentSettings />} />
                 <Route path="finance" element={<FinanceOperations />} />
                 <Route path="operations" element={<OperationsDashboard />} />
                 {/* Intelligent Redirect */}

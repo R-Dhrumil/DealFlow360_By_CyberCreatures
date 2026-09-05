@@ -25,6 +25,7 @@ export default function Layout() {
     { name: 'Operations Hub', path: '/app/operations', icon: 'fa-boxes-packing', roles: ['operations', 'admin'] },
     { name: 'Finance Hub', path: '/app/finance', icon: 'fa-coins', roles: ['finance_manager', 'admin', 'sales_manager'] },
     { name: 'Admin Operations', path: '/app/admin', icon: 'fa-user-gear', roles: ['admin'] },
+    { name: 'Payment Settings', path: '/app/payment-settings', icon: 'fa-credit-card', roles: ['admin'] },
     { name: 'Reporting', path: '/app/reporting', icon: 'fa-chart-bar', roles: ['sales_manager', 'finance_manager', 'admin'] },
     { name: 'Global Tenants', path: '/app/superadmin', search: '?tab=tenants', icon: 'fa-globe', roles: ['super_admin'] },
     { name: 'Platform Settings', path: '/app/superadmin', search: '?tab=settings', icon: 'fa-gear', roles: ['super_admin'] },

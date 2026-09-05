@@ -10,10 +10,66 @@ export default function CustomerPortal() {
   const { id: quotationId } = useParams();
   const [quotation, setQuotation] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Payment state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentOptions, setPaymentOptions] = useState(null);
+  const [paymentOptionsLoading, setPaymentOptionsLoading] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState('');
+  const [paymentConfirming, setPaymentConfirming] = useState(false);
 
   useEffect(() => {
     fetchQuotation();
   }, [quotationId]);
+
+  useEffect(() => {
+    if (showPaymentModal && quotation?.company_id && !paymentOptions) {
+      fetchPaymentOptions(quotation.company_id);
+    }
+  }, [showPaymentModal, quotation]);
+
+  const fetchPaymentOptions = async (companyId) => {
+    setPaymentOptionsLoading(true);
+    try {
+      const res = await api.get(`/companies/${companyId}/payment-options`);
+      setPaymentOptions(res.data);
+    } catch (err) {
+      console.error('Failed to fetch payment options', err);
+    } finally {
+      setPaymentOptionsLoading(false);
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    setPaymentConfirming(true);
+    try {
+      const qLines = quotation.lines || [];
+      const paymentType = qLines.some(l => l.line_type === 'recurring') ? 'subscription-monthly' : 'one-time';
+      
+      const calculateLineNetTotal = (line) => {
+        const unitPrice = Number(line.unit_price) || 0;
+        const discount = Number(line.discount_percent) || 0;
+        const qty = Number(line.quantity) || 1;
+        const netUnitPrice = unitPrice * (1 - discount / 100);
+        return netUnitPrice * qty;
+      };
+      const totalAmount = qLines.reduce((sum, line) => sum + calculateLineNetTotal(line), 0);
+
+      await api.put(`/quotations/${quotationId}/confirm`, {
+        paymentMethod: selectedPayment,
+        paymentType,
+        amount: totalAmount
+      });
+      setShowPaymentModal(false);
+      // Refetch quotation to show confirmed status
+      await fetchQuotation();
+    } catch (err) {
+      console.error('Failed to confirm payment', err);
+      alert('Failed to process payment. Please try again.');
+    } finally {
+      setPaymentConfirming(false);
+    }
+  };
 
   const fetchQuotation = async () => {
     try {
@@ -253,7 +309,7 @@ export default function CustomerPortal() {
                   )}
                 </div>
 
-                <div className="w-full sm:w-80 space-y-2 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-200">
+                <div className="w-full sm:w-80 space-y-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-200">
                   <div className="flex justify-between items-center text-xs text-slate-600">
                     <span>Base Subtotal:</span>
                     <span className="font-mono font-semibold text-slate-700">{formatMoney(totalGross)}</span>
@@ -285,6 +341,12 @@ export default function CustomerPortal() {
                       )}
                     </div>
                   </div>
+                  
+                  {isApproved && (
+                    <button onClick={() => setShowPaymentModal(true)} className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                      <i className="fa-solid fa-credit-card"></i> Accept Proposal & Pay
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -292,6 +354,87 @@ export default function CustomerPortal() {
         </div>
 
       </main>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h3 className="font-bold text-slate-900">Select Payment Method</h3>
+              <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-slate-600">
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {paymentOptionsLoading ? (
+                <div className="flex justify-center py-8">
+                  <i className="fa-solid fa-spinner fa-spin text-emerald-600 text-2xl"></i>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {!paymentOptions?.is_manual_payment_enabled && !paymentOptions?.is_upi_payment_enabled && !paymentOptions?.is_cod_enabled && (
+                    <p className="text-sm text-slate-500 text-center py-4">No payment methods configured by the company.</p>
+                  )}
+                  
+                  {paymentOptions?.is_upi_payment_enabled && (
+                    <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-all ${selectedPayment === 'upi' ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:border-slate-300'}`}>
+                      <input type="radio" name="paymentMethod" value="upi" checked={selectedPayment === 'upi'} onChange={() => setSelectedPayment('upi')} className="mt-1 text-emerald-600 focus:ring-emerald-500" />
+                      <div>
+                        <span className="block font-bold text-slate-900">UPI Payment</span>
+                        <span className="block text-xs text-slate-500 mt-1">Pay instantly via any UPI app.</span>
+                        {selectedPayment === 'upi' && (
+                          <div className="mt-3 p-3 bg-white rounded-lg border border-emerald-100 text-sm">
+                            <span className="text-slate-500 block text-xs">Scan or transfer to:</span>
+                            <span className="font-mono font-bold text-slate-800">{paymentOptions.upi_id}</span>
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  )}
+                  
+                  {paymentOptions?.is_manual_payment_enabled && (
+                    <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-all ${selectedPayment === 'manual' ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:border-slate-300'}`}>
+                      <input type="radio" name="paymentMethod" value="manual" checked={selectedPayment === 'manual'} onChange={() => setSelectedPayment('manual')} className="mt-1 text-emerald-600 focus:ring-emerald-500" />
+                      <div>
+                        <span className="block font-bold text-slate-900">Bank Transfer (Manual)</span>
+                        <span className="block text-xs text-slate-500 mt-1">Directly transfer to our bank account.</span>
+                        {selectedPayment === 'manual' && (
+                          <div className="mt-3 p-3 bg-white rounded-lg border border-emerald-100 text-sm whitespace-pre-wrap font-mono text-slate-700">
+                            {paymentOptions.manual_payment_instructions}
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  )}
+
+                  {paymentOptions?.is_cod_enabled && (
+                    <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-all ${selectedPayment === 'cod' ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:border-slate-300'}`}>
+                      <input type="radio" name="paymentMethod" value="cod" checked={selectedPayment === 'cod'} onChange={() => setSelectedPayment('cod')} className="mt-1 text-emerald-600 focus:ring-emerald-500" />
+                      <div>
+                        <span className="block font-bold text-slate-900">Cash on Delivery</span>
+                        <span className="block text-xs text-slate-500 mt-1">Pay when your order is delivered.</span>
+                      </div>
+                    </label>
+                  )}
+                </div>
+              )}
+
+              <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                <button onClick={() => setShowPaymentModal(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-all">Cancel</button>
+                <button 
+                  onClick={handleConfirmPayment} 
+                  disabled={!selectedPayment || paymentConfirming}
+                  className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-bold rounded-lg transition-all flex items-center gap-2"
+                >
+                  {paymentConfirming ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-check"></i>}
+                  Confirm & Pay {formatMoney(grandTotal)}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

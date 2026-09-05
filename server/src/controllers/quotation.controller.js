@@ -221,7 +221,8 @@ class QuotationController {
   /** PUT /quotations/:id/confirm — Customer accepts quotation */
   async confirm(req, res) {
     const quotationId = req.params.id;
-    const result = await quotationService.confirmQuotation(req.companyId, quotationId);
+    const { paymentMethod, paymentType, amount } = req.body;
+    const result = await quotationService.confirmQuotation(req.companyId, quotationId, { paymentMethod, paymentType, amount });
     return res.json({ success: true, ...result });
   }
 
