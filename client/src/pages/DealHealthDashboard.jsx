@@ -43,7 +43,7 @@ export default function DealHealthDashboard() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-slate-50">
-        <i className="fa-solid fa-spinner fa-spin text-primary-600 text-4xl"></i>
+        <i className="fa-solid fa-spinner fa-spin text-primary text-4xl"></i>
       </div>
     );
   }
@@ -65,13 +65,13 @@ export default function DealHealthDashboard() {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-surface-soft shadow-sm border-l-4 border-l-primary-500">
+        <div className="bg-white p-5 rounded-xl border border-surface-soft shadow-sm border-l-4 border-l-primary">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">Total Quotations</p>
               <h3 className="text-3xl font-black text-text-main">{metrics.totalQuotes}</h3>
             </div>
-            <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600 font-bold">
+            <div className="w-10 h-10 rounded-lg bg-border-soft flex items-center justify-center text-primary font-bold">
               <i className="fa-solid fa-file-invoice"></i>
             </div>
           </div>
@@ -147,7 +147,7 @@ export default function DealHealthDashboard() {
 
                   return (
                     <tr key={deal.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4 font-mono font-bold text-primary-600">{dealId}</td>
+                      <td className="px-6 py-4 font-mono font-bold text-primary">{dealId}</td>
                       <td className="px-6 py-4 font-bold text-text-main">{deal.customer_name}</td>
                       <td className="px-6 py-4 text-slate-600 font-medium">{deal.rep_name}</td>
                       <td className="px-6 py-4">
@@ -171,7 +171,7 @@ export default function DealHealthDashboard() {
                           className={`px-3 py-1.5 rounded-lg font-bold text-[11px] transition-all ${
                             isNudged 
                               ? 'bg-slate-200 text-text-muted cursor-default' 
-                              : 'bg-primary-600 hover:bg-primary-700 text-text-main shadow-sm'
+                              : 'bg-primary hover:bg-primary-dark text-text-main shadow-sm'
                           }`}
                         >
                           {isNudged ? 'Nudged' : '⚡ Nudge Rep'}

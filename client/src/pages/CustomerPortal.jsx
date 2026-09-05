@@ -146,7 +146,7 @@ export default function CustomerPortal() {
   if (loading || !quotation) {
     return (
       <div className="flex justify-center items-center h-screen bg-white text-text-main">
-        <i className="fa-solid fa-spinner fa-spin text-primary-500 text-4xl"></i>
+        <i className="fa-solid fa-spinner fa-spin text-primary text-4xl"></i>
       </div>
     );
   }
@@ -159,7 +159,7 @@ export default function CustomerPortal() {
       <header className="bg-white text-text-main border-b border-surface-soft sticky top-0 z-10 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 bg-primary-600 rounded-lg flex items-center justify-center font-bold text-lg text-text-main">
+            <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center font-bold text-lg text-text-main">
               {quotation.company_name.charAt(0)}
             </div>
             <div>
@@ -241,7 +241,7 @@ export default function CustomerPortal() {
                               type="number"
                               min="0"
                               max="50"
-                              className="w-20 text-right bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs font-bold text-primary-700 focus:ring-2 focus:ring-primary-500"
+                              className="w-20 text-right bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs font-bold text-primary focus:ring-2 focus:ring-primary"
                               value={activeDiscount}
                               onChange={(e) => handleCounterChange(line.id, e.target.value)}
                             />
@@ -259,7 +259,7 @@ export default function CustomerPortal() {
                   <span className="text-xs text-text-muted">Modify numbers above to counter proposal</span>
                   <button 
                     onClick={submitCounterProposal}
-                    className="bg-primary-600 hover:bg-primary-700 text-text-main px-4 py-2 rounded-lg text-xs font-bold shadow transition-colors flex items-center"
+                    className="bg-primary hover:bg-primary-dark text-text-main px-4 py-2 rounded-lg text-xs font-bold shadow transition-colors flex items-center"
                   >
                     <i className="fa-solid fa-calculator mr-2"></i> Submit Counter Proposal
                   </button>
@@ -271,7 +271,7 @@ export default function CustomerPortal() {
             <div className="bg-white rounded-xl shadow-sm border border-surface-soft overflow-hidden flex flex-col h-[420px]">
               <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                 <h3 className="font-bold text-slate-800 text-sm flex items-center">
-                  <i className="fa-regular fa-comments mr-2 text-primary-600"></i>
+                  <i className="fa-regular fa-comments mr-2 text-primary"></i>
                   Live Deal Discussion & Audit Thread
                 </h3>
                 <span className="text-[11px] text-text-muted">Encrypted Portal Session</span>
@@ -282,11 +282,11 @@ export default function CustomerPortal() {
                   <div key={msg.id} className={`flex ${msg.sender_type === 'customer' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${
                       msg.sender_type === 'customer' 
-                        ? 'bg-primary-600 text-text-main rounded-tr-sm' 
+                        ? 'bg-primary text-text-main rounded-tr-sm' 
                         : 'bg-white border border-surface-soft text-slate-800 rounded-tl-sm'
                     }`}>
                       <p className="text-sm">{msg.content}</p>
-                      <p className={`text-[10px] mt-1 text-right ${msg.sender_type === 'customer' ? 'text-primary-200' : 'text-text-muted'}`}>
+                      <p className={`text-[10px] mt-1 text-right ${msg.sender_type === 'customer' ? 'text-on-primary/70' : 'text-text-muted'}`}>
                         {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </p>
                     </div>
@@ -334,7 +334,7 @@ export default function CustomerPortal() {
                 <div className="space-y-3">
                   <button 
                     onClick={() => setShowSignModal(true)}
-                    className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-md flex justify-center items-center text-sm"
+                    className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-md flex justify-center items-center text-sm"
                   >
                     <i className="fa-solid fa-pen-nib mr-2"></i> E-Sign & Accept Proposal
                   </button>

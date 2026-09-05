@@ -99,7 +99,7 @@ export default function QuotationBuilder() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-slate-50">
-        <i className="fa-solid fa-spinner fa-spin text-primary-600 text-4xl"></i>
+        <i className="fa-solid fa-spinner fa-spin text-primary text-4xl"></i>
       </div>
     );
   }
@@ -299,14 +299,14 @@ export default function QuotationBuilder() {
               {products.map(product => (
                 <div 
                   key={product.id} 
-                  className="border border-surface-soft rounded-lg p-3 hover:border-primary-400 hover:bg-slate-50/60 transition-all cursor-pointer group flex justify-between items-center" 
+                  className="border border-surface-soft rounded-lg p-3 hover:border-primary/60 hover:bg-slate-50/60 transition-all cursor-pointer group flex justify-between items-center" 
                   onClick={() => addLine(product)}
                 >
                   <div>
-                    <h4 className="font-bold text-slate-800 text-xs group-hover:text-primary-600">{product.name}</h4>
+                    <h4 className="font-bold text-slate-800 text-xs group-hover:text-primary">{product.name}</h4>
                     <span className="text-[11px] text-text-muted">{product.category} &bull; ${parseFloat(product.base_price).toFixed(2)}</span>
                   </div>
-                  <button className="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-primary-600 group-hover:text-text-main text-text-muted flex items-center justify-center transition-colors">
+                  <button className="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-primary group-hover:text-text-main text-text-muted flex items-center justify-center transition-colors">
                     <i className="fa-solid fa-plus text-xs"></i>
                   </button>
                 </div>

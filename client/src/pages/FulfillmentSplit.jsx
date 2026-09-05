@@ -66,7 +66,7 @@ export default function FulfillmentSplit() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-slate-50">
-        <i className="fa-solid fa-spinner fa-spin text-primary-600 text-4xl"></i>
+        <i className="fa-solid fa-spinner fa-spin text-primary text-4xl"></i>
       </div>
     );
   }
@@ -144,7 +144,7 @@ export default function FulfillmentSplit() {
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-xl border border-surface-soft shadow-sm flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center font-bold text-lg">
+          <div className="w-10 h-10 rounded-lg bg-border-soft text-primary flex items-center justify-center font-bold text-lg">
             <i className="fa-solid fa-warehouse"></i>
           </div>
           <div>
@@ -180,7 +180,7 @@ export default function FulfillmentSplit() {
           <div key={warehouseId} className="bg-white rounded-xl border border-surface-soft shadow-sm overflow-hidden">
             <div className="bg-slate-100 px-5 py-3.5 border-b border-surface-soft flex justify-between items-center">
               <div className="flex items-center space-x-2.5">
-                <i className="fa-solid fa-building-flag text-primary-600"></i>
+                <i className="fa-solid fa-building-flag text-primary"></i>
                 <h3 className="font-bold text-text-main text-sm">{group.name}</h3>
               </div>
               <span className="bg-slate-200 text-slate-700 text-xs font-mono font-bold px-2.5 py-0.5 rounded-full">

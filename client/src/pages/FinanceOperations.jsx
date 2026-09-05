@@ -110,7 +110,7 @@ export default function FinanceOperations() {
               <tbody className="divide-y divide-slate-100">
                 {RECURRING_BILLING_SCHEDULES.map(s => (
                   <tr key={s.id} className="hover:bg-slate-50">
-                    <td className="p-2.5 font-mono font-bold text-primary-600">{s.id}</td>
+                    <td className="p-2.5 font-mono font-bold text-primary">{s.id}</td>
                     <td className="p-2.5 font-bold text-text-main">{s.customer}</td>
                     <td className="p-2.5 font-black text-text-main">${s.amount.toFixed(2)}</td>
                     <td className="p-2.5"><span className="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded text-[10px]">{s.cycle}</span></td>

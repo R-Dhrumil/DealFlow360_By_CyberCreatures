@@ -31,11 +31,11 @@ export default function Marketplace() {
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <header className="bg-white shadow-sm border-b border-surface-soft py-4 px-6 md:px-12 flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <i className="fa-solid fa-store text-primary-600 text-2xl"></i>
+          <i className="fa-solid fa-store text-primary text-2xl"></i>
           <h1 className="text-xl font-bold text-slate-800">DealFlow360 Marketplace</h1>
         </div>
         <div className="flex items-center space-x-4">
-          <a href="/login" className="text-slate-600 hover:text-primary-600 font-medium">Business Login</a>
+          <a href="/login" className="text-slate-600 hover:text-primary font-medium">Business Login</a>
           <a href="/customer/login" className="btn-primary">Customer Portal</a>
         </div>
       </header>
@@ -78,7 +78,7 @@ export default function Marketplace() {
         <section className="flex-1">
           {loading ? (
             <div className="flex justify-center items-center h-64">
-              <i className="fa-solid fa-spinner fa-spin text-primary-600 text-3xl"></i>
+              <i className="fa-solid fa-spinner fa-spin text-primary text-3xl"></i>
             </div>
           ) : products.length === 0 ? (
             <div className="card p-12 text-center">
@@ -91,7 +91,7 @@ export default function Marketplace() {
               {products.map(product => (
                 <div key={product.id} className="card overflow-hidden hover:shadow-premium transition-shadow duration-300 flex flex-col">
                   {product.is_promoted && (
-                    <div className="bg-primary-600 text-text-main text-xs font-bold uppercase tracking-wider py-1 px-3">
+                    <div className="bg-primary text-text-main text-xs font-bold uppercase tracking-wider py-1 px-3">
                       <i className="fa-solid fa-star mr-1"></i> Featured
                     </div>
                   )}
@@ -118,7 +118,7 @@ export default function Marketplace() {
                         <span className="text-2xl font-bold text-text-main">${parseFloat(product.base_price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         <span className="text-xs text-text-muted ml-1">/ {product.unit}</span>
                       </div>
-                      <button className="text-primary-600 hover:text-primary-800 p-2 rounded-full hover:bg-primary-50 transition-colors" title="Requires login to quote">
+                      <button className="text-primary hover:text-primary-dark p-2 rounded-full hover:bg-border-soft transition-colors" title="Requires login to quote">
                          <i className="fa-solid fa-arrow-right"></i>
                       </button>
                     </div>

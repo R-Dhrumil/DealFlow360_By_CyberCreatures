@@ -60,7 +60,7 @@ export default function OperationsDashboard() {
               {quotations.map(q => (
                 <tr key={q.id} className="hover:bg-slate-50 transition-colors">
                   <td className="p-4 font-mono text-sm text-slate-600">
-                    <Link to={`/app/quote/${q.id}`} className="text-primary-600 hover:underline">
+                    <Link to={`/app/quote/${q.id}`} className="text-primary hover:underline">
                       #{q.id.split('-')[0].toUpperCase()}
                     </Link>
                   </td>
@@ -74,7 +74,7 @@ export default function OperationsDashboard() {
                   <td className="p-4 text-right">
                     <Link 
                       to={`/app/quote/${q.id}`} 
-                      className="inline-flex items-center px-3 py-1.5 border border-primary-200 bg-primary-50 text-primary-700 text-sm font-medium rounded-lg hover:bg-primary-100 transition-colors"
+                      className="inline-flex items-center px-3 py-1.5 border border-surface-soft bg-border-soft text-primary text-sm font-medium rounded-lg hover:bg-surface-soft transition-colors"
                     >
                       <i className="fa-solid fa-boxes-packing mr-2"></i> Allocate
                     </Link>

@@ -41,7 +41,7 @@ export default function Layout() {
       {/* Main Sidebar */}
       <aside className="w-64 bg-white text-text-muted flex flex-col print:hidden shadow-lg border-r border-surface-soft">
         <div className="p-4 bg-white border-b border-surface-soft flex items-center space-x-3">
-          <div className="w-9 h-9 bg-primary-600 rounded-lg flex items-center justify-center text-text-main shadow-md font-bold text-lg">
+          <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-text-main shadow-md font-bold text-lg">
             DF
           </div>
           <div>
@@ -76,7 +76,7 @@ export default function Layout() {
 
         <div className="p-4 border-t border-surface-soft bg-white/50">
           <div className="flex items-center space-x-3 mb-4">
-            <div className="w-9 h-9 rounded-full bg-primary-900/80 border border-primary-500/30 flex items-center justify-center text-primary-300 font-bold">
+            <div className="w-9 h-9 rounded-full bg-primary/80 border border-primary/30 flex items-center justify-center text-on-primary font-bold">
               {user?.name ? user.name.charAt(0) : 'U'}
             </div>
             <div className="flex-1 min-w-0">

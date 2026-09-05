@@ -277,7 +277,7 @@ export default function AdminWorkspace() {
               <input
                 type="text"
                 placeholder="Filter by product name, SKU..."
-                className="bg-slate-50 border border-surface-soft rounded-xl px-3 py-1.5 text-xs text-slate-800 w-full sm:w-60 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="bg-slate-50 border border-surface-soft rounded-xl px-3 py-1.5 text-xs text-slate-800 w-full sm:w-60 focus:outline-none focus:ring-2 focus:ring-primary"
                 value={prodSearch}
                 onChange={(e) => setProdSearch(e.target.value)}
               />
@@ -340,7 +340,7 @@ export default function AdminWorkspace() {
                   type="text"
                   required
                   placeholder="e.g. NextGen Firewall Appliance"
-                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
                   value={newProdName}
                   onChange={(e) => setNewProdName(e.target.value)}
                 />
@@ -352,7 +352,7 @@ export default function AdminWorkspace() {
                   <input
                     type="text"
                     placeholder="e.g. HW-FW-09"
-                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-primary"
                     value={newProdSku}
                     onChange={(e) => setNewProdSku(e.target.value)}
                   />
@@ -360,7 +360,7 @@ export default function AdminWorkspace() {
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Category</label>
                   <select
-                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
                     value={newProdCategory}
                     onChange={(e) => setNewProdCategory(e.target.value)}
                   >
@@ -379,7 +379,7 @@ export default function AdminWorkspace() {
                     type="number"
                     required
                     placeholder="2500"
-                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
                     value={newProdPrice}
                     onChange={(e) => setNewProdPrice(e.target.value)}
                   />
@@ -389,7 +389,7 @@ export default function AdminWorkspace() {
                   <input
                     type="number"
                     placeholder="25"
-                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
                     value={newProdMargin}
                     onChange={(e) => setNewProdMargin(e.target.value)}
                   />
@@ -399,7 +399,7 @@ export default function AdminWorkspace() {
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Unit Pricing Model</label>
                 <select
-                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
                   value={newProdUnit}
                   onChange={(e) => setNewProdUnit(e.target.value)}
                 >
@@ -480,7 +480,7 @@ export default function AdminWorkspace() {
                     type="text"
                     required
                     placeholder="e.g. VIP Enterprise"
-                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
                     value={newTierName}
                     onChange={(e) => setNewTierName(e.target.value)}
                   />
@@ -493,7 +493,7 @@ export default function AdminWorkspace() {
                       type="number"
                       required
                       placeholder="18"
-                      className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
                       value={newTierDiscount}
                       onChange={(e) => setNewTierDiscount(e.target.value)}
                     />
@@ -503,7 +503,7 @@ export default function AdminWorkspace() {
                     <input
                       type="number"
                       placeholder="20"
-                      className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
                       value={newTierMargin}
                       onChange={(e) => setNewTierMargin(e.target.value)}
                     />
@@ -513,7 +513,7 @@ export default function AdminWorkspace() {
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Escalation Approver Required</label>
                   <select
-                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
                     value={newTierApprover}
                     onChange={(e) => setNewTierApprover(e.target.value)}
                   >
@@ -613,7 +613,7 @@ export default function AdminWorkspace() {
                   type="text"
                   required
                   placeholder="e.g. Michael Scott"
-                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                 />
@@ -625,7 +625,7 @@ export default function AdminWorkspace() {
                   type="email"
                   required
                   placeholder="e.g. michael@cybercreatures.com"
-                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                 />
@@ -634,7 +634,7 @@ export default function AdminWorkspace() {
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Select Role</label>
                 <select
-                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value)}
                 >
@@ -687,7 +687,7 @@ export default function AdminWorkspace() {
                   type="text"
                   required
                   placeholder="e.g. West Coast Depot"
-                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
                   value={newWhName}
                   onChange={(e) => setNewWhName(e.target.value)}
                 />
@@ -698,7 +698,7 @@ export default function AdminWorkspace() {
                 <input
                   type="text"
                   placeholder="e.g. Los Angeles, CA"
-                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
                   value={newWhLoc}
                   onChange={(e) => setNewWhLoc(e.target.value)}
                 />

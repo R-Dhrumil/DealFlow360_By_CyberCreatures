@@ -41,7 +41,7 @@ export default function QuotationView() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
-        <i className="fa-solid fa-spinner fa-spin text-primary-600 text-4xl"></i>
+        <i className="fa-solid fa-spinner fa-spin text-primary text-4xl"></i>
       </div>
     );
   }
@@ -123,10 +123,10 @@ export default function QuotationView() {
           </section>
 
           {/* Recurring Costs Section */}
-          <section className="card p-0 overflow-hidden border-primary-100 ring-1 ring-primary-500 ring-opacity-20">
-            <div className="bg-primary-50 px-6 py-4 border-b border-primary-100">
-              <h2 className="text-lg font-semibold text-primary-900">Recurring Subscription Costs</h2>
-              <p className="text-sm text-primary-700">Software licenses, SaaS platform, and ongoing support</p>
+          <section className="card p-0 overflow-hidden border-surface-soft ring-1 ring-primary ring-opacity-20">
+            <div className="bg-border-soft px-6 py-4 border-b border-surface-soft">
+              <h2 className="text-lg font-semibold text-text-main">Recurring Subscription Costs</h2>
+              <p className="text-sm text-primary">Software licenses, SaaS platform, and ongoing support</p>
             </div>
             <table className="w-full text-left">
               <thead>
@@ -147,7 +147,7 @@ export default function QuotationView() {
                       <td className="px-6 py-4 text-right text-slate-600">{line.quantity}</td>
                       <td className="px-6 py-4 text-right text-slate-600">${line.unit_price.toFixed(2)}</td>
                       <td className="px-6 py-4 text-right text-slate-600">{line.discount_percent}%</td>
-                      <td className="px-6 py-4 text-right font-semibold text-primary-700">${(netPrice * line.quantity).toFixed(2)}</td>
+                      <td className="px-6 py-4 text-right font-semibold text-primary">${(netPrice * line.quantity).toFixed(2)}</td>
                     </tr>
                   )
                 })}
@@ -172,10 +172,10 @@ export default function QuotationView() {
 
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-primary-700 font-medium flex items-center">
+                <span className="text-primary font-medium flex items-center">
                   <i className="fa-solid fa-rotate mr-2"></i> Monthly Recurring
                 </span>
-                <span className="text-xl font-bold text-primary-700">${recurringTotal.toFixed(2)}</span>
+                <span className="text-xl font-bold text-primary">${recurringTotal.toFixed(2)}</span>
               </div>
               <p className="text-xs text-text-muted">Billed on the 1st of every month starting after implementation.</p>
             </div>

@@ -44,7 +44,7 @@ export default function ApprovalQueue() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
-        <i className="fa-solid fa-spinner fa-spin text-primary-600 text-4xl"></i>
+        <i className="fa-solid fa-spinner fa-spin text-primary text-4xl"></i>
       </div>
     );
   }
@@ -93,7 +93,7 @@ export default function ApprovalQueue() {
                       <td className="px-6 py-4 text-right">
                         <button 
                           onClick={() => setExpandedId(expandedId === approval.id ? null : approval.id)}
-                          className="text-text-muted hover:text-primary-600 px-3 py-1"
+                          className="text-text-muted hover:text-primary px-3 py-1"
                         >
                           {expandedId === approval.id ? 'Hide Details' : 'View Details'}
                         </button>

@@ -63,7 +63,7 @@ export default function Pipeline() {
             <input
               type="text"
               placeholder="Search deals or customer..."
-              className="pl-9 pr-4 py-2 bg-white border border-surface-soft rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-64 shadow-sm"
+              className="pl-9 pr-4 py-2 bg-white border border-surface-soft rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-64 shadow-sm"
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
             />
@@ -101,10 +101,10 @@ export default function Pipeline() {
                 {stageDeals.map(deal => (
                   <div
                     key={deal.id}
-                    className="bg-white rounded-lg p-4 border border-surface-soft shadow-sm hover:shadow-md hover:border-primary-400 transition-all cursor-pointer group"
+                    className="bg-white rounded-lg p-4 border border-surface-soft shadow-sm hover:shadow-md hover:border-primary/60 transition-all cursor-pointer group"
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <span className="text-xs font-mono font-semibold text-primary-600 group-hover:underline">
+                      <span className="text-xs font-mono font-semibold text-primary group-hover:underline">
                         {deal.id}
                       </span>
                       {deal.riskScore > 0 ? (
@@ -126,7 +126,7 @@ export default function Pipeline() {
                       <div className="flex space-x-1">
                         <Link
                           to={`/app/quote/${deal.rawId || deal.id}`}
-                          className="px-2 py-1 bg-slate-100 hover:bg-primary-600 hover:text-text-main rounded text-[11px] font-medium transition-colors"
+                          className="px-2 py-1 bg-slate-100 hover:bg-primary hover:text-text-main rounded text-[11px] font-medium transition-colors"
                         >
                           View
                         </Link>

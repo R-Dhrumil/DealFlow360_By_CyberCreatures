@@ -361,7 +361,7 @@ export default function SuperAdminConsole({ defaultTab }) {
                     <label className="block text-xs font-bold text-slate-700 mb-1">Site Name</label>
                     <input
                       type="text"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
                       value={settings.site_name}
                       onChange={(e) => setSettings({...settings, site_name: e.target.value})}
                       placeholder="e.g. DealFlow360"
@@ -372,7 +372,7 @@ export default function SuperAdminConsole({ defaultTab }) {
                     <label className="block text-xs font-bold text-slate-700 mb-1">Tagline</label>
                     <input
                       type="text"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
                       value={settings.tagline}
                       onChange={(e) => setSettings({...settings, tagline: e.target.value})}
                       placeholder="e.g. Next-Gen B2B Sales Operations Platform"
@@ -385,7 +385,7 @@ export default function SuperAdminConsole({ defaultTab }) {
                   <div className="flex gap-2">
                     <input
                       type="url"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="https://example.com/logo.png"
                       value={settings.logo_url}
                       onChange={(e) => setSettings({...settings, logo_url: e.target.value})}
@@ -411,7 +411,7 @@ export default function SuperAdminConsole({ defaultTab }) {
                   <div className="flex gap-2">
                     <input
                       type="url"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="https://example.com/favicon.ico"
                       value={settings.favicon_url}
                       onChange={(e) => setSettings({...settings, favicon_url: e.target.value})}
@@ -439,7 +439,7 @@ export default function SuperAdminConsole({ defaultTab }) {
                       <label className="block text-xs font-bold text-slate-700 mb-1">Google Analytics ID (GA4)</label>
                       <input
                         type="text"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="G-XXXXXXXXXX"
                         value={settings.google_analytics_id}
                         onChange={(e) => setSettings({...settings, google_analytics_id: e.target.value})}
@@ -449,7 +449,7 @@ export default function SuperAdminConsole({ defaultTab }) {
                       <label className="block text-xs font-bold text-slate-700 mb-1">Google Search Console Verification Token</label>
                       <input
                         type="text"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="Verification token content attribute"
                         value={settings.google_search_console_id}
                         onChange={(e) => setSettings({...settings, google_search_console_id: e.target.value})}
@@ -459,7 +459,7 @@ export default function SuperAdminConsole({ defaultTab }) {
                       <label className="block text-xs font-bold text-slate-700 mb-1">Meta Pixel ID</label>
                       <input
                         type="text"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="123456789012345"
                         value={settings.meta_pixel_id}
                         onChange={(e) => setSettings({...settings, meta_pixel_id: e.target.value})}
@@ -498,7 +498,7 @@ export default function SuperAdminConsole({ defaultTab }) {
                   <label className="block text-xs font-bold text-slate-700 mb-1">Current Password</label>
                   <input
                     type="password"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
                     required
                     value={passwords.currentPassword}
                     onChange={(e) => setPasswords({...passwords, currentPassword: e.target.value})}
@@ -508,7 +508,7 @@ export default function SuperAdminConsole({ defaultTab }) {
                   <label className="block text-xs font-bold text-slate-700 mb-1">New Password</label>
                   <input
                     type="password"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
                     required
                     placeholder="Min 8 chars, 1 uppercase, 1 number"
                     value={passwords.newPassword}
@@ -519,7 +519,7 @@ export default function SuperAdminConsole({ defaultTab }) {
                   <label className="block text-xs font-bold text-slate-700 mb-1">Confirm New Password</label>
                   <input
                     type="password"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary"
                     required
                     value={passwords.confirmPassword}
                     onChange={(e) => setPasswords({...passwords, confirmPassword: e.target.value})}
@@ -583,7 +583,7 @@ export default function SuperAdminConsole({ defaultTab }) {
               <input
                 type="text"
                 placeholder="Search by name, email, tenant, subdomain, role..."
-                className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -591,7 +591,7 @@ export default function SuperAdminConsole({ defaultTab }) {
 
             <div>
               <select
-                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary"
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
               >
@@ -608,7 +608,7 @@ export default function SuperAdminConsole({ defaultTab }) {
 
             <div>
               <select
-                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary"
                 value={companyFilter}
                 onChange={(e) => setCompanyFilter(e.target.value)}
               >
