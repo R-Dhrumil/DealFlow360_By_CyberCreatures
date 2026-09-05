@@ -408,8 +408,17 @@ export default function CustomerDashboard() {
                         </div>
 
                         <div className="pt-2 flex justify-between items-baseline border-t border-slate-100">
-                          <span className="text-xs text-text-muted font-medium">Total Proposal Value:</span>
-                          <span className="text-2xl font-black text-emerald-700">
+                          <div>
+                            <span className={`text-xs ${q.status === 'approved' ? 'text-emerald-950 font-bold' : 'text-text-muted font-medium'}`}>
+                              {q.status === 'approved' ? 'Total Payable Amount:' : 'Total Proposal Value:'}
+                            </span>
+                            {q.status === 'approved' && (
+                              <span className="block text-[10px] text-emerald-600 font-bold uppercase tracking-wider">
+                                Approved &bull; Discount Locked
+                              </span>
+                            )}
+                          </div>
+                          <span className={`text-2xl font-black ${q.status === 'approved' ? 'text-emerald-700' : 'text-slate-800'}`}>
                             {formatMoney(totalVal)}
                           </span>
                         </div>

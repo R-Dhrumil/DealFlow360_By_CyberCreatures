@@ -238,6 +238,7 @@ export default function QuotationView() {
                   <th className="px-6 py-3 font-medium text-right">Qty</th>
                   <th className="px-6 py-3 font-medium text-right">Unit Price</th>
                   <th className="px-6 py-3 font-medium text-right">Discount</th>
+                  <th className="px-6 py-3 font-medium text-right">Discounted Price</th>
                   <th className="px-6 py-3 font-medium text-right">Net Total</th>
                 </tr>
               </thead>
@@ -251,9 +252,26 @@ export default function QuotationView() {
                     <tr key={line.id}>
                       <td className="px-6 py-4 font-medium text-slate-800">{line.product_name} <span className="text-xs text-text-muted font-normal block">{line.category}</span></td>
                       <td className="px-6 py-4 text-right text-slate-600">{qty}</td>
-                      <td className="px-6 py-4 text-right text-slate-600">{formatMoney(uPrice)}</td>
-                      <td className="px-6 py-4 text-right text-slate-600">{dPercent}%</td>
-                      <td className="px-6 py-4 text-right font-semibold text-slate-800">{formatMoney(netPrice * qty)}</td>
+                      <td className="px-6 py-4 text-right font-mono text-slate-600">
+                        {dPercent > 0 ? (
+                          <span className="line-through text-slate-400 text-xs mr-1">{formatMoney(uPrice)}</span>
+                        ) : (
+                          formatMoney(uPrice)
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right font-mono text-slate-600">
+                        {dPercent > 0 ? (
+                          <span className="inline-block bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded text-xs border border-emerald-200">
+                            {dPercent}%
+                          </span>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right font-mono font-bold text-emerald-700">
+                        {formatMoney(netPrice)}
+                      </td>
+                      <td className="px-6 py-4 text-right font-semibold text-slate-800 font-mono">{formatMoney(netPrice * qty)}</td>
                     </tr>
                   )
                 })}
@@ -274,6 +292,7 @@ export default function QuotationView() {
                   <th className="px-6 py-3 font-medium text-right">Qty</th>
                   <th className="px-6 py-3 font-medium text-right">Unit Price / Mo</th>
                   <th className="px-6 py-3 font-medium text-right">Discount</th>
+                  <th className="px-6 py-3 font-medium text-right">Discounted Price</th>
                   <th className="px-6 py-3 font-medium text-right">Monthly Total</th>
                 </tr>
               </thead>
@@ -287,9 +306,26 @@ export default function QuotationView() {
                     <tr key={line.id}>
                       <td className="px-6 py-4 font-medium text-slate-800">{line.product_name} <span className="text-xs text-text-muted font-normal block">{line.category}</span></td>
                       <td className="px-6 py-4 text-right text-slate-600">{qty}</td>
-                      <td className="px-6 py-4 text-right text-slate-600">{formatMoney(uPrice)}</td>
-                      <td className="px-6 py-4 text-right text-slate-600">{dPercent}%</td>
-                      <td className="px-6 py-4 text-right font-semibold text-primary">{formatMoney(netPrice * qty)}</td>
+                      <td className="px-6 py-4 text-right font-mono text-slate-600">
+                        {dPercent > 0 ? (
+                          <span className="line-through text-slate-400 text-xs mr-1">{formatMoney(uPrice)}</span>
+                        ) : (
+                          formatMoney(uPrice)
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right font-mono text-slate-600">
+                        {dPercent > 0 ? (
+                          <span className="inline-block bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded text-xs border border-emerald-200">
+                            {dPercent}%
+                          </span>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right font-mono font-bold text-emerald-700">
+                        {formatMoney(netPrice)}
+                      </td>
+                      <td className="px-6 py-4 text-right font-semibold text-primary font-mono">{formatMoney(netPrice * qty)}</td>
                     </tr>
                   )
                 })}
@@ -366,12 +402,28 @@ export default function QuotationView() {
         {/* Summary Sidebar */}
         <div className="lg:col-span-1">
           <div className="card p-6 sticky top-6">
-            <h3 className="text-lg font-bold text-text-main mb-6">Financial Summary</h3>
+            <h3 className="text-lg font-bold text-text-main mb-4">Financial Summary</h3>
+
+            {quotation.status === 'approved' && (
+              <div className="mb-4 p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-800 flex items-center justify-between shadow-2xs">
+                <span className="flex items-center gap-1.5">
+                  <i className="fa-solid fa-circle-check text-emerald-600 text-sm"></i>
+                  <span>Approved &bull; Price Locked</span>
+                </span>
+                <span className="text-[10px] uppercase font-mono px-2 py-0.5 bg-emerald-100 rounded text-emerald-900">
+                  Ready
+                </span>
+              </div>
+            )}
             
             <div className="space-y-4 border-b border-surface-soft pb-6 mb-6">
               <div className="flex justify-between items-center">
-                <span className="text-slate-600 font-medium">Total Due Today</span>
-                <span className="text-xl font-bold text-text-main">{formatMoney(oneTimeTotal)}</span>
+                <span className="text-slate-600 font-medium">
+                  {quotation.status === 'approved' ? 'Total Payable Due Today' : 'Total Due Today'}
+                </span>
+                <span className={`text-xl font-bold font-mono ${quotation.status === 'approved' ? 'text-emerald-700 font-black' : 'text-text-main'}`}>
+                  {formatMoney(oneTimeTotal)}
+                </span>
               </div>
               <p className="text-xs text-text-muted">Includes all hardware, implementation, and setup fees.</p>
             </div>
@@ -392,8 +444,12 @@ export default function QuotationView() {
                 <span className="font-semibold text-slate-800">{formatMoney(recurringTotal * 12)}</span>
               </div>
               <div className="flex justify-between items-center mt-2">
-                <span className="text-text-muted text-sm">Total Contract Value (1 Yr)</span>
-                <span className="font-bold text-text-main">{formatMoney(oneTimeTotal + (recurringTotal * 12))}</span>
+                <span className={`text-sm ${quotation.status === 'approved' ? 'text-emerald-950 font-black' : 'text-text-muted'}`}>
+                  {quotation.status === 'approved' ? 'Total Payable (1 Yr):' : 'Total Contract Value (1 Yr)'}
+                </span>
+                <span className={`font-bold font-mono ${quotation.status === 'approved' ? 'text-xl text-emerald-700 font-black' : 'text-text-main'}`}>
+                  {formatMoney(oneTimeTotal + (recurringTotal * 12))}
+                </span>
               </div>
             </div>
             

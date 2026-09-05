@@ -98,6 +98,27 @@ export default function CustomerPortal() {
       {/* Main Content Body */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
 
+        {/* Status Banner when Approved */}
+        {quotation.status === 'approved' && (
+          <div className="bg-emerald-50 border border-emerald-300/80 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg font-bold shadow">
+                <i className="fa-solid fa-certificate"></i>
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-emerald-950">Official Approved Proposal</h3>
+                <p className="text-xs text-emerald-800 mt-0.5">
+                  This quotation has been officially approved by company leadership with all discounts locked in.
+                </p>
+              </div>
+            </div>
+            <div className="bg-white px-4 py-2 rounded-xl border border-emerald-200 text-right shadow-2xs">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Total Payable Amount</span>
+              <span className="text-xl font-black text-emerald-700 font-mono">{formatMoney(grandTotal)}</span>
+            </div>
+          </div>
+        )}
+
         {/* Customer & Document Information Card */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="space-y-1 sm:border-r border-slate-100 pr-4">
@@ -122,9 +143,13 @@ export default function CustomerPortal() {
                 {quotation.created_at ? new Date(quotation.created_at).toLocaleDateString() : new Date().toLocaleDateString()}
               </span>
             </div>
-            <div className="flex justify-between text-xs">
+            <div className="flex justify-between text-xs items-center">
               <span className="text-slate-500">Status:</span>
-              <span className="font-bold text-emerald-600 capitalize">
+              <span className={`font-bold capitalize px-2 py-0.5 rounded-full text-[11px] ${
+                quotation.status === 'approved'
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black'
+                  : 'text-slate-700'
+              }`}>
                 {(quotation.status || 'Active').replace(/_/g, ' ')}
               </span>
             </div>
@@ -148,13 +173,14 @@ export default function CustomerPortal() {
                   <th className="py-3 px-4 text-center">Qty</th>
                   <th className="py-3 px-4 text-right">Unit Price</th>
                   <th className="py-3 px-4 text-right">Discount</th>
+                  <th className="py-3 px-4 text-right">Discounted Price</th>
                   <th className="py-3 px-6 text-right">Line Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
                 {lines.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="py-8 text-center text-slate-400 text-xs">
+                    <td colSpan="6" className="py-8 text-center text-slate-400 text-xs">
                       No line items included in this quotation.
                     </td>
                   </tr>
@@ -163,7 +189,8 @@ export default function CustomerPortal() {
                     const unitPrice = Number(line.unit_price) || 0;
                     const discount = Number(line.discount_percent) || 0;
                     const qty = Number(line.quantity) || 1;
-                    const lineNet = calculateLineNetTotal(line);
+                    const netUnitPrice = unitPrice * (1 - discount / 100);
+                    const lineNet = netUnitPrice * qty;
 
                     return (
                       <tr key={line.id || idx} className="hover:bg-slate-50/60 transition-colors">
@@ -176,9 +203,26 @@ export default function CustomerPortal() {
                           )}
                         </td>
                         <td className="py-4 px-4 text-center font-semibold text-slate-700">{qty}</td>
-                        <td className="py-4 px-4 text-right font-mono text-slate-600">{formatMoney(unitPrice)}</td>
-                        <td className="py-4 px-4 text-right font-mono text-slate-500">{discount > 0 ? `${discount}%` : '-'}</td>
-                        <td className="py-4 px-6 text-right font-bold text-slate-900 font-mono">
+                        <td className="py-4 px-4 text-right font-mono text-slate-600">
+                          {discount > 0 ? (
+                            <span className="line-through text-slate-400 text-xs">{formatMoney(unitPrice)}</span>
+                          ) : (
+                            formatMoney(unitPrice)
+                          )}
+                        </td>
+                        <td className="py-4 px-4 text-right font-mono">
+                          {discount > 0 ? (
+                            <span className="inline-block bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded text-xs border border-emerald-200">
+                              {discount}% OFF
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </td>
+                        <td className="py-4 px-4 text-right font-mono font-bold text-emerald-700">
+                          {formatMoney(netUnitPrice)}
+                        </td>
+                        <td className="py-4 px-6 text-right font-black text-slate-900 font-mono">
                           {formatMoney(lineNet)}
                         </td>
                       </tr>
@@ -190,19 +234,61 @@ export default function CustomerPortal() {
           </div>
 
           {/* Totals Summary */}
-          <div className="bg-slate-50/50 p-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <p className="text-xs text-slate-500 italic">
-              All prices are displayed in {selected.name} ({selected.symbol}). This is a public quotation document preview.
-            </p>
-            <div className="w-full sm:w-72 space-y-2 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-200">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-600">Total Amount:</span>
-                <span className="text-xl font-black text-slate-900 font-mono">
-                  {formatMoney(grandTotal)}
-                </span>
+          {(() => {
+            const totalGross = lines.reduce((sum, line) => sum + (Number(line.unit_price) || 0) * (Number(line.quantity) || 1), 0);
+            const totalDiscountSaved = Math.max(0, totalGross - grandTotal);
+            const isApproved = quotation.status === 'approved';
+
+            return (
+              <div className="bg-slate-50/50 p-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-slate-500 italic">
+                    All prices are displayed in {selected.name} ({selected.symbol}).
+                  </p>
+                  {isApproved && (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <i className="fa-solid fa-circle-check text-emerald-600"></i>
+                      <span>Approved Price Guarantee &bull; Price Locked</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="w-full sm:w-80 space-y-2 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-200">
+                  <div className="flex justify-between items-center text-xs text-slate-600">
+                    <span>Base Subtotal:</span>
+                    <span className="font-mono font-semibold text-slate-700">{formatMoney(totalGross)}</span>
+                  </div>
+
+                  {totalDiscountSaved > 0 && (
+                    <div className="flex justify-between items-center text-xs text-emerald-700 font-medium">
+                      <span className="flex items-center gap-1">
+                        <i className="fa-solid fa-tag text-[10px]"></i> Discount Savings:
+                      </span>
+                      <span className="font-mono font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        - {formatMoney(totalDiscountSaved)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="pt-2 border-t border-slate-200 flex justify-between items-baseline">
+                    <span className={`text-sm font-bold ${isApproved ? 'text-emerald-950 font-black' : 'text-slate-800'}`}>
+                      {isApproved ? 'Total Payable Amount:' : 'Total Amount:'}
+                    </span>
+                    <div className="text-right">
+                      <span className={`text-2xl font-black font-mono ${isApproved ? 'text-emerald-700' : 'text-slate-900'}`}>
+                        {formatMoney(grandTotal)}
+                      </span>
+                      {isApproved && (
+                        <span className="block text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
+                          Net Payable
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            );
+          })()}
         </div>
 
       </main>
