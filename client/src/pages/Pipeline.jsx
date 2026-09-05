@@ -69,13 +69,98 @@ export default function Pipeline() {
       await fetchQuotations();
     } catch (err) {
       console.error('Failed to submit quote for approval:', err);
-      // Fallback update if submit endpoint has role constraints
       try {
         await api.put(`/quotations/${quoteId}/counter`, { lines: [], status: 'pending_approval' });
         await fetchQuotations();
       } catch (err2) {
         console.error('Fallback submit failed:', err2);
       }
+    }
+  };
+
+  const handleDragStart = (e, deal) => {
+    setDraggedDeal(deal);
+    e.dataTransfer.setData('text/plain', deal.rawId || deal.id);
+  };
+
+  const handleDragOver = (e, stageName) => {
+    e.preventDefault();
+    if (dragOverStage !== stageName) {
+      setDragOverStage(stageName);
+    }
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e, targetStageName) => {
+    e.preventDefault();
+    setDragOverStage(null);
+
+    if (!draggedDeal) return;
+    if (draggedDeal.stage === targetStageName) return;
+
+    setConfirmData({
+      show: true,
+      deal: draggedDeal,
+      targetStage: targetStageName
+    });
+  };
+
+  const executeDropAction = async () => {
+    const { deal, targetStage } = confirmData;
+    if (!deal || !targetStage) return;
+
+    setIsSubmitting(true);
+
+    const stageToStatusMap = {
+      'Draft': 'draft',
+      'Pending Approval': 'pending_approval',
+      'Pending Finance': 'pending_finance_approval',
+      'Approved': 'approved',
+      'Confirmed': 'confirmed',
+      'Rejected': 'rejected'
+    };
+
+    const newStatus = stageToStatusMap[targetStage] || 'draft';
+
+    try {
+      if (newStatus === 'pending_approval') {
+        try {
+          await api.put(`/quotations/${deal.rawId || deal.id}/submit`);
+        } catch (e) {
+          await api.put(`/quotations/${deal.rawId || deal.id}/counter`, { lines: [], status: newStatus });
+        }
+      } else if (newStatus === 'approved') {
+        try {
+          await api.put(`/quotations/${deal.rawId || deal.id}/approve`);
+        } catch (e) {
+          await api.put(`/quotations/${deal.rawId || deal.id}/counter`, { lines: [], status: newStatus });
+        }
+      } else if (newStatus === 'rejected') {
+        try {
+          await api.put(`/quotations/${deal.rawId || deal.id}/reject`, { reason: 'Moved to Rejected via Deal Pipeline Drag & Drop' });
+        } catch (e) {
+          await api.put(`/quotations/${deal.rawId || deal.id}/counter`, { lines: [], status: newStatus });
+        }
+      } else if (newStatus === 'confirmed') {
+        try {
+          await api.put(`/quotations/${deal.rawId || deal.id}/confirm`);
+        } catch (e) {
+          await api.put(`/quotations/${deal.rawId || deal.id}/counter`, { lines: [], status: newStatus });
+        }
+      } else {
+        await api.put(`/quotations/${deal.rawId || deal.id}/counter`, { lines: [], status: newStatus });
+      }
+
+      await fetchQuotations();
+    } catch (err) {
+      console.error('Failed to update deal stage via drag & drop:', err);
+    } finally {
+      setIsSubmitting(false);
+      setDraggedDeal(null);
+      setConfirmData({ show: false, deal: null, targetStage: null });
     }
   };
 
@@ -158,7 +243,9 @@ export default function Pipeline() {
                 {stageDeals.map(deal => (
                   <div
                     key={deal.id}
-                    className="bg-white rounded-lg p-4 border border-surface-soft shadow-sm hover:shadow-md hover:border-primary/60 transition-all cursor-pointer group space-y-3"
+                    draggable={true}
+                    onDragStart={(e) => handleDragStart(e, deal)}
+                    className="bg-white rounded-lg p-4 border border-surface-soft shadow-sm hover:shadow-md hover:border-primary/60 transition-all cursor-grab active:cursor-grabbing group space-y-3"
                   >
                     <div className="flex justify-between items-start">
                       <span className="text-xs font-mono font-semibold text-primary group-hover:underline">
