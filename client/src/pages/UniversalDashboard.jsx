@@ -19,44 +19,44 @@ const getStageBadge = (status) => {
     case 'pending_finance_approval':
       return {
         label: 'Approval Gate',
-        bg: 'bg-[#ffedd5]',
-        text: 'text-[#ea580c]',
-        border: 'border-[#fed7aa]',
-        dot: 'bg-[#ea580c]'
+        bg: 'bg-amber-status/10',
+        text: 'text-amber-status',
+        border: 'border-amber-status/30',
+        dot: 'bg-amber-status'
       };
     case 'approved':
       return {
         label: 'Approved',
-        bg: 'bg-[#dcfce7]',
-        text: 'text-[#16a34a]',
-        border: 'border-[#bbf7d0]',
-        dot: 'bg-[#16a34a]'
+        bg: 'bg-emerald-status/10',
+        text: 'text-emerald-status',
+        border: 'border-emerald-status/30',
+        dot: 'bg-emerald-status'
       };
     case 'confirmed':
     case 'won':
       return {
         label: 'Confirmed',
-        bg: 'bg-[#dbeafe]',
-        text: 'text-[#2563eb]',
-        border: 'border-[#bfdbfe]',
-        dot: 'bg-[#2563eb]'
+        bg: 'bg-secondary/10',
+        text: 'text-secondary',
+        border: 'border-secondary/30',
+        dot: 'bg-secondary'
       };
     case 'sent':
       return {
         label: 'Sent • Viewed',
-        bg: 'bg-[#fef3c7]',
-        text: 'text-[#d97706]',
-        border: 'border-[#fde68a]',
-        dot: 'bg-[#d97706]'
+        bg: 'bg-amber-status/10',
+        text: 'text-amber-status',
+        border: 'border-amber-status/30',
+        dot: 'bg-amber-status'
       };
     case 'draft':
     default:
       return {
         label: 'Draft',
-        bg: 'bg-[#f1f5f9]',
-        text: 'text-[#475569]',
-        border: 'border-[#cbd5e1]',
-        dot: 'bg-[#64748b]'
+        bg: 'bg-surface-soft/40',
+        text: 'text-text-muted',
+        border: 'border-surface-soft',
+        dot: 'bg-text-muted'
       };
   }
 };
@@ -120,7 +120,7 @@ const UniversalDashboard = () => {
   const totalFilteredAcv = filteredQuotations.reduce((sum, q) => sum + (Number(q.total_amount) || 0), 0);
 
   return (
-    <div className="flex flex-col w-full px-8 py-8 bg-border-soft font-body text-text-body">
+    <div className="flex flex-col w-full min-h-screen px-8 py-8 bg-border-soft font-sans text-text-body">
       {/* Executive Action & Control Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6">
         <div className="flex flex-col gap-1">
@@ -140,15 +140,15 @@ const UniversalDashboard = () => {
             <span className="material-symbols-outlined text-text-muted text-base">tune</span>
           </button>
           
-          <Link to="/app/approvals" className="relative group flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#ea580c] border border-[#fed7aa] hover:bg-[#ffedd5] transition-all shadow-sm font-semibold text-xs">
+          <Link to="/app/approvals" className="relative group flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-amber-status border border-amber-status/30 hover:bg-amber-status/10 transition-all shadow-sm font-semibold text-xs">
             <span className="material-symbols-outlined text-base">verified</span>
             <span>Review Approvals</span>
-            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#ea580c] text-white text-[11px] font-bold">
+            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-status text-on-primary text-[11px] font-bold">
               {pendingDeals.length}
             </span>
           </Link>
           
-          <Link to="/app/quote" className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold text-xs shadow-sm hover:bg-[#5a1f4f] transition-all active:scale-[0.99]">
+          <Link to="/app/quote" className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-on-primary font-semibold text-xs shadow-sm hover:bg-primary-dark transition-all active:scale-[0.99]">
             <span className="material-symbols-outlined text-base">add_circle</span>
             <span>New Quotation</span>
           </Link>
@@ -165,7 +165,7 @@ const UniversalDashboard = () => {
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Gatekeeper Queue</span>
               <span className="font-bold text-sm text-text-main pt-0.5">Pending Approvals</span>
             </div>
-            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#fee2e2] text-rose-status border border-[#fecaca] text-xs font-bold">
+            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-status/10 text-rose-status border border-rose-status/20 text-xs font-bold">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-status"></span> Queue: {pendingDeals.length}
             </span>
           </div>
@@ -176,7 +176,7 @@ const UniversalDashboard = () => {
             </div>
             <span className="font-mono text-sm font-bold text-text-main">{formatCurrency(pendingValue)}</span>
           </div>
-          <div className="pt-3 mt-4 border-t border-[#eddffb] flex items-center justify-between">
+          <div className="pt-3 mt-4 border-t border-surface-soft flex items-center justify-between">
             <span className="text-xs text-text-muted">{pendingDeals.length > 0 ? `${pendingDeals.length} requires VP review` : 'All cleared'}</span>
             <Link to="/app/approvals" className="text-xs font-semibold text-rose-status hover:underline flex items-center gap-0.5">
               Resolve <span className="material-symbols-outlined text-xs">arrow_forward</span>
@@ -191,23 +191,23 @@ const UniversalDashboard = () => {
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Deal Desk Active</span>
               <span className="font-bold text-sm text-text-main pt-0.5">Open Quotations</span>
             </div>
-            <span className="p-2 rounded-xl bg-[#ffedd5] text-[#ea580c] border border-[#fed7aa]">
+            <span className="p-2 rounded-xl bg-amber-status/10 text-amber-status border border-amber-status/20">
               <span className="material-symbols-outlined text-lg">stacked_bar_chart</span>
             </span>
           </div>
           <div className="flex items-baseline justify-between pt-4">
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-extrabold text-text-main">{formatCurrency(openValue)}</span>
-              <span className="text-xs text-[#ea580c] font-bold">{openDeals.length} active</span>
+              <span className="text-xs text-amber-status font-bold">{openDeals.length} active</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="w-1.5 h-3.5 rounded bg-[#ea580c]"></span>
-              <span className="w-1.5 h-5 rounded bg-[#ea580c]"></span>
-              <span className="w-1.5 h-6 rounded bg-[#ea580c]"></span>
+              <span className="w-1.5 h-3.5 rounded bg-amber-status"></span>
+              <span className="w-1.5 h-5 rounded bg-amber-status"></span>
+              <span className="w-1.5 h-6 rounded bg-amber-status"></span>
               <span className="w-1.5 h-2 rounded bg-surface-soft"></span>
             </div>
           </div>
-          <div className="pt-3 mt-4 border-t border-[#eddffb] flex items-center justify-between">
+          <div className="pt-3 mt-4 border-t border-surface-soft flex items-center justify-between">
             <span className="text-xs text-text-muted">Total Active CPQ Quotes</span>
             <span className="font-mono text-xs font-semibold text-text-main">{quotations.length} records</span>
           </div>
@@ -220,7 +220,7 @@ const UniversalDashboard = () => {
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">AI Deal Sentry</span>
               <span className="font-bold text-sm text-text-main pt-0.5">At-Risk Deals</span>
             </div>
-            <span className="p-2 rounded-xl bg-[#fee2e2] text-rose-status border border-[#fecaca]">
+            <span className="p-2 rounded-xl bg-rose-status/10 text-rose-status border border-rose-status/20">
               <span className="material-symbols-outlined text-lg">warning_amber</span>
             </span>
           </div>
@@ -231,7 +231,7 @@ const UniversalDashboard = () => {
             </div>
             <span className="font-mono text-sm font-bold text-rose-status">{formatCurrency(atRiskValue)}</span>
           </div>
-          <div className="pt-3 mt-4 border-t border-[#eddffb] flex items-center justify-between">
+          <div className="pt-3 mt-4 border-t border-surface-soft flex items-center justify-between">
             <span className="text-xs font-medium text-rose-status">Risk Score ≥ 5.0</span>
             <span className="material-symbols-outlined text-text-muted text-sm group-hover:translate-x-0.5 transition-transform">chevron_right</span>
           </div>
@@ -244,23 +244,23 @@ const UniversalDashboard = () => {
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Financial Performance</span>
               <span className="font-bold text-sm text-text-main pt-0.5">Revenue Approved</span>
             </div>
-            <span className="p-2 rounded-xl bg-[#dcfce7] text-[#16a34a] border border-[#bbf7d0]">
+            <span className="p-2 rounded-xl bg-emerald-status/10 text-emerald-status border border-emerald-status/20">
               <span className="material-symbols-outlined text-lg">payments</span>
             </span>
           </div>
           <div className="flex items-baseline justify-between pt-4">
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-extrabold text-text-main">{formatCurrency(totalRecognizedValue)}</span>
-              <span className="text-xs font-bold text-[#16a34a] bg-[#dcfce7] px-2 py-0.5 rounded border border-[#bbf7d0]">Live</span>
+              <span className="text-xs font-bold text-emerald-status bg-emerald-status/10 px-2 py-0.5 rounded border border-emerald-status/20">Live</span>
             </div>
           </div>
-          <div className="pt-3 mt-4 border-t border-[#eddffb] flex flex-col gap-1.5">
-            <div className="w-full bg-border-soft h-2 rounded-full overflow-hidden border border-[#eddffb]">
-              <div className="bg-[#16a34a] h-full rounded-full" style={{ width: `${Math.min(100, Math.max(15, quotations.length ? (totalRecognizedValue / (openValue || 1)) * 100 : 0))}%` }}></div>
+          <div className="pt-3 mt-4 border-t border-surface-soft flex flex-col gap-1.5">
+            <div className="w-full bg-border-soft h-2 rounded-full overflow-hidden border border-surface-soft">
+              <div className="bg-emerald-status h-full rounded-full" style={{ width: `${Math.min(100, Math.max(15, quotations.length ? (totalRecognizedValue / (openValue || 1)) * 100 : 0))}%` }}></div>
             </div>
             <div className="flex justify-between text-xs text-text-muted">
               <span>Conversion Ratio</span>
-              <span className="text-[#16a34a] font-mono font-bold">
+              <span className="text-emerald-status font-mono font-bold">
                 {openValue > 0 ? ((totalRecognizedValue / openValue) * 100).toFixed(1) : 0}%
               </span>
             </div>
@@ -287,13 +287,13 @@ const UniversalDashboard = () => {
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <input
-                    className="pl-8 pr-3 py-1.5 rounded-xl bg-white border border-surface-soft text-text-main text-xs placeholder:text-[#968c9f] focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="pl-8 pr-3 py-1.5 rounded-xl bg-white border border-surface-soft text-text-main text-xs placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
                     placeholder="Filter pipeline..."
                     type="text"
                     value={filterText}
                     onChange={(e) => setFilterText(e.target.value)}
                   />
-                  <span className="material-symbols-outlined absolute left-2.5 top-2 text-[#968c9f] text-sm">search</span>
+                  <span className="material-symbols-outlined absolute left-2.5 top-2 text-text-muted text-sm">search</span>
                 </div>
               </div>
             </div>
@@ -304,13 +304,13 @@ const UniversalDashboard = () => {
                 onClick={() => setSelectedStage('all')}
                 className={`stage-pill px-3.5 py-1.5 rounded-full font-semibold text-xs flex items-center gap-2 whitespace-nowrap transition-all ${
                   selectedStage === 'all'
-                    ? 'bg-primary text-white shadow-sm'
+                    ? 'bg-primary text-on-primary shadow-sm'
                     : 'bg-white text-text-muted border border-surface-soft hover:bg-border-soft hover:text-text-main'
                 }`}
               >
                 <span>All Stages</span>
                 <span className={`w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-bold ${
-                  selectedStage === 'all' ? 'bg-white text-primary' : 'bg-border-soft text-text-main'
+                  selectedStage === 'all' ? 'bg-white text-primary' : 'bg-surface-soft text-text-main'
                 }`}>
                   {quotations.length}
                 </span>
@@ -320,7 +320,7 @@ const UniversalDashboard = () => {
                 onClick={() => setSelectedStage('draft')}
                 className={`stage-pill px-3.5 py-1.5 rounded-full font-semibold text-xs flex items-center gap-2 whitespace-nowrap transition-all ${
                   selectedStage === 'draft'
-                    ? 'bg-primary text-white shadow-sm'
+                    ? 'bg-primary text-on-primary shadow-sm'
                     : 'bg-white text-text-muted border border-surface-soft hover:bg-border-soft hover:text-text-main'
                 }`}
               >
@@ -332,24 +332,24 @@ const UniversalDashboard = () => {
                 onClick={() => setSelectedStage('approval')}
                 className={`stage-pill px-3.5 py-1.5 rounded-full font-semibold text-xs flex items-center gap-2 whitespace-nowrap transition-all ${
                   selectedStage === 'approval'
-                    ? 'bg-primary text-white shadow-sm'
+                    ? 'bg-primary text-on-primary shadow-sm'
                     : 'bg-white text-text-muted border border-surface-soft hover:bg-border-soft hover:text-text-main'
                 }`}
               >
                 <span>Approval Gate</span>
-                <span className="text-[11px] text-[#ea580c] font-bold">{approvalGateCount}</span>
+                <span className="text-[11px] text-amber-status font-bold">{approvalGateCount}</span>
               </button>
 
               <button
                 onClick={() => setSelectedStage('approved')}
                 className={`stage-pill px-3.5 py-1.5 rounded-full font-semibold text-xs flex items-center gap-2 whitespace-nowrap transition-all ${
                   selectedStage === 'approved'
-                    ? 'bg-primary text-white shadow-sm'
+                    ? 'bg-primary text-on-primary shadow-sm'
                     : 'bg-white text-text-muted border border-surface-soft hover:bg-border-soft hover:text-text-main'
                 }`}
               >
                 <span>Approved</span>
-                <span className="text-[11px] text-[#16a34a] font-bold">
+                <span className="text-[11px] text-emerald-status font-bold">
                   {quotations.filter(q => q.status === 'approved' || q.status === 'confirmed').length}
                 </span>
               </button>
@@ -368,7 +368,7 @@ const UniversalDashboard = () => {
                   <th className="py-3 px-5 font-semibold text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#eddffb] text-xs">
+              <tbody className="divide-y divide-surface-soft text-xs">
                 {loading ? (
                   <tr>
                     <td colSpan="5" className="py-8 text-center text-text-muted">
@@ -421,7 +421,7 @@ const UniversalDashboard = () => {
                               ${Number(deal.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                             {riskVal >= 5 && (
-                              <span className="text-[11px] font-bold text-rose-status bg-[#fee2e2] px-1 rounded">
+                              <span className="text-[11px] font-bold text-rose-status bg-rose-status/10 border border-rose-status/20 px-1.5 py-0.5 rounded">
                                 Risk: {riskVal.toFixed(1)}
                               </span>
                             )}
@@ -429,12 +429,12 @@ const UniversalDashboard = () => {
                         </td>
                         <td className="py-3.5 px-5 text-right">
                           {deal.status?.includes('pending') ? (
-                            <Link to="/app/approvals" className="px-2.5 py-1.5 rounded-lg bg-primary text-white text-[11px] font-semibold hover:bg-[#5a1f4f] transition-colors inline-flex items-center gap-1 shadow-xs">
+                            <Link to="/app/approvals" className="px-2.5 py-1.5 rounded-lg bg-primary text-on-primary text-[11px] font-semibold hover:bg-primary-dark transition-colors inline-flex items-center gap-1 shadow-xs">
                               <span>Approve</span>
                               <span className="material-symbols-outlined text-xs">check</span>
                             </Link>
                           ) : (
-                            <Link to="/app/quote" className="p-1.5 rounded-lg bg-border-soft border border-surface-soft text-text-muted hover:text-text-main hover:bg-white transition-colors inline-flex shadow-xs">
+                            <Link to={`/app/quote/${deal.id}`} className="p-1.5 rounded-lg bg-border-soft border border-surface-soft text-text-muted hover:text-text-main hover:bg-white transition-colors inline-flex shadow-xs">
                               <span className="material-symbols-outlined text-sm">visibility</span>
                             </Link>
                           )}
@@ -461,9 +461,9 @@ const UniversalDashboard = () => {
         {/* Right Stage: Deal Health & Risk Feed (4 cols) */}
         <div className="lg:col-span-4 flex flex-col gap-5">
           <div className="flex flex-col p-5 rounded-2xl bg-white border border-surface-soft shadow-sm">
-            <div className="flex items-center justify-between pb-3.5 border-b border-[#eddffb]">
+            <div className="flex items-center justify-between pb-3.5 border-b border-surface-soft">
               <div className="flex items-center gap-2.5">
-                <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-[#fee2e2] text-rose-status border border-[#fecaca]">
+                <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-rose-status/10 text-rose-status border border-rose-status/20">
                   <span className="material-symbols-outlined text-lg">crisis_alert</span>
                   <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-status ring-2 ring-white"></span>
                 </div>
@@ -487,7 +487,7 @@ const UniversalDashboard = () => {
                         <span className="w-2 h-2 rounded-full bg-rose-status flex-shrink-0"></span>
                         <span className="font-bold text-xs text-text-main">{riskDeal.customer_name || 'Account'}</span>
                       </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#fee2e2] text-rose-status border border-[#fecaca] uppercase">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-status/10 text-rose-status border border-rose-status/20 uppercase">
                         Score: {Number(riskDeal.blended_risk_score || 0).toFixed(1)}
                       </span>
                     </div>
@@ -504,13 +504,13 @@ const UniversalDashboard = () => {
             <div className="flex flex-col">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Pipeline Velocity</span>
               <span className="font-bold text-sm text-text-main pt-0.5">Q3 CPQ Velocity</span>
-              <span className="text-xs font-bold text-[#16a34a] pt-0.5">14.8 Days Cycle Time</span>
+              <span className="text-xs font-bold text-emerald-status pt-0.5">14.8 Days Cycle Time</span>
               <span className="text-[11px] text-text-muted pt-1">Active DB Pipeline connected</span>
             </div>
             <div className="relative w-20 h-20 flex-shrink-0 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                 <path className="text-border-soft stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" strokeWidth="3.5"></path>
-                <path className="text-[#16a34a] stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" strokeDasharray="82, 100" strokeLinecap="round" strokeWidth="3.5"></path>
+                <path className="text-emerald-status stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" strokeDasharray="82, 100" strokeLinecap="round" strokeWidth="3.5"></path>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <span className="font-extrabold text-sm text-text-main">82%</span>
