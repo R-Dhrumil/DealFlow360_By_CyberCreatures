@@ -2,14 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCurrency } from '../contexts/CurrencyContext';
 
-const DEMO_USERS = [
-  { name: 'Alex Rep', email: 'rep@dealflow360.com', role: 'sales_rep', label: 'Sales Rep' },
-  { name: 'Sarah Manager', email: 'manager@dealflow360.com', role: 'sales_manager', label: 'Sales Manager' },
-  { name: 'Fiona Finance Mgr', email: 'financemanager@cybercreatures.com', role: 'finance_manager', label: 'Finance Manager' },
-  { name: 'Elena Admin', email: 'admin@dealflow360.com', role: 'admin', label: 'Admin' },
-  { name: 'Omar Operations', email: 'ops@dealflow360.com', role: 'operations', label: 'Operations' }
-];
-
+<<<<<<< HEAD
+=======
 function CurrencyPicker() {
   const { currencies, selected, setCurrency } = useCurrency();
   const [open, setOpen] = useState(false);
@@ -67,6 +61,7 @@ function CurrencyPicker() {
   );
 }
 
+>>>>>>> e9b55e6741e0a3e222557a71179777233a30aba2
 export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();

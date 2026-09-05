@@ -35,7 +35,7 @@ function DiscountAuthorityPanel({ showNotification }) {
         maxDiscountPercent: roleLimits[roleKey]
       });
       showNotification('success', `Discount authority for ${roleKey.replace('_', ' ')} saved.`);
-    } catch (e) {
+    } catch {
       showNotification('error', 'Failed to save discount authority.');
     } finally {
       setSaving(false);
@@ -208,11 +208,6 @@ export default function AdminWorkspace() {
     { id: 'dt-3', tier: 'Gold', maxDiscount: 15.0, minMargin: 25.0, approver: 'Finance Lead' },
     { id: 'dt-4', tier: 'Platinum Enterprise', maxDiscount: 22.0, minMargin: 20.0, approver: 'Admin Override' }
   ]);
-  const [categoryRules, setCategoryRules] = useState([
-    { category: 'Hardware', maxDiscount: 12.0, defaultMargin: 40.0 },
-    { category: 'Software', maxDiscount: 25.0, defaultMargin: 85.0 },
-    { category: 'Services', maxDiscount: 18.0, defaultMargin: 65.0 }
-  ]);
   const [newTierName, setNewTierName] = useState('');
   const [newTierDiscount, setNewTierDiscount] = useState('');
   const [newTierMargin, setNewTierMargin] = useState('');
@@ -273,6 +268,11 @@ export default function AdminWorkspace() {
   const fetchTeam = async () => {
     try {
       const res = await api.get('/users');
+<<<<<<< HEAD
+      setTeam(res.data || []);
+    } catch {
+      setTeam([]);
+=======
       if (res.data && Array.isArray(res.data) && res.data.length > 0) {
         setTeam(res.data);
       } else {
@@ -280,6 +280,7 @@ export default function AdminWorkspace() {
       }
     } catch (_err) {
       setTeam(INITIAL_TEAM);
+>>>>>>> e9b55e6741e0a3e222557a71179777233a30aba2
     }
   };
 
@@ -311,7 +312,7 @@ export default function AdminWorkspace() {
           return updated;
         });
       }
-    } catch (_err) {
+    } catch {
       console.warn('Could not fetch tiers from API');
     }
   };
@@ -349,7 +350,7 @@ export default function AdminWorkspace() {
         minMargin: newProdMargin,
         stock: stockVal
       });
-    } catch (_err) {
+    } catch {
       console.warn('Stored product locally');
     }
 
@@ -386,7 +387,7 @@ export default function AdminWorkspace() {
     setProducts(prev => prev.map(p => p.id === productId ? { ...p, stock: newStock } : p));
     try {
       await api.patch(`/products/${productId}/stock`, { stock: newStock });
-    } catch (_err) {
+    } catch {
       console.warn('Updated stock locally');
     }
     showNotification('success', `Incremented stock for '${prod.name}' to ${newStock} units`);
@@ -402,7 +403,7 @@ export default function AdminWorkspace() {
     setProducts(prev => prev.map(p => p.id === productId ? { ...p, stock: newStock } : p));
     try {
       await api.patch(`/products/${productId}/stock`, { stock: newStock });
-    } catch (_err) {
+    } catch {
       console.warn('Updated stock locally');
     }
     showNotification('info', `Decremented stock for '${prod.name}' to ${newStock} units`);
@@ -416,7 +417,7 @@ export default function AdminWorkspace() {
     setProducts(prev => prev.map(p => p.id === productId ? { ...p, stock: newStock } : p));
     try {
       await api.patch(`/products/${productId}/stock`, { stock: newStock });
-    } catch (_err) {
+    } catch {
       console.warn('Updated stock locally');
     }
   };
@@ -431,7 +432,7 @@ export default function AdminWorkspace() {
     setProducts(prev => prev.map(p => p.id === productId ? { ...p, base_price: newPrice } : p));
     try {
       await api.put(`/products/${productId}`, { ...prod, basePrice: newPrice });
-    } catch (_err) {
+    } catch {
       console.warn('Updated price locally');
     }
     showNotification('success', `Updated price for '${prod.name}' to $${newPrice.toLocaleString()}`);
@@ -474,7 +475,7 @@ export default function AdminWorkspace() {
         stock: updatedProd.stock,
         status: updatedProd.status
       });
-    } catch (_err) {
+    } catch {
       console.warn('Product updated locally');
     }
 
@@ -508,7 +509,7 @@ export default function AdminWorkspace() {
       async () => {
         try {
           await api.delete(`/products/${prod.id}`);
-        } catch (_err) {
+        } catch {
           console.warn('Deleted product locally');
         }
 
@@ -557,7 +558,7 @@ export default function AdminWorkspace() {
       ]);
 
       showNotification('success', `Saved configuration for ${tierObj.tier} Tier!`);
-    } catch (_err) {
+    } catch {
       showNotification('error', `Failed to save ${tierObj.tier} Tier configuration.`);
     }
   };
@@ -581,7 +582,7 @@ export default function AdminWorkspace() {
         minMarginPercent: parseFloat(newTierMargin || 20),
         approver: newTierApprover
       });
-    } catch (_e) {}
+    } catch {}
 
     setTiers(prev => [...prev.filter(t => t.tier !== newTierName), newTierObj]);
     setNewTierName('');

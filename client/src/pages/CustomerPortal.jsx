@@ -16,34 +16,13 @@ export default function CustomerPortal() {
     try {
       if (!quotationId) return;
       const res = await api.get(`/quotations/${quotationId}`);
-      if (res.data) {
-        setQuotation(res.data);
-      } else {
-        setFallbackQuotation();
-      }
+      setQuotation(res.data || null);
     } catch (error) {
       console.error('Failed to fetch public quotation details', error);
-      setFallbackQuotation();
+      setQuotation(null);
     } finally {
       setLoading(false);
     }
-  };
-
-  const setFallbackQuotation = () => {
-    setQuotation({
-      id: quotationId || 'QT-1001',
-      customer_name: 'Acme Enterprises',
-      customer_email: 'contact@acmeenterprises.com',
-      company_name: 'DealFlow360',
-      sales_rep_name: 'Enterprise Sales Team',
-      created_at: new Date().toISOString(),
-      status: 'approved',
-      lines: [
-        { id: 1, product_name: 'Enterprise Server X1', category: 'Hardware', line_type: 'one_time', quantity: 2, unit_price: 5000, discount_percent: 10 },
-        { id: 2, product_name: 'SaaS Platform License', category: 'Software', line_type: 'recurring', quantity: 25, unit_price: 120, discount_percent: 5 },
-        { id: 3, product_name: 'Implementation & Onboarding Services', category: 'Services', line_type: 'one_time', quantity: 1, unit_price: 2500, discount_percent: 0 }
-      ]
-    });
   };
 
   if (loading) {
