@@ -41,29 +41,74 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full text-left">
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-            <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 mb-4">
-              <i className="fa-solid fa-calculator text-xl"></i>
+        <div className="mt-24 w-full text-center">
+          <h2 className="text-3xl font-bold text-slate-900 mb-12">Complete Feature Suite</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto text-left">
+            
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 mb-4">
+                <i className="fa-solid fa-calculator text-xl"></i>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Smart Quotations</h3>
+              <p className="text-slate-600 text-sm">Dynamic builder separating one-time hardware and recurring SaaS fees, presenting clean ROI to customers.</p>
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Smart Quotations</h3>
-            <p className="text-slate-600">Dynamic builder separating one-time hardware and recurring SaaS fees, presenting clean ROI to customers.</p>
-          </div>
 
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-            <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 mb-4">
-              <i className="fa-solid fa-shield-halved text-xl"></i>
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-lg bg-teal-100 flex items-center justify-center text-teal-600 mb-4">
+                <i className="fa-solid fa-arrow-trend-up text-xl"></i>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Upsell Engine</h3>
+              <p className="text-slate-600 text-sm">Intelligently recommends complementary products to boost deal values automatically during quotation.</p>
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Blended Risk Scoring</h3>
-            <p className="text-slate-600">Intelligently route approvals based on value-weighted discount excesses across customer tiers and product categories.</p>
-          </div>
 
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-            <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center text-green-600 mb-4">
-              <i className="fa-solid fa-truck-fast text-xl"></i>
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 mb-4">
+                <i className="fa-solid fa-shield-halved text-xl"></i>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Blended Risk Scoring</h3>
+              <p className="text-slate-600 text-sm">Intelligently route approvals based on value-weighted discount excesses across customer tiers and categories.</p>
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Fulfillment Optimization</h3>
-            <p className="text-slate-600">Automatically split complex orders across multiple warehouses based on real-time stock availability.</p>
+
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center text-red-600 mb-4">
+                <i className="fa-solid fa-check-double text-xl"></i>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Multi-Tier Approvals</h3>
+              <p className="text-slate-600 text-sm">Manager and Finance-level approval workflows for high-risk deals, preventing margin erosion.</p>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center text-green-600 mb-4">
+                <i className="fa-solid fa-truck-fast text-xl"></i>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Fulfillment Splitting</h3>
+              <p className="text-slate-600 text-sm">Automatically split complex orders across multiple warehouses based on real-time stock, with manual overrides.</p>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 mb-4">
+                <i className="fa-solid fa-pen-nib text-xl"></i>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">E-Signatures & Portal</h3>
+              <p className="text-slate-600 text-sm">Dedicated branded customer portal with interactive chat negotiation and HTML5 canvas e-signatures.</p>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 mb-4">
+                <i className="fa-solid fa-chart-pie text-xl"></i>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Deal Health Dashboard</h3>
+              <p className="text-slate-600 text-sm">Real-time analytics tracking win rates, pending approvals, and active high-risk deals across your pipeline.</p>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 mb-4">
+                <i className="fa-solid fa-globe text-xl"></i>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Multi-Tenant Architecture</h3>
+              <p className="text-slate-600 text-sm">A robust Super Admin console managing multiple distinct tenant companies, users, and data isolation securely.</p>
+            </div>
+
           </div>
         </div>
       </main>
