@@ -17,6 +17,12 @@ class QuotationController {
     const result = await quotationService.submitQuotation(req.companyId, quotationId);
     return res.json({ success: true, ...result });
   }
+
+  async getCompanyQuotations(req, res) {
+    const quotationRepository = require('../repositories/quotation.repository');
+    const quotations = await quotationRepository.findByCompany(req.companyId);
+    return res.json(quotations);
+  }
 }
 
 module.exports = new QuotationController();

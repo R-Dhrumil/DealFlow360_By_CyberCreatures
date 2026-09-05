@@ -54,12 +54,19 @@ export default function CustomerDashboard() {
 
   const fetchCatalogProducts = async () => {
     try {
-      const res = await api.get('/products');
+      const res = await api.get('/marketplace/products');
       if (res.data && res.data.length > 0) {
         setProducts(res.data);
       }
     } catch (err) {
-      console.warn('Using seeded products in Customer Dashboard');
+      try {
+        const res2 = await api.get('/products');
+        if (res2.data && res2.data.length > 0) {
+          setProducts(res2.data);
+        }
+      } catch (err2) {
+        console.warn('Using seeded products in Customer Dashboard');
+      }
     }
   };
 

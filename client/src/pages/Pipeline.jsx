@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../api/client';
 
 const INITIAL_DEALS = [
   { id: 'Q-101', customer: 'Acme Corp', amount: 18500, riskScore: 0.00, stage: 'Draft', rep: 'Alex Rep', linesCount: 4, updatedAt: '10 mins ago' },
@@ -20,6 +21,31 @@ const STAGES = [
 export default function Pipeline() {
   const [deals, setDeals] = useState(INITIAL_DEALS);
   const [filterText, setFilterText] = useState('');
+
+  useEffect(() => {
+    fetchQuotations();
+  }, []);
+
+  const fetchQuotations = async () => {
+    try {
+      const res = await api.get('/quotations');
+      if (res.data && res.data.length > 0) {
+        const formatted = res.data.map(q => ({
+          id: q.id.slice(0, 8),
+          customer: q.customer_name || 'Acme Corp',
+          amount: parseFloat(q.total_amount || 0),
+          riskScore: parseFloat(q.blended_risk_score || 0),
+          stage: q.status === 'draft' ? 'Draft' : q.status === 'pending_approval' ? 'Pending Approval' : q.status === 'pending_finance_approval' ? 'Pending Finance' : q.status === 'approved' ? 'Approved' : 'Confirmed',
+          rep: q.sales_rep_name || 'Alex Rep',
+          linesCount: parseInt(q.lines_count || 1, 10),
+          updatedAt: 'Recently'
+        }));
+        setDeals(formatted);
+      }
+    } catch (err) {
+      console.warn('Using demo deal pipeline in Pipeline view');
+    }
+  };
 
   const filteredDeals = deals.filter(d => 
     d.customer.toLowerCase().includes(filterText.toLowerCase()) || 

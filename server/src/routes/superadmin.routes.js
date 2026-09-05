@@ -33,7 +33,7 @@ router.post('/upload', upload.single('file'), (req, res) => {
 
 // Note: Password update would ideally be in an auth or user controller, but for hackathon speed we add it here
 const { pool } = require('../config/db');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 
 router.put('/password', asyncWrap(async (req, res) => {
   const { currentPassword, newPassword } = req.body;

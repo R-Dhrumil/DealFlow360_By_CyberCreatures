@@ -26,6 +26,26 @@ class QuotationRepository {
     return result.rows[0];
   }
 
+  async findByCompany(companyId) {
+    const result = await db.query(
+      `SELECT 
+         q.id, q.status, q.blended_risk_score, q.created_at, q.updated_at,
+         c.name as customer_name, c.email as customer_email,
+         u.name as sales_rep_name,
+         COALESCE(SUM(ql.unit_price * ql.quantity * (1 - ql.discount_percent/100)), 0) as total_amount,
+         COUNT(ql.id) as lines_count
+       FROM quotations q
+       LEFT JOIN customers c ON q.customer_id = c.id
+       LEFT JOIN users u ON q.sales_rep_id = u.id
+       LEFT JOIN quotation_lines ql ON q.id = ql.quotation_id
+       WHERE q.company_id = $1
+       GROUP BY q.id, c.name, c.email, u.name
+       ORDER BY q.created_at DESC`,
+      [companyId]
+    );
+    return result.rows;
+  }
+
   async findByIdAndCompany(quotationId, companyId) {
     const result = await db.query(
       'SELECT * FROM quotations WHERE id = $1 AND company_id = $2',
