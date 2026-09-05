@@ -69,17 +69,32 @@ class QuotationController {
   }
 
   async getCompanyQuotations(req, res) {
+    const limit = parseInt(req.query.limit, 10) || 50;
+    const page = parseInt(req.query.page, 10) || 1;
+    const offset = (page - 1) * limit;
+
     if (req.user && req.user.role === 'customer') {
       const customerId = req.user.customerId || req.user.id || 'cust1';
-      const customerQuotes = await quotationRepository.findByCustomer(customerId);
-      if (customerQuotes && customerQuotes.length > 0) {
-        return res.json(customerQuotes);
+      const customerQuotes = await quotationRepository.findByCustomer(customerId, limit, offset);
+      if (customerQuotes && customerQuotes.data.length > 0) {
+        res.set('X-Total-Count', customerQuotes.totalCount);
+        return res.json(customerQuotes.data);
       }
-      const allQuotes = await quotationRepository.findAll();
-      return res.json(allQuotes);
+      const allQuotes = await quotationRepository.findAll(limit, offset);
+      res.set('X-Total-Count', allQuotes.totalCount);
+      return res.json(allQuotes.data);
     }
-    const quotations = await quotationRepository.findByCompany(req.companyId);
-    return res.json(quotations);
+    
+    // BOLA Protection: Sales Reps can only view their own quotes
+    if (req.user && req.user.role === 'sales_rep') {
+      const quotations = await quotationRepository.findByCompanyAndSalesRep(req.companyId, req.user.userId, limit, offset);
+      res.set('X-Total-Count', quotations.totalCount);
+      return res.json(quotations.data);
+    }
+
+    const quotations = await quotationRepository.findByCompany(req.companyId, limit, offset);
+    res.set('X-Total-Count', quotations.totalCount);
+    return res.json(quotations.data);
   }
 
   async getQuotationById(req, res) {
@@ -87,22 +102,34 @@ class QuotationController {
     if (!quote) {
       return res.status(404).json({ error: 'Quotation not found' });
     }
+
+    // BOLA Protection: Restrict access for specific roles
+    if (req.user && req.user.role === 'sales_rep' && quote.sales_rep_id !== req.user.userId) {
+      return res.status(403).json({ error: 'Forbidden: You do not have access to this quotation.' });
+    }
+    if (req.user && req.user.role === 'customer' && quote.customer_id !== (req.user.customerId || req.user.id)) {
+      return res.status(403).json({ error: 'Forbidden: You do not have access to this quotation.' });
+    }
+
     return res.json(quote);
   }
 
-  async updateStatus(req, res) {
+  async approve(req, res) {
     const quotationId = req.params.id;
-    const { status } = req.body;
-    const quote = await quotationRepository.findDetailById(quotationId);
-    if (!quote) {
-      return res.status(404).json({ error: 'Quotation not found' });
-    }
-    const updated = await quotationRepository.updateQuotationStatusAndScore(
-      quotationId,
-      status || 'confirmed',
-      quote.blended_risk_score || 0
-    );
-    return res.json({ success: true, quotation: updated });
+    const result = await quotationService.approveQuotation(req.companyId, quotationId, req.user.role);
+    return res.json({ success: true, ...result });
+  }
+
+  async reject(req, res) {
+    const quotationId = req.params.id;
+    const result = await quotationService.rejectQuotation(req.companyId, quotationId, req.user.role);
+    return res.json({ success: true, ...result });
+  }
+
+  async confirm(req, res) {
+    const quotationId = req.params.id;
+    const result = await quotationService.confirmQuotation(req.companyId, quotationId);
+    return res.json({ success: true, ...result });
   }
 
   async counterOffer(req, res) {

@@ -121,6 +121,96 @@ class QuotationService {
       requiredApproval: riskResult.requiredApproval
     };
   }
+
+  async approveQuotation(companyId, quotationId, userRole) {
+    const client = await db.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
+      if (!quotation) throw ApiError.notFound('Quotation not found');
+
+      if (quotation.status === 'pending_finance_approval' && userRole !== 'finance' && userRole !== 'admin') {
+        throw ApiError.forbidden('Only Finance can approve this high-risk quotation');
+      }
+      if (quotation.status !== 'pending_approval' && quotation.status !== 'pending_finance_approval') {
+        throw ApiError.conflict(`Cannot approve a quotation with status: ${quotation.status}`);
+      }
+
+      await quotationRepository.updateQuotationStatusAndScore(
+        quotationId,
+        'approved',
+        quotation.blended_risk_score,
+        client
+      );
+
+      await client.query('COMMIT');
+      return { quotationId, status: 'approved' };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async rejectQuotation(companyId, quotationId, userRole) {
+    const client = await db.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
+      if (!quotation) throw ApiError.notFound('Quotation not found');
+
+      if (quotation.status === 'pending_finance_approval' && userRole !== 'finance' && userRole !== 'admin') {
+        throw ApiError.forbidden('Only Finance can reject this high-risk quotation');
+      }
+      if (quotation.status !== 'pending_approval' && quotation.status !== 'pending_finance_approval') {
+        throw ApiError.conflict(`Cannot reject a quotation with status: ${quotation.status}`);
+      }
+
+      await quotationRepository.updateQuotationStatusAndScore(
+        quotationId,
+        'rejected',
+        quotation.blended_risk_score,
+        client
+      );
+
+      await client.query('COMMIT');
+      return { quotationId, status: 'rejected' };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async confirmQuotation(companyId, quotationId) {
+    const client = await db.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
+      if (!quotation) throw ApiError.notFound('Quotation not found');
+
+      if (quotation.status !== 'approved') {
+        throw ApiError.conflict(`Cannot confirm quotation. It must be approved first. Current status: ${quotation.status}`);
+      }
+
+      await quotationRepository.updateQuotationStatusAndScore(
+        quotationId,
+        'confirmed',
+        quotation.blended_risk_score,
+        client
+      );
+
+      await client.query('COMMIT');
+      return { quotationId, status: 'confirmed' };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
 }
 
 module.exports = new QuotationService();
