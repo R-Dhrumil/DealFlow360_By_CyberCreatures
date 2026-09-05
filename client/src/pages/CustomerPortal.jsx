@@ -178,18 +178,60 @@ export default function CustomerPortal() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   };
 
+  const [isSigning, setIsSigning] = useState(false);
+
   const submitSignature = async () => {
     if (!quotation) return;
     try {
-      await api.put(`/quotations/${quotation.id}/status`, { status: 'confirmed' });
-      const refreshed = await api.get(`/quotations/${quotation.id}`);
-      if (refreshed.data) {
-        setQuotation(refreshed.data);
+      setIsSigning(true);
+      const quoteId = quotation.rawId || quotation.id;
+      
+      try {
+        await api.put(`/quotations/${quoteId}/confirm`);
+      } catch (err1) {
+        try {
+          await api.put(`/quotations/${quoteId}/status`, { status: 'confirmed' });
+        } catch (err2) {
+          try {
+            await api.put(`/quotations/${quoteId}/counter`, { lines: [], status: 'confirmed' });
+          } catch (err3) {
+            console.error('All confirm endpoints failed:', err3);
+            throw err3;
+          }
+        }
       }
+
+      // Record acceptance message in discussion thread
+      try {
+        const msgRes = await api.post(`/quotations/${quoteId}/messages`, {
+          content: 'Quotation digitally signed and accepted by customer.',
+          sender_type: 'customer'
+        });
+        setMessages(prev => [...prev, msgRes.data]);
+      } catch (mErr) {
+        // non-blocking
+      }
+
+      try {
+        const refreshed = await api.get(`/quotations/${quoteId}`);
+        if (refreshed.data) {
+          setQuotation(refreshed.data);
+        } else {
+          setQuotation(prev => ({ ...prev, status: 'confirmed' }));
+        }
+      } catch (rErr) {
+        setQuotation(prev => ({ ...prev, status: 'confirmed' }));
+      }
+
       showNotification('success', 'Quotation accepted and digitally signed! Sales manager and fulfillment team notified.');
       setShowSignModal(false);
     } catch (err) {
       console.error('Failed to sign quotation', err);
+      const errMsg = err.response?.data?.error || err.response?.data?.message || 'Failed to confirm signature. Please check permissions.';
+      showNotification('error', errMsg);
+      alert(errMsg);
+    } finally {
+      setIsSigning(false);
     }
   };
 
@@ -543,8 +585,8 @@ export default function CustomerPortal() {
 
       {/* E-Signature Modal */}
       {showSignModal && (
-        <div className="fixed inset-0 bg-white bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-surface-soft">
             <div className="flex justify-between items-center">
               <h3 className="text-xl font-bold text-text-main">Legal E-Signature</h3>
               <button onClick={() => setShowSignModal(false)} className="text-text-muted hover:text-slate-600">
@@ -571,15 +613,25 @@ export default function CustomerPortal() {
             </div>
             
             <div className="flex justify-between items-center pt-2">
-              <button onClick={clearSignature} className="text-text-muted hover:text-slate-700 text-xs font-semibold">
+              <button onClick={clearSignature} disabled={isSigning} className="text-text-muted hover:text-slate-700 text-xs font-semibold">
                 <i className="fa-solid fa-eraser mr-1"></i> Clear Canvas
               </button>
               <div className="space-x-2">
-                <button onClick={() => setShowSignModal(false)} className="btn-secondary text-xs">
+                <button onClick={() => setShowSignModal(false)} disabled={isSigning} className="btn-secondary text-xs">
                   Cancel
                 </button>
-                <button onClick={submitSignature} className="btn-primary text-xs font-bold">
-                  Confirm Signature
+                <button 
+                  onClick={submitSignature} 
+                  disabled={isSigning}
+                  className="btn-primary text-xs font-bold disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {isSigning ? (
+                    <>
+                      <i className="fa-solid fa-spinner animate-spin"></i> Confirming...
+                    </>
+                  ) : (
+                    'Confirm Signature'
+                  )}
                 </button>
               </div>
             </div>

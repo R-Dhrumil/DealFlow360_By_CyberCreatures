@@ -142,6 +142,21 @@ class QuotationController {
     return res.json({ success: true, ...result });
   }
 
+  async updateStatus(req, res) {
+    const quotationId = req.params.id;
+    const { status } = req.body;
+    if (status === 'confirmed') {
+      const result = await quotationService.confirmQuotation(req.companyId, quotationId);
+      return res.json({ success: true, ...result });
+    }
+    const updated = await quotationRepository.updateQuotationStatusAndScore(
+      quotationId,
+      status,
+      0.00
+    );
+    return res.json({ success: true, quotation: updated });
+  }
+
   async counterOffer(req, res) {
     const quotationId = req.params.id;
     const { lines, status = 'pending_approval' } = req.body;

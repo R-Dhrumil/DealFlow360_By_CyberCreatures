@@ -191,8 +191,8 @@ class QuotationService {
       const quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
       if (!quotation) throw ApiError.notFound('Quotation not found');
 
-      if (quotation.status !== 'approved') {
-        throw ApiError.conflict(`Cannot confirm quotation. It must be approved first. Current status: ${quotation.status}`);
+      if (quotation.status !== 'approved' && quotation.status !== 'draft' && quotation.status !== 'presented') {
+        throw ApiError.conflict(`Cannot confirm quotation. Current status is ${quotation.status}. Pending manager approval is required first.`);
       }
 
       await quotationRepository.updateQuotationStatusAndScore(

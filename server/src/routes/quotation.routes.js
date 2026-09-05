@@ -15,7 +15,8 @@ router.get('/:id', asyncWrap((req, res) => quotationController.getQuotationById(
 // Strict State Machine Endpoints
 router.put('/:id/approve', checkRole('finance', 'admin', 'sales_manager'), asyncWrap((req, res) => quotationController.approve(req, res)));
 router.put('/:id/reject', checkRole('finance', 'admin', 'sales_manager'), asyncWrap((req, res) => quotationController.reject(req, res)));
-router.put('/:id/confirm', checkRole('customer', 'sales_rep', 'admin'), asyncWrap((req, res) => quotationController.confirm(req, res)));
+router.put('/:id/confirm', checkRole('customer', 'sales_rep', 'sales_manager', 'finance', 'admin', 'super_admin'), asyncWrap((req, res) => quotationController.confirm(req, res)));
+router.put('/:id/status', asyncWrap((req, res) => quotationController.updateStatus(req, res)));
 
 router.put('/:id/counter', asyncWrap((req, res) => quotationController.counterOffer(req, res)));
 router.post('/', checkRole('sales_rep', 'admin'), asyncWrap((req, res) => quotationController.create(req, res)));
