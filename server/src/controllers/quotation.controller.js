@@ -147,10 +147,17 @@ class QuotationController {
     const { lines, status = 'pending_approval' } = req.body;
     if (lines && Array.isArray(lines)) {
       for (const l of lines) {
-        await db.query(
-          'UPDATE quotation_lines SET discount_percent = $1 WHERE id = $2 AND quotation_id = $3',
-          [l.discountPercent, l.id, quotationId]
-        );
+        if (l.quantity !== undefined) {
+          await db.query(
+            'UPDATE quotation_lines SET discount_percent = $1, quantity = $2 WHERE id = $3 AND quotation_id = $4',
+            [l.discountPercent, Math.max(1, Number(l.quantity) || 1), l.id, quotationId]
+          );
+        } else {
+          await db.query(
+            'UPDATE quotation_lines SET discount_percent = $1 WHERE id = $2 AND quotation_id = $3',
+            [l.discountPercent, l.id, quotationId]
+          );
+        }
       }
     }
     const quote = await quotationRepository.findDetailById(quotationId);

@@ -14,6 +14,7 @@ export default function CustomerPortal() {
   
   // Counter Discount & Negotiation State
   const [counterDiscounts, setCounterDiscounts] = useState({});
+  const [counterQuantities, setCounterQuantities] = useState({});
   const [isCounterSubmitted, setIsCounterSubmitted] = useState(false);
 
   // E-Signature state
@@ -62,12 +63,30 @@ export default function CustomerPortal() {
     setCounterDiscounts(prev => ({ ...prev, [lineId]: parseFloat(val) || 0 }));
   };
 
+  const handleQuantityChange = (lineId, val) => {
+    const parsed = Math.max(1, parseInt(val, 10) || 1);
+    setCounterQuantities(prev => ({ ...prev, [lineId]: parsed }));
+  };
+
+  const incrementQuantity = (lineId, currentQty) => {
+    const activeQty = counterQuantities[lineId] !== undefined ? counterQuantities[lineId] : (Number(currentQty) || 1);
+    handleQuantityChange(lineId, activeQty + 1);
+  };
+
+  const decrementQuantity = (lineId, currentQty) => {
+    const activeQty = counterQuantities[lineId] !== undefined ? counterQuantities[lineId] : (Number(currentQty) || 1);
+    if (activeQty > 1) {
+      handleQuantityChange(lineId, activeQty - 1);
+    }
+  };
+
   const submitCounterProposal = async (e) => {
     e.preventDefault();
     if (!quotation || !quotation.lines) return;
 
     const payloadLines = quotation.lines.map(line => ({
       id: line.id,
+      quantity: counterQuantities[line.id] !== undefined ? counterQuantities[line.id] : Number(line.quantity || 1),
       discountPercent: counterDiscounts[line.id] !== undefined ? counterDiscounts[line.id] : Number(line.discount_percent || 0)
     }));
 
@@ -81,7 +100,7 @@ export default function CustomerPortal() {
       // Save persistent counter proposal message
       try {
         const msgRes = await api.post(`/quotations/${quotation.id}/messages`, {
-          content: 'Submitted counter-proposal with revised discounts. Sent to Sales Manager for review.',
+          content: 'Submitted counter-proposal with revised quantity / discounts. Sent to Sales Manager for review.',
           sender_type: 'customer'
         });
         setMessages(prev => [...prev, msgRes.data]);
@@ -89,13 +108,14 @@ export default function CustomerPortal() {
         const newMsg = {
           id: Date.now(),
           sender_type: 'customer',
-          content: `Submitted counter-proposal with revised discounts. Sent to Sales Manager for review.`,
+          content: `Submitted counter-proposal with revised quantity / discounts. Sent to Sales Manager for review.`,
           created_at: new Date().toISOString()
         };
         setMessages(prev => [...prev, newMsg]);
       }
 
       setIsCounterSubmitted(true);
+      showNotification('success', 'Counter proposal with updated quantities and discounts submitted!');
     } catch (err) {
       console.error('Failed to submit counter proposal', err);
     }
@@ -177,8 +197,9 @@ export default function CustomerPortal() {
     if (!quotation || !quotation.lines) return 0;
     return quotation.lines.reduce((acc, line) => {
       const activeDisc = counterDiscounts[line.id] !== undefined ? counterDiscounts[line.id] : Number(line.discount_percent || 0);
+      const activeQty = counterQuantities[line.id] !== undefined ? counterQuantities[line.id] : Number(line.quantity || 1);
       const net = (Number(line.unit_price) || 0) * (1 - activeDisc / 100);
-      return acc + (net * (Number(line.quantity) || 1));
+      return acc + (net * activeQty);
     }, 0);
   };
 
@@ -307,7 +328,7 @@ export default function CustomerPortal() {
                   <thead>
                     <tr className="text-xs font-semibold text-text-muted border-b border-surface-soft">
                       <th className="pb-3">Product / Service</th>
-                      <th className="pb-3 text-right">Qty</th>
+                      <th className="pb-3 text-center">Qty</th>
                       <th className="pb-3 text-right">Current Disc %</th>
                       <th className="pb-3 text-right">Propose Counter %</th>
                       <th className="pb-3 text-right">Line Total</th>
@@ -315,8 +336,10 @@ export default function CustomerPortal() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {quotation.lines.map(line => {
+                      const activeQty = counterQuantities[line.id] !== undefined ? counterQuantities[line.id] : Number(line.quantity || 1);
                       const activeDiscount = counterDiscounts[line.id] !== undefined ? counterDiscounts[line.id] : line.discount_percent;
                       const netPrice = line.unit_price * (1 - activeDiscount / 100);
+                      const isLocked = quotation.status === 'accepted' || quotation.status === 'confirmed';
 
                       return (
                         <tr key={line.id}>
@@ -324,20 +347,50 @@ export default function CustomerPortal() {
                             <p className="font-semibold text-slate-800 text-sm">{line.product_name}</p>
                             <span className="text-[11px] text-text-muted">{line.category} ({line.line_type})</span>
                           </td>
-                          <td className="py-4 text-right text-slate-600 font-medium text-sm">{line.quantity}</td>
+                          <td className="py-4 text-center">
+                            <div className="inline-flex items-center border border-surface-soft rounded-lg bg-slate-50 overflow-hidden shadow-xs">
+                              <button
+                                type="button"
+                                onClick={() => decrementQuantity(line.id, line.quantity)}
+                                disabled={activeQty <= 1 || isLocked}
+                                className="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-slate-200 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+                                title="Decrease Quantity"
+                              >
+                                <i className="fa-solid fa-minus text-[10px]"></i>
+                              </button>
+                              <input
+                                type="number"
+                                min="1"
+                                value={activeQty}
+                                onChange={(e) => handleQuantityChange(line.id, e.target.value)}
+                                disabled={isLocked}
+                                className="w-10 text-center font-bold text-text-main text-xs bg-transparent border-0 focus:ring-0 p-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => incrementQuantity(line.id, line.quantity)}
+                                disabled={isLocked}
+                                className="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-slate-200 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+                                title="Increase Quantity"
+                              >
+                                <i className="fa-solid fa-plus text-[10px]"></i>
+                              </button>
+                            </div>
+                          </td>
                           <td className="py-4 text-right text-text-muted text-sm font-mono">{line.discount_percent}%</td>
                           <td className="py-4 text-right">
                             <input
                               type="number"
                               min="0"
                               max="50"
-                              className="w-20 text-right bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs font-bold text-primary focus:ring-2 focus:ring-primary"
+                              disabled={isLocked}
+                              className="w-20 text-right bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs font-bold text-primary focus:ring-2 focus:ring-primary disabled:opacity-50"
                               value={activeDiscount}
                               onChange={(e) => handleCounterChange(line.id, e.target.value)}
                             />
                           </td>
                           <td className="py-4 text-right font-bold text-text-main text-sm">
-                            ${(netPrice * line.quantity).toFixed(2)}
+                            ${(netPrice * activeQty).toFixed(2)}
                           </td>
                         </tr>
                       );
@@ -346,7 +399,7 @@ export default function CustomerPortal() {
                 </table>
 
                 <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
-                  <span className="text-xs text-text-muted">Modify numbers above to counter proposal</span>
+                  <span className="text-xs text-text-muted">Modify quantity or discount above to propose a counter offer</span>
                   <button 
                     onClick={submitCounterProposal}
                     className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-xs font-bold shadow transition-colors flex items-center"
