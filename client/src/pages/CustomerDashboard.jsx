@@ -5,6 +5,61 @@ import { formatQuoteCode, formatSKU } from '../utils/formatters';
 import { useCurrency } from '../contexts/CurrencyContext';
 import CurrencyPicker from '../components/CurrencyPicker';
 
+const getQuoteStageInfo = (status) => {
+  switch (status) {
+    case 'draft':
+      return {
+        step: 1, // Salesperson Quotation
+        label: 'Salesperson Drafting',
+        badgeClass: 'bg-blue-100 text-blue-800 border-blue-200',
+        desc: 'Inquiry routed to eligible salespeople. Preparing quote.',
+        canAccept: false
+      };
+    case 'pending_approval':
+      return {
+        step: 2, // Manager Review
+        label: 'Under Manager Review',
+        badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
+        desc: 'Requires escalation: custom discount currently under Manager review.',
+        canAccept: false
+      };
+    case 'pending_admin_approval':
+    case 'pending_finance_approval':
+      return {
+        step: 3, // Company Admin
+        label: 'Under Company Admin Review',
+        badgeClass: 'bg-purple-100 text-purple-800 border-purple-200',
+        desc: 'Below floor price: escalated to Company Admin for executive clearance.',
+        canAccept: false
+      };
+    case 'approved':
+    case 'sent':
+      return {
+        step: 4, // Ready for Customer
+        label: 'Approved • Ready to Accept',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        desc: 'Quotation fully approved! Ready for your review and acceptance.',
+        canAccept: true
+      };
+    case 'confirmed':
+      return {
+        step: 5, // Confirmed
+        label: 'Deal Confirmed',
+        badgeClass: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+        desc: 'Accepted & locked for order fulfillment.',
+        canAccept: false
+      };
+    default:
+      return {
+        step: 1,
+        label: status ? status.replace(/_/g, ' ') : 'Processing',
+        badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
+        desc: 'Processing proposal in CPQ workflow.',
+        canAccept: false
+      };
+  }
+};
+
 export default function CustomerDashboard() {
   const { formatMoney } = useCurrency();
   const navigate = useNavigate();
@@ -313,9 +368,10 @@ export default function CustomerDashboard() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {quotations.map(q => {
-                  const statusLabel = (q.status || 'draft').replace(/_/g, ' ');
                   const totalVal = Number(q.total_amount || q.totalAmount || 0);
                   const quoteCode = formatQuoteCode(q.id);
+                  const stage = getQuoteStageInfo(q.status);
+
                   return (
                     <div
                       key={q.id}
@@ -326,16 +382,30 @@ export default function CustomerDashboard() {
                           <span className="font-mono font-bold text-emerald-700 text-xs bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
                             {quoteCode}
                           </span>
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${q.status === 'accepted' || q.status === 'approved' || q.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' :
-                            q.status === 'pending_approval' ? 'bg-amber-100 text-amber-800' :
-                              'bg-blue-100 text-blue-800'
-                            }`}>
-                            {statusLabel}
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${stage.badgeClass}`}>
+                            {stage.label}
                           </span>
                         </div>
 
                         <h3 className="font-bold text-text-main text-base">{q.product_summary || q.title || 'Quotation Proposal'}</h3>
-                        <p className="text-xs text-text-muted">Account: <strong>{q.customer_name || 'Acme Corp'}</strong> &bull; Assigned Rep: <strong>{q.sales_rep_name || 'M. Shah'}</strong> &bull; {q.lines_count || 1} item(s)</p>
+                        <p className="text-xs text-text-muted">Account: <strong>{q.customer_name || 'Acme Corp'}</strong> &bull; Assigned Rep: <strong>{q.sales_rep_name || 'Eligible Sales Team'}</strong> &bull; {q.lines_count || 1} item(s)</p>
+
+                        {/* Hierarchy Progress Flowchart */}
+                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/70 text-[11px] space-y-2">
+                          <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            <span className={stage.step >= 1 ? 'text-emerald-700' : ''}>1. Rep Quote</span>
+                            <i className="fa-solid fa-arrow-right text-[8px] text-slate-300"></i>
+                            <span className={stage.step >= 2 ? 'text-amber-700 font-extrabold' : ''}>2. Manager</span>
+                            <i className="fa-solid fa-arrow-right text-[8px] text-slate-300"></i>
+                            <span className={stage.step >= 3 ? 'text-purple-700 font-extrabold' : ''}>3. Admin</span>
+                            <i className="fa-solid fa-arrow-right text-[8px] text-slate-300"></i>
+                            <span className={stage.step >= 4 ? 'text-emerald-600 font-black' : ''}>4. Customer</span>
+                          </div>
+                          <p className="text-[11px] text-slate-600 font-medium">
+                            <i className="fa-solid fa-circle-info text-emerald-600 mr-1.5"></i>
+                            {stage.desc}
+                          </p>
+                        </div>
 
                         <div className="pt-2 flex justify-between items-baseline border-t border-slate-100">
                           <span className="text-xs text-text-muted font-medium">Total Proposal Value:</span>
@@ -348,10 +418,14 @@ export default function CustomerDashboard() {
                       <div className="pt-4 flex space-x-3">
                         <Link
                           to={`/portal/${q.id}`}
-                          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl text-center shadow transition-colors flex items-center justify-center space-x-2"
+                          className={`flex-1 text-white text-xs font-bold py-2.5 px-4 rounded-xl text-center shadow transition-colors flex items-center justify-center space-x-2 ${
+                            stage.canAccept
+                              ? 'bg-emerald-600 hover:bg-emerald-700'
+                              : 'bg-slate-800 hover:bg-slate-900'
+                          }`}
                         >
-                          <i className="fa-solid fa-pen-to-square"></i>
-                          <span>View & Negotiate Proposal</span>
+                          <i className={stage.canAccept ? 'fa-solid fa-check-double' : 'fa-solid fa-eye'}></i>
+                          <span>{stage.canAccept ? 'Review & Accept Proposal' : 'View Proposal Details'}</span>
                         </Link>
                       </div>
                     </div>

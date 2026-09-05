@@ -156,13 +156,12 @@ class QuotationController {
 
     // Customer: only see their own quotations
     if (req.user && req.user.role === 'customer') {
-      const customerId = req.user.customerId || req.user.id || null;
-      const customerEmail = req.user.email || null;
-      if (!customerId && !customerEmail) {
+      const customerId = req.user.customerId || req.user.id;
+      if (!customerId) {
         res.set('X-Total-Count', 0);
         return res.json([]);
       }
-      const customerQuotes = await quotationRepository.findByCustomer(customerId, customerEmail, limit, offset);
+      const customerQuotes = await quotationRepository.findByCustomer(customerId, null, limit, offset);
       res.set('X-Total-Count', customerQuotes ? customerQuotes.totalCount : 0);
       return res.json(customerQuotes ? customerQuotes.data : []);
     }
