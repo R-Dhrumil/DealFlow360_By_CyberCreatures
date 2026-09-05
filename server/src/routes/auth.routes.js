@@ -4,8 +4,8 @@ const authController = require('../controllers/auth.controller');
 const asyncWrap = require('../utils/asyncWrap');
 const { authRateLimiter } = require('../middleware/rateLimiter');
 
-router.post('/login', authRateLimiter, asyncWrap((req, res) => authController.login(req, res)));
-router.post('/customer/login', authRateLimiter, asyncWrap((req, res) => authController.customerLogin(req, res)));
-router.post('/customer/signup', authRateLimiter, asyncWrap((req, res) => authController.customerSignup(req, res)));
+router.post('/login', authRateLimiter, asyncWrap((req, res) => authController.unifiedLogin(req, res)));
+router.post('/signup', authRateLimiter, asyncWrap((req, res) => authController.unifiedSignup(req, res)));
 
 module.exports = router;
+

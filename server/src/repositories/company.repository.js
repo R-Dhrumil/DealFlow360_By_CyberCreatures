@@ -18,6 +18,23 @@ class CompanyRepository {
     );
     return result.rows;
   }
+
+  async getAllTenantUsers() {
+    const result = await db.query(
+      `SELECT 
+         u.id, 
+         u.name, 
+         u.email, 
+         u.role, 
+         u.created_at,
+         c.name as company_name,
+         c.subdomain_slug
+       FROM users u
+       LEFT JOIN companies c ON u.company_id = c.id
+       ORDER BY u.created_at DESC`
+    );
+    return result.rows;
+  }
 }
 
 module.exports = new CompanyRepository();

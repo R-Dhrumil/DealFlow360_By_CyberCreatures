@@ -17,6 +17,7 @@ import SuperAdminConsole from './pages/SuperAdminConsole';
 import SuperAdminSettings from './pages/SuperAdminSettings';
 import AdminWorkspace from './pages/AdminWorkspace';
 import FinanceOperations from './pages/FinanceOperations';
+import OperationsDashboard from './pages/OperationsDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
@@ -50,7 +51,9 @@ function App() {
         <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/portal/:id" element={<CustomerPortal />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Login defaultIsSignup={true} />} />
         <Route path="/customer/login" element={<Login />} />
+        <Route path="/superadmin" element={<Navigate to="/app/superadmin" replace />} />
 
         {/* Customer Protected Workspace */}
         <Route path="/customer" element={<ProtectedRoute allowedRoles={['customer']} />}>
@@ -59,7 +62,7 @@ function App() {
         </Route>
 
         {/* Internal Protected Routes */}
-        <Route path="/app" element={<ProtectedRoute allowedRoles={['sales_rep', 'sales_manager', 'finance', 'admin', 'super_admin']} />}>
+        <Route path="/app" element={<ProtectedRoute allowedRoles={['sales_rep', 'sales_manager', 'finance', 'admin', 'super_admin', 'operations']} />}>
           <Route element={<Layout />}>
             <Route path="pipeline" element={<Pipeline />} />
             <Route path="dashboard" element={<DealHealthDashboard />} />
@@ -72,6 +75,7 @@ function App() {
             <Route path="settings" element={<SuperAdminSettings />} />
             <Route path="admin" element={<AdminWorkspace />} />
             <Route path="finance" element={<FinanceOperations />} />
+            <Route path="operations" element={<OperationsDashboard />} />
             {/* Redirect /app to pipeline by default */}
             <Route index element={<Navigate to="pipeline" replace />} />
           </Route>

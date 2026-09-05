@@ -1,6 +1,14 @@
 import React from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 
+const DEMO_USERS = [
+  { name: 'Alex Rep', email: 'rep@dealflow360.com', role: 'sales_rep', label: 'Sales Rep' },
+  { name: 'Sarah Manager', email: 'manager@dealflow360.com', role: 'sales_manager', label: 'Sales Manager' },
+  { name: 'David Finance', email: 'finance@dealflow360.com', role: 'finance', label: 'Finance' },
+  { name: 'Elena Admin', email: 'admin@dealflow360.com', role: 'admin', label: 'Admin' },
+  { name: 'Omar Operations', email: 'ops@dealflow360.com', role: 'operations', label: 'Operations' }
+];
+
 export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,15 +22,17 @@ export default function Layout() {
   };
 
   const navItems = [
-    { name: 'Pipeline', path: '/app/pipeline', icon: 'fa-diagram-project', roles: ['sales_rep', 'sales_manager', 'finance', 'admin', 'super_admin'] },
-    { name: 'Dashboard', path: '/app/dashboard', icon: 'fa-chart-pie', roles: ['sales_rep', 'sales_manager', 'admin', 'super_admin'] },
+    { name: 'Pipeline', path: '/app/pipeline', icon: 'fa-diagram-project', roles: ['sales_rep', 'sales_manager', 'finance', 'admin'] },
+    { name: 'Dashboard', path: '/app/dashboard', icon: 'fa-chart-pie', roles: ['sales_rep', 'sales_manager', 'admin'] },
     { name: 'Quotation Builder', path: '/app/quote', icon: 'fa-file-invoice-dollar', roles: ['sales_rep', 'sales_manager', 'admin'] },
     { name: 'Approvals', path: '/app/approvals', icon: 'fa-check-double', roles: ['sales_manager', 'admin', 'finance', 'sales_rep'] },
+    { name: 'Operations Hub', path: '/app/operations', icon: 'fa-boxes-packing', roles: ['operations', 'admin', 'super_admin'] },
     { name: 'Finance Hub', path: '/app/finance', icon: 'fa-coins', roles: ['finance', 'admin', 'sales_manager'] },
-    { name: 'Admin Operations', path: '/app/admin', icon: 'fa-user-gear', roles: ['admin', 'super_admin'] },
-    { name: 'Reporting', path: '/app/reporting', icon: 'fa-chart-bar', roles: ['sales_manager', 'admin', 'super_admin'] },
-    { name: 'Global Tenants', path: '/app/superadmin', icon: 'fa-globe', roles: ['super_admin', 'admin'] },
+    { name: 'Admin Operations', path: '/app/admin', icon: 'fa-user-gear', roles: ['admin'] },
+    { name: 'Reporting', path: '/app/reporting', icon: 'fa-chart-bar', roles: ['sales_manager', 'admin'] },
+    { name: 'Super Admin Console', path: '/app/superadmin', icon: 'fa-crown', roles: ['super_admin'] },
   ];
+
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans">

@@ -5,6 +5,11 @@ class SuperadminController {
     const companies = await companyRepository.getAllCompaniesWithStats();
     return res.json(companies);
   }
+
+  async getTenantUsers(req, res) {
+    const users = await companyRepository.getAllTenantUsers();
+    return res.json(users);
+  }
 }
 
 module.exports = new SuperadminController();

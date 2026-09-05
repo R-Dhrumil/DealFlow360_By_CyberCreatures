@@ -8,6 +8,7 @@ const asyncWrap = require('../utils/asyncWrap');
 router.use(authenticate, checkRole('super_admin'));
 
 router.get('/companies', asyncWrap((req, res) => superadminController.getCompanies(req, res)));
+router.get('/users', asyncWrap((req, res) => superadminController.getTenantUsers(req, res)));
 
 const settingsController = require('../controllers/settings.controller');
 router.get('/settings', asyncWrap((req, res) => settingsController.getSettings(req, res)));
