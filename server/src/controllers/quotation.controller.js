@@ -3,7 +3,7 @@ const quotationRepository = require('../repositories/quotation.repository');
 const db = require('../config/db');
 const crypto = require('crypto');
 const { logAction } = require('../services/audit.service');
-const { emitRoleNotification, emitUserNotification } = require('../services/socket.service');
+const { emitCompanyRoleNotification, emitUserNotification, broadcastPipelineUpdate } = require('../services/socket.service');
 
 class QuotationController {
   async create(req, res) {
@@ -66,8 +66,8 @@ class QuotationController {
       base_price: product.base_price
     });
 
-    // Notify admin & assigned sales rep of customer quote request
-    emitRoleNotification(['admin', 'sales_manager'], {
+    // Notify dedicated company admin & assigned sales rep of customer quote request
+    emitCompanyRoleNotification(companyId, ['admin', 'sales_manager'], {
       type: 'info',
       title: '🛒 New Customer Request',
       message: `Customer requested quotation for ${product.name} (Qty: ${qty}) [Quote #${newQuote.id}]`,
@@ -79,6 +79,8 @@ class QuotationController {
       message: `Customer requested a quote for ${product.name} [Quote #${newQuote.id}]`,
       link: `/app/quote/${newQuote.id}`
     });
+
+    broadcastPipelineUpdate(companyId, { quotationId: newQuote.id, newStatus: 'pending_approval' });
 
     return res.status(201).json({
       success: true,
@@ -169,6 +171,27 @@ class QuotationController {
       status,
       0.00
     );
+
+    const quote = await quotationRepository.findDetailById(quotationId);
+    const companyId = req.companyId || quote?.company_id;
+
+    broadcastPipelineUpdate(companyId, { quotationId, newStatus: status });
+
+    if (quote) {
+      emitCompanyRoleNotification(companyId, ['admin', 'sales_manager'], {
+        type: 'info',
+        title: 'Pipeline Stage Updated',
+        message: `Quote #${quotationId} moved to stage: ${status.replace(/_/g, ' ')}.`,
+        link: `/app/pipeline`
+      });
+      emitUserNotification(quote.sales_rep_id, {
+        type: 'info',
+        title: 'Pipeline Stage Updated',
+        message: `Quote #${quotationId} was moved to ${status.replace(/_/g, ' ')}.`,
+        link: `/app/quote/${quotationId}`
+      });
+    }
+
     return res.json({ success: true, quotation: updated });
   }
 
@@ -197,6 +220,9 @@ class QuotationController {
       15.00
     );
 
+    const companyId = req.companyId || quote?.company_id;
+    broadcastPipelineUpdate(companyId, { quotationId, newStatus: status });
+
     if (quote) {
       emitUserNotification(quote.sales_rep_id, {
         type: 'warning',
@@ -204,7 +230,7 @@ class QuotationController {
         message: `Customer requested counter offer on Quote #${quotationId}.`,
         link: `/app/quote/${quotationId}`
       });
-      emitRoleNotification(['admin', 'sales_manager'], {
+      emitCompanyRoleNotification(companyId, ['admin', 'sales_manager'], {
         type: 'warning',
         title: '💬 Counter Offer Received',
         message: `Counter offer submitted for Quote #${quotationId}.`,
@@ -238,6 +264,7 @@ class QuotationController {
 
     const quote = await quotationRepository.findDetailById(quotationId);
     if (quote) {
+      const companyId = req.companyId || quote.company_id;
       if (senderType === 'customer') {
         emitUserNotification(quote.sales_rep_id, {
           type: 'info',
@@ -245,7 +272,7 @@ class QuotationController {
           message: `Customer message on Quote #${quotationId}: "${msgText.substring(0, 40)}..."`,
           link: `/app/quote/${quotationId}`
         });
-        emitRoleNotification(['admin'], {
+        emitCompanyRoleNotification(companyId, ['admin'], {
           type: 'info',
           title: '💬 Customer Negotiation Message',
           message: `Quote #${quotationId}: "${msgText.substring(0, 40)}..."`,
@@ -253,7 +280,7 @@ class QuotationController {
         });
       } else {
         // From Rep / Manager
-        emitRoleNotification(['admin'], {
+        emitCompanyRoleNotification(companyId, ['admin'], {
           type: 'info',
           title: '💬 Sales Team Message',
           message: `Quote #${quotationId} message posted by sales rep.`,

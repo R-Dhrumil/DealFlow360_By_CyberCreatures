@@ -1,7 +1,7 @@
 const approvalRepository = require('../repositories/approval.repository');
 const quotationRepository = require('../repositories/quotation.repository');
 const ApiError = require('../utils/apiError');
-const { emitUserNotification, emitRoleNotification } = require('./socket.service');
+const { emitUserNotification, emitCompanyRoleNotification, broadcastPipelineUpdate } = require('./socket.service');
 
 class ApprovalService {
   async getPendingApprovals(companyId, role) {
@@ -57,7 +57,10 @@ class ApprovalService {
 
     await approvalRepository.updateQuotationStatus(quotationId, newStatus);
 
-    // Emit Real-time Toast Notifications
+    // Emit real-time pipeline update so Kanban boards refresh automatically
+    broadcastPipelineUpdate(companyId, { quotationId, newStatus });
+
+    // Emit Real-time Toast Notifications to dedicated company admin/roles & user
     if (quotation) {
       const salesRepId = quotation.sales_rep_id;
       if (newStatus === 'approved') {
@@ -67,7 +70,7 @@ class ApprovalService {
           message: `Quote #${quotationId} has been approved by ${userRole.replace('_', ' ')}.`,
           link: `/app/quote/${quotationId}`
         });
-        emitRoleNotification(['admin', 'sales_manager'], {
+        emitCompanyRoleNotification(companyId, ['admin', 'sales_manager'], {
           type: 'success',
           title: 'Quotation Approved',
           message: `Quote #${quotationId} was approved.`,
@@ -80,7 +83,7 @@ class ApprovalService {
           message: `Quote #${quotationId} passed Manager review and is now pending Finance approval.`,
           link: `/app/quote/${quotationId}`
         });
-        emitRoleNotification(['finance', 'admin'], {
+        emitCompanyRoleNotification(companyId, ['finance', 'admin'], {
           type: 'warning',
           title: 'Finance Approval Needed',
           message: `Quote #${quotationId} requires finance team review and approval.`,
@@ -93,7 +96,7 @@ class ApprovalService {
           message: `Quote #${quotationId} was rejected. ${reason ? `Reason: ${reason}` : ''}`,
           link: `/app/quote/${quotationId}`
         });
-        emitRoleNotification(['admin'], {
+        emitCompanyRoleNotification(companyId, ['admin'], {
           type: 'error',
           title: 'Quotation Rejected',
           message: `Quote #${quotationId} was rejected by ${userRole.replace('_', ' ')}.`,

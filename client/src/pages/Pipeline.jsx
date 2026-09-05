@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { io } from 'socket.io-client';
 import api from '../api/client';
 import { formatQuoteCode } from '../utils/formatters';
 
@@ -12,6 +13,14 @@ const STAGES = [
   { name: 'Rejected', color: 'border-rose-400 bg-rose-50 text-rose-800' }
 ];
 
+const getSocketUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
+  }
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  return `http://${hostname}:5001`;
+};
+
 export default function Pipeline() {
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,11 +32,38 @@ export default function Pipeline() {
 
   useEffect(() => {
     fetchQuotations();
+
+    // Socket.IO Listener for real-time pipeline updates across connected clients
+    const socket = io(getSocketUrl(), {
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 10,
+    });
+
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+
+    socket.on('connect', () => {
+      if (user) {
+        socket.emit('register_user', {
+          userId: user.id || user.userId,
+          role: user.role,
+          companyId: user.company_id || user.companyId || 'c1',
+        });
+      }
+    });
+
+    socket.on('pipeline_updated', () => {
+      fetchQuotations(false);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
-  const fetchQuotations = async () => {
+  const fetchQuotations = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const res = await api.get('/quotations');
       if (res.data && res.data.length > 0) {
         const formatted = res.data.map(q => ({
@@ -53,7 +89,7 @@ export default function Pipeline() {
     } catch (err) {
       setDeals([]);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -66,12 +102,12 @@ export default function Pipeline() {
     e.stopPropagation();
     try {
       await api.put(`/quotations/${quoteId}/submit`);
-      await fetchQuotations();
+      await fetchQuotations(false);
     } catch (err) {
       console.error('Failed to submit quote for approval:', err);
       try {
         await api.put(`/quotations/${quoteId}/counter`, { lines: [], status: 'pending_approval' });
-        await fetchQuotations();
+        await fetchQuotations(false);
       } catch (err2) {
         console.error('Fallback submit failed:', err2);
       }
@@ -114,6 +150,11 @@ export default function Pipeline() {
 
     setIsSubmitting(true);
 
+    // Optimistic local state update for instantaneous zero-delay UI feedback
+    setDeals(prevDeals =>
+      prevDeals.map(d => (d.rawId === deal.rawId || d.id === deal.id ? { ...d, stage: targetStage } : d))
+    );
+
     const stageToStatusMap = {
       'Draft': 'draft',
       'Pending Approval': 'pending_approval',
@@ -154,9 +195,10 @@ export default function Pipeline() {
         await api.put(`/quotations/${deal.rawId || deal.id}/counter`, { lines: [], status: newStatus });
       }
 
-      await fetchQuotations();
+      await fetchQuotations(false);
     } catch (err) {
       console.error('Failed to update deal stage via drag & drop:', err);
+      await fetchQuotations(false);
     } finally {
       setIsSubmitting(false);
       setDraggedDeal(null);
