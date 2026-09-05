@@ -7,20 +7,10 @@ const config = require('../config/environment');
 const ApiError = require('../utils/apiError');
 const db = require('../config/db');
 
-// Seeded Demo Accounts for Instant Testing with PostgreSQL UUID compatibility
-const DEMO_ACCOUNTS = [
-  { email: 'superadmin@dealflow360.com', password: 'SuperAdmin123!', name: 'Super Admin', role: 'super_admin', id: '11111111-1111-1111-1111-100000000000' },
-  { email: 'admin@cybercreatures.com', password: 'Admin123!', name: 'CyberCreatures Admin', role: 'admin', id: '11111111-1111-1111-1111-100000000001', companyId: '11111111-1111-1111-1111-111111111111' },
-  { email: 'manager@cybercreatures.com', password: 'Manager123!', name: 'Sales Manager', role: 'sales_manager', id: '11111111-1111-1111-1111-100000000002', companyId: '11111111-1111-1111-1111-111111111111' },
-  { email: 'finance@cybercreatures.com', password: 'Finance123!', name: 'Finance Lead', role: 'finance', id: '11111111-1111-1111-1111-100000000004', companyId: '11111111-1111-1111-1111-111111111111' },
-  { email: 'sales@cybercreatures.com', password: 'Sales123!', name: 'Sales Executive', role: 'sales_rep', id: '11111111-1111-1111-1111-100000000003', companyId: '11111111-1111-1111-1111-111111111111' },
-  { email: 'customer@acme.com', password: 'Customer123!', name: 'Acme Procurement', role: 'customer', id: '33333333-3333-3333-3333-333333333331' },
-];
-
 class AuthService {
   /**
    * Unified login: Automatically identifies user role (Super Admin, User, or Customer)
-   * from credentials without requiring manual role selection.
+   * from database credentials without requiring manual role selection.
    */
   async unifiedLogin(email, password) {
     if (!email || !password) {
@@ -90,29 +80,7 @@ class AuthService {
       console.warn('Customer DB lookup error:', err.message);
     }
 
-    // 3. Fallback Check Pre-seeded DEMO_ACCOUNTS array
-    const demoMatch = DEMO_ACCOUNTS.find(
-      acc => acc.email.toLowerCase() === cleanEmail && acc.password === password
-    );
-    if (demoMatch) {
-      const token = jwt.sign(
-        { userId: demoMatch.id, role: demoMatch.role, companyId: demoMatch.companyId },
-        config.jwtSecret,
-        { expiresIn: config.jwtExpiresIn }
-      );
-      return {
-        token,
-        user: {
-          id: demoMatch.id,
-          name: demoMatch.name,
-          email: demoMatch.email,
-          role: demoMatch.role,
-          companyId: demoMatch.companyId
-        }
-      };
-    }
-
-    // 4. Invalid credentials
+    // 3. Credentials not found in DB
     throw ApiError.unauthorized('Invalid email or password');
   }
 
@@ -167,22 +135,8 @@ class AuthService {
           }
         };
       } catch (err) {
-        // Fallback response for offline setup mode
-        const token = jwt.sign(
-          { userId: 'usr-' + Date.now(), role: 'admin' },
-          config.jwtSecret,
-          { expiresIn: config.jwtExpiresIn }
-        );
-        return {
-          token,
-          user: {
-            id: 'usr-' + Date.now(),
-            name,
-            email: cleanEmail,
-            role: 'admin',
-            companyId: 'comp-' + Date.now()
-          }
-        };
+        if (err instanceof ApiError) throw err;
+        throw ApiError.internal(err.message || 'Failed to create admin user');
       }
     } else {
       try {
@@ -210,20 +164,8 @@ class AuthService {
           }
         };
       } catch (err) {
-        const token = jwt.sign(
-          { customerId: 'cust-' + Date.now(), role: 'customer' },
-          config.jwtSecret,
-          { expiresIn: config.jwtExpiresIn }
-        );
-        return {
-          token,
-          user: {
-            id: 'cust-' + Date.now(),
-            name,
-            email: cleanEmail,
-            role: 'customer'
-          }
-        };
+        if (err instanceof ApiError) throw err;
+        throw ApiError.internal(err.message || 'Failed to create customer account');
       }
     }
   }
