@@ -53,6 +53,14 @@ function App() {
           }
           metaDesc.content = settings.tagline;
         }
+        if (settings.favicon_url) {
+          let oldLink = document.querySelector("link[rel~='icon']");
+          if (oldLink) oldLink.remove();
+          let link = document.createElement('link');
+          link.rel = 'icon';
+          link.href = settings.favicon_url;
+          document.head.appendChild(link);
+        }
       })
       .catch(err => console.error('Error fetching global settings:', err));
   }, []);
