@@ -206,8 +206,10 @@ class QuotationRepository {
 
   async findByIdAndCompanyForUpdate(quotationId, companyId, client) {
     const result = await client.query(
-      'SELECT * FROM quotations WHERE id = $1 AND company_id = $2 FOR UPDATE',
-      [quotationId, companyId]
+      companyId 
+        ? 'SELECT * FROM quotations WHERE id = $1 AND company_id = $2 FOR UPDATE'
+        : 'SELECT * FROM quotations WHERE id = $1 FOR UPDATE',
+      companyId ? [quotationId, companyId] : [quotationId]
     );
     return result.rows[0] || null;
   }
