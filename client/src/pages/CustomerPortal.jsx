@@ -116,7 +116,9 @@ export default function CustomerPortal() {
     return netUnitPrice * qty;
   };
 
+  const totalGross = lines.reduce((sum, line) => sum + (Number(line.unit_price) || 0) * (Number(line.quantity) || 1), 0);
   const grandTotal = lines.reduce((sum, line) => sum + calculateLineNetTotal(line), 0);
+  const totalDiscountSaved = Math.max(0, totalGross - grandTotal);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-16">
@@ -171,7 +173,13 @@ export default function CustomerPortal() {
             </div>
             <div className="bg-white px-4 py-2 rounded-xl border border-emerald-200 text-right shadow-2xs">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Total Payable Amount</span>
+              {totalDiscountSaved > 0 && (
+                <span className="text-xs text-slate-400 line-through mr-2 font-mono">{formatMoney(totalGross)}</span>
+              )}
               <span className="text-xl font-black text-emerald-700 font-mono">{formatMoney(grandTotal)}</span>
+              <span className="block text-[10px] font-bold text-emerald-600 font-mono">
+                {totalDiscountSaved > 0 ? `Discount: -${formatMoney(totalDiscountSaved)}` : 'Discount: -₹0.00'}
+              </span>
             </div>
           </div>
         )}
@@ -270,10 +278,10 @@ export default function CustomerPortal() {
                         <td className="py-4 px-4 text-right font-mono">
                           {discount > 0 ? (
                             <span className="inline-block bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded text-xs border border-emerald-200">
-                              {discount}% OFF
+                              -{discount}% OFF
                             </span>
                           ) : (
-                            <span className="text-slate-400">-</span>
+                            <span className="text-slate-400 font-mono text-xs">- 0%</span>
                           )}
                         </td>
                         <td className="py-4 px-4 text-right font-mono font-bold text-emerald-700">
@@ -292,8 +300,6 @@ export default function CustomerPortal() {
 
           {/* Totals Summary */}
           {(() => {
-            const totalGross = lines.reduce((sum, line) => sum + (Number(line.unit_price) || 0) * (Number(line.quantity) || 1), 0);
-            const totalDiscountSaved = Math.max(0, totalGross - grandTotal);
             const isApproved = quotation.status === 'approved';
 
             return (
@@ -310,22 +316,20 @@ export default function CustomerPortal() {
                   )}
                 </div>
 
-                <div className="w-full sm:w-80 space-y-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-200">
+                <div className="w-full sm:w-80 space-y-3 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-200">
                   <div className="flex justify-between items-center text-xs text-slate-600">
                     <span>Base Subtotal:</span>
                     <span className="font-mono font-semibold text-slate-700">{formatMoney(totalGross)}</span>
                   </div>
 
-                  {totalDiscountSaved > 0 && (
-                    <div className="flex justify-between items-center text-xs text-emerald-700 font-medium">
-                      <span className="flex items-center gap-1">
-                        <i className="fa-solid fa-tag text-[10px]"></i> Discount Savings:
-                      </span>
-                      <span className="font-mono font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                        - {formatMoney(totalDiscountSaved)}
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex justify-between items-center text-xs text-emerald-700 font-medium">
+                    <span className="flex items-center gap-1">
+                      <i className="fa-solid fa-tag text-[10px]"></i> Discount:
+                    </span>
+                    <span className="font-mono font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
+                      - {formatMoney(totalDiscountSaved)} {totalGross > 0 && totalDiscountSaved > 0 ? `(-${((totalDiscountSaved / totalGross) * 100).toFixed(0)}%)` : ''}
+                    </span>
+                  </div>
 
                   <div className="pt-2 border-t border-slate-200 flex justify-between items-baseline">
                     <span className={`text-sm font-bold ${isApproved ? 'text-emerald-950 font-black' : 'text-slate-800'}`}>
