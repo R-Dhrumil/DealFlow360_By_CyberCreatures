@@ -555,7 +555,9 @@ export default function AdminWorkspace() {
                     <th className="p-3">Category</th>
                     <th className="p-3 text-right">Base Price ($)</th>
                     <th className="p-3 text-center">Floor Margin</th>
+                    <th className="p-3 text-center">Stock Units</th>
                     <th className="p-3 text-center">Status</th>
+                    <th className="p-3 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -573,15 +575,44 @@ export default function AdminWorkspace() {
                     filteredProducts.map(p => (
                       <tr key={p.id} className="hover:bg-purple-50/40 transition-colors">
                         <td className="p-3 font-mono font-bold text-text-muted">{p.sku || 'SKU-00' + p.id}</td>
-                        <td className="p-3 font-extrabold text-text-main">{p.name}</td>
+                        <td className="p-3">
+                          <div className="font-extrabold text-text-main">{p.name}</div>
+                          {p.description && (
+                            <div className="text-[10px] text-text-muted truncate max-w-xs">{p.description}</div>
+                          )}
+                        </td>
                         <td className="p-3">
                           <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg text-[10px] font-bold">
                             {p.category}
                           </span>
                         </td>
-                        <td className="p-3 text-right font-black text-purple-700">
-                          ${typeof p.base_price === 'number' ? p.base_price.toLocaleString() : p.base_price}
-                          <span className="text-[10px] text-text-muted font-normal block">/ {p.unit || 'unit'}</span>
+                        <td className="p-3 text-right">
+                          <div className="flex items-center justify-end space-x-1.5">
+                            <div className="text-right">
+                              <span className="font-black text-purple-700 block">
+                                ${typeof p.base_price === 'number' ? p.base_price.toLocaleString() : p.base_price}
+                              </span>
+                              <span className="text-[10px] text-text-muted font-normal block">/ {p.unit || 'unit'}</span>
+                            </div>
+                            <div className="flex flex-col ml-1">
+                              <button 
+                                type="button"
+                                onClick={() => handleAdjustPrice(p.id, 10)}
+                                title="Quick increment price (+$10)"
+                                className="w-5 h-4 flex items-center justify-center text-[9px] text-slate-500 hover:text-primary hover:bg-purple-100 rounded transition-colors"
+                              >
+                                <i className="fa-solid fa-chevron-up"></i>
+                              </button>
+                              <button 
+                                type="button"
+                                onClick={() => handleAdjustPrice(p.id, -10)}
+                                title="Quick decrement price (-$10)"
+                                className="w-5 h-4 flex items-center justify-center text-[9px] text-slate-500 hover:text-primary hover:bg-purple-100 rounded transition-colors"
+                              >
+                                <i className="fa-solid fa-chevron-down"></i>
+                              </button>
+                            </div>
+                          </div>
                         </td>
                         <td className="p-3 text-center">
                           <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px]">
@@ -589,9 +620,64 @@ export default function AdminWorkspace() {
                           </span>
                         </td>
                         <td className="p-3 text-center">
-                          <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-[10px]">
-                            Active
+                          <div className="inline-flex items-center border border-surface-soft rounded-lg bg-slate-50 overflow-hidden shadow-xs">
+                            <button
+                              type="button"
+                              onClick={() => handleDecrementStock(p.id)}
+                              disabled={(p.stock !== undefined ? p.stock : 100) <= 0}
+                              className="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-slate-200 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+                              title="Decrement stock quantity"
+                            >
+                              <i className="fa-solid fa-minus text-[9px]"></i>
+                            </button>
+                            <input
+                              type="number"
+                              min="0"
+                              value={p.stock !== undefined ? p.stock : 100}
+                              onChange={(e) => handleStockChange(p.id, e.target.value)}
+                              className="w-10 text-center font-bold text-text-main text-xs bg-transparent border-0 focus:ring-0 p-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              title="In-stock inventory units"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleIncrementStock(p.id)}
+                              className="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-slate-200 transition-colors"
+                              title="Increment stock quantity"
+                            >
+                              <i className="fa-solid fa-plus text-[9px]"></i>
+                            </button>
+                          </div>
+                        </td>
+                        <td className="p-3 text-center">
+                          <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                            p.status === 'Inactive' 
+                              ? 'bg-slate-100 text-slate-600' 
+                              : p.status === 'Archived' 
+                                ? 'bg-red-100 text-red-700' 
+                                : 'bg-emerald-100 text-emerald-800'
+                          }`}>
+                            {p.status || 'Active'}
                           </span>
+                        </td>
+                        <td className="p-3 text-center">
+                          <div className="flex items-center justify-center space-x-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleEditProduct(p)}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-primary hover:bg-purple-100 transition-colors"
+                              title="Edit Product & Pricing"
+                            >
+                              <i className="fa-solid fa-pen-to-square text-xs"></i>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteProduct(p)}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              title="Delete Product from Company Catalog"
+                            >
+                              <i className="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
