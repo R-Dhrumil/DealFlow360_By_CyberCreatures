@@ -2,8 +2,8 @@ const db = require('../config/db');
 const { logAction } = require('../services/audit.service');
 
 class QuotationRepository {
-  async createQuotation(companyId, customerId, salesRepId, status = 'draft') {
-    const result = await db.query(
+  async createQuotation(companyId, customerId, salesRepId, status = 'draft', client = db) {
+    const result = await client.query(
       `INSERT INTO quotations (company_id, customer_id, sales_rep_id, status)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
@@ -16,8 +16,8 @@ class QuotationRepository {
     return newQuote;
   }
 
-  async createQuotationLine(quotationId, productId, quantity, unitPrice, discountPercent = 0, lineType = 'one_time') {
-    const result = await db.query(
+  async createQuotationLine(quotationId, productId, quantity, unitPrice, discountPercent = 0, lineType = 'one_time', client = db) {
+    const result = await client.query(
       `INSERT INTO quotation_lines (quotation_id, product_id, quantity, unit_price, discount_percent, line_type)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
@@ -139,8 +139,8 @@ class QuotationRepository {
     return result.rows;
   }
 
-  async updateQuotationStatusAndScore(quotationId, status, blendedRiskScore) {
-    const result = await db.query(
+  async updateQuotationStatusAndScore(quotationId, status, blendedRiskScore, client = db) {
+    const result = await client.query(
       `UPDATE quotations 
        SET status = $1, blended_risk_score = $2, updated_at = CURRENT_TIMESTAMP
        WHERE id = $3
@@ -156,18 +156,18 @@ class QuotationRepository {
       if (status === 'confirmed') {
         try {
           // Create Order
-          const orderRes = await db.query(
+          const orderRes = await client.query(
             `INSERT INTO orders (company_id, quotation_id, status) VALUES ($1, $2, 'pending_fulfillment') ON CONFLICT (quotation_id) DO NOTHING RETURNING id`,
             [updatedQuotation.company_id, quotationId]
           );
           
           if (orderRes.rows[0]) {
             // Sum quotation lines for invoice amount
-            const linesRes = await db.query(`SELECT SUM(unit_price * quantity * (1 - discount_percent/100)) as total FROM quotation_lines WHERE quotation_id = $1`, [quotationId]);
+            const linesRes = await client.query(`SELECT SUM(unit_price * quantity * (1 - discount_percent/100)) as total FROM quotation_lines WHERE quotation_id = $1`, [quotationId]);
             const totalAmount = linesRes.rows[0]?.total || 0;
 
             // Create Invoice
-            await db.query(
+            await client.query(
               `INSERT INTO invoices (company_id, order_id, amount, status) VALUES ($1, $2, $3, 'unpaid')`,
               [updatedQuotation.company_id, orderRes.rows[0].id, totalAmount]
             );

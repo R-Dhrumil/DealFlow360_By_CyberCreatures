@@ -23,12 +23,27 @@ const storage = multer.diskStorage({
     cb(null, `upload-${Date.now()}${ext}`);
   }
 });
-const upload = multer({ storage });
+const fileFilter = (req, file, cb) => {
+  const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/x-icon', 'image/vnd.microsoft.icon'];
+  if (allowedMimes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only JPG, PNG, WEBP, and ICO are allowed.'));
+  }
+};
+const upload = multer({ 
+  storage, 
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
 
-router.post('/upload', upload.single('file'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  const serverUrl = req.protocol + '://' + req.get('host');
-  res.json({ url: `${serverUrl}/uploads/${req.file.filename}` });
+router.post('/upload', (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const serverUrl = req.protocol + '://' + req.get('host');
+    res.json({ url: `${serverUrl}/uploads/${req.file.filename}` });
+  });
 });
 
 // Note: Password update would ideally be in an auth or user controller, but for hackathon speed we add it here
@@ -39,6 +54,12 @@ router.put('/password', asyncWrap(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   if (!currentPassword || !newPassword) {
     return res.status(400).json({ error: 'Missing current or new password' });
+  }
+
+  // Enforce password strength: at least 8 chars, 1 uppercase, 1 number
+  const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+  if (!passwordRegex.test(newPassword)) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters long and contain at least one uppercase letter and one number.' });
   }
   
   const userResult = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.userId]);
