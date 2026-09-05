@@ -15,6 +15,10 @@ export default function QuotationView() {
   useEffect(() => {
     fetchQuotation();
     fetchMessages();
+    const interval = setInterval(() => {
+      fetchMessages();
+    }, 3000);
+    return () => clearInterval(interval);
   }, [quotationId]);
 
   const fetchMessages = async () => {
