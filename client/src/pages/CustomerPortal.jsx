@@ -41,7 +41,7 @@ export default function CustomerPortal() {
     }
   };
 
-  const handleConfirmPayment = async () => {
+  const handleConfirmPayment = async (transactionResult = 'success') => {
     setPaymentConfirming(true);
     try {
       const qLines = quotation.lines || [];
@@ -59,10 +59,20 @@ export default function CustomerPortal() {
       const res = await api.put(`/quotations/${quotationId}/confirm`, {
         paymentMethod: selectedPayment || 'cod',
         paymentType,
-        amount: totalAmount
+        amount: totalAmount,
+        transactionResult
       });
       setShowPaymentModal(false);
-      // Refetch quotation to show confirmed status
+      
+      if (res.data?.status === 'blocked') {
+        alert(res.data?.message || 'Quotation blocked due to too many failed payment attempts.');
+      } else if (res.data?.status === 'closed' || res.data?.status === 'confirmed') {
+        alert('Payment successful! Order confirmed.');
+      } else if (transactionResult === 'failed') {
+        alert(res.data?.message || 'Payment failed. Please try again.');
+      }
+
+      // Refetch quotation to show confirmed/blocked status
       await fetchQuotation();
     } catch (err) {
       console.error('Failed to confirm payment', err);
@@ -185,8 +195,8 @@ export default function CustomerPortal() {
           </div>
         )}
 
-        {/* Status Banner when Confirmed */}
-        {quotation.status === 'confirmed' && (
+        {/* Status Banner when Confirmed / Closed */}
+        {(quotation.status === 'confirmed' || quotation.status === 'closed') && (
           <div className="bg-emerald-50 border border-emerald-300/80 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg font-bold shadow">
@@ -205,6 +215,27 @@ export default function CustomerPortal() {
               <span className="block text-[10px] font-bold text-emerald-600 font-mono">
                 {totalDiscountSaved > 0 ? `Discount: -${formatMoney(totalDiscountSaved)}` : 'Discount: -₹0.00'}
               </span>
+            </div>
+          </div>
+        )}
+
+        {/* Status Banner when Blocked */}
+        {quotation.status === 'blocked' && (
+          <div className="bg-rose-50 border border-rose-300/80 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center text-lg font-bold shadow">
+                <i className="fa-solid fa-ban"></i>
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-rose-950">Payment Blocked</h3>
+                <p className="text-xs text-rose-800 mt-0.5">
+                  This quotation has been blocked due to multiple failed payment attempts. Please contact support or your sales rep.
+                </p>
+              </div>
+            </div>
+            <div className="bg-white px-4 py-2 rounded-xl border border-rose-200 text-right shadow-2xs">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Status</span>
+              <span className="text-xl font-black text-rose-700 font-mono">Blocked</span>
             </div>
           </div>
         )}
@@ -378,9 +409,15 @@ export default function CustomerPortal() {
                     </button>
                   )}
 
-                  {quotation.status === 'confirmed' && (
+                  {(quotation.status === 'confirmed' || quotation.status === 'closed') && (
                     <div className="w-full mt-4 bg-emerald-100/70 border border-emerald-300 text-emerald-900 font-bold py-3 px-4 rounded-xl text-center text-sm flex items-center justify-center gap-2">
                       <i className="fa-solid fa-circle-check text-emerald-600"></i> Order Confirmed &amp; In Fulfillment
+                    </div>
+                  )}
+
+                  {quotation.status === 'blocked' && (
+                    <div className="w-full mt-4 bg-rose-100/70 border border-rose-300 text-rose-900 font-bold py-3 px-4 rounded-xl text-center text-sm flex items-center justify-center gap-2">
+                      <i className="fa-solid fa-ban text-rose-600"></i> Payment Blocked (Too Many Attempts)
                     </div>
                   )}
                 </div>
@@ -463,10 +500,18 @@ export default function CustomerPortal() {
                 </div>
               )}
 
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+              <div className="pt-4 border-t border-slate-100 flex justify-end gap-3 flex-wrap">
                 <button onClick={() => setShowPaymentModal(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-all">Cancel</button>
                 <button 
-                  onClick={handleConfirmPayment} 
+                  onClick={() => handleConfirmPayment('failed')} 
+                  disabled={!selectedPayment || paymentConfirming}
+                  className="px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 text-sm font-bold rounded-lg transition-all flex items-center gap-2"
+                  title="For demonstration: Simulate a failed payment attempt"
+                >
+                  <i className="fa-solid fa-triangle-exclamation"></i> Simulate Failure
+                </button>
+                <button 
+                  onClick={() => handleConfirmPayment('success')} 
                   disabled={!selectedPayment || paymentConfirming}
                   className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-bold rounded-lg transition-all flex items-center gap-2"
                 >

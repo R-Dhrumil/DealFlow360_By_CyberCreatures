@@ -560,17 +560,37 @@ class QuotationService {
       quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId || null, client);
       if (!quotation) throw ApiError.notFound('Quotation not found');
 
-      if (quotation.status === 'confirmed') {
+      if (['confirmed', 'closed'].includes(quotation.status)) {
         await client.query('COMMIT');
-        return { quotationId, status: 'confirmed', message: 'Quotation is already confirmed.' };
+        return { quotationId, status: quotation.status, message: `Quotation is already ${quotation.status}.` };
+      }
+
+      if (quotation.status === 'blocked') {
+        throw ApiError.conflict('Cannot confirm a blocked quotation due to too many failed payment attempts.');
       }
 
       if (quotation.status === 'rejected') {
         throw ApiError.conflict('Cannot confirm a rejected quotation.');
       }
 
+      // Handle failed payment scenario
+      if (paymentData.transactionResult === 'failed') {
+        const attempts = (quotation.payment_attempts || 0) + 1;
+        if (attempts >= 3) {
+          // Block the quotation
+          await client.query('UPDATE quotations SET status = $1, payment_attempts = $2 WHERE id = $3', ['blocked', attempts, quotationId]);
+          await client.query('COMMIT');
+          return { quotationId, status: 'blocked', message: 'Quotation blocked due to 3 failed payment attempts.' };
+        } else {
+          await client.query('UPDATE quotations SET payment_attempts = $1 WHERE id = $2', [attempts, quotationId]);
+          await client.query('COMMIT');
+          return { quotationId, status: quotation.status, message: `Payment failed. You have ${3 - attempts} attempt(s) remaining.` };
+        }
+      }
+
+      // On successful payment (or default behavior) -> Close quotation
       await quotationRepository.updateQuotationStatusAndScore(
-        quotationId, 'confirmed', quotation.blended_risk_score || 0, client
+        quotationId, 'closed', quotation.blended_risk_score || 0, client
       );
 
       if (paymentData.paymentMethod) {
@@ -598,6 +618,7 @@ class QuotationService {
 
         const normalizedType = (paymentData.paymentType === 'recurring' || paymentData.paymentType === 'subscription-monthly')
           ? 'subscription-monthly'
+
           : 'one-time';
         const rawMethod = (paymentData.paymentMethod || 'cod').toLowerCase();
         const normalizedMethod = (rawMethod === 'cod' || rawMethod.includes('cash')) ? 'cod' : (rawMethod.includes('upi') ? 'upi' : 'manual');
