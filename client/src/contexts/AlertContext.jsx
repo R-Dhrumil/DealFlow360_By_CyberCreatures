@@ -98,7 +98,7 @@ const AlertModal = ({ config, onClose }) => {
             )}
             <button
               onClick={() => handleClose(onConfirm)}
-              className={`flex-1 px-4 py-2 rounded-lg text-black font-semibold text-sm transition-colors shadow-sm ${type === 'error' || type === 'warning' ? 'bg-destructive hover:bg-red-700' : 'bg-primary hover:bg-primary-dark'
+              className={`flex-1 px-4 py-2 rounded-lg text-black hover:text-white font-semibold text-sm transition-colors shadow-sm ${type === 'error' || type === 'warning' ? 'bg-destructive hover:bg-red-700' : 'bg-primary hover:bg-primary-dark'
                 }`}
             >
               OK
