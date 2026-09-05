@@ -341,7 +341,7 @@ export default function CustomerDashboard() {
                         <div className="pt-2 flex justify-between items-baseline border-t border-slate-100">
                           <span className="text-xs text-text-muted font-medium">Total Proposal Value:</span>
                           <span className="text-2xl font-black text-emerald-700">
-                            ${productVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ${totalVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                         </div>
                       </div>
