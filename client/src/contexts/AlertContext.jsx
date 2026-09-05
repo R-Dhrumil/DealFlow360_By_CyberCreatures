@@ -59,13 +59,13 @@ const AlertModal = ({ config, onClose }) => {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Backdrop */}
-      <div 
-        className={`absolute inset-0 bg-foreground/30 backdrop-blur-sm transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`} 
+      <div
+        className={`absolute inset-0 bg-foreground/30 backdrop-blur-sm transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
         onClick={() => handleClose(onCancel)}
       />
-      
+
       {/* Modal Box */}
-      <div 
+      <div
         className={`relative bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 overflow-hidden transition-all duration-200 transform ${isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
         role="dialog"
         aria-modal="true"
@@ -77,7 +77,7 @@ const AlertModal = ({ config, onClose }) => {
               {iconConfig.icon}
             </span>
           </div>
-          
+
           <div className="space-y-1">
             <h3 id="alert-title" className="text-lg font-bold text-text-main">
               {title}
@@ -98,9 +98,8 @@ const AlertModal = ({ config, onClose }) => {
             )}
             <button
               onClick={() => handleClose(onConfirm)}
-              className={`flex-1 px-4 py-2 rounded-lg text-white font-semibold text-sm transition-colors shadow-sm ${
-                type === 'error' || type === 'warning' ? 'bg-destructive hover:bg-red-700' : 'bg-primary hover:bg-primary-dark'
-              }`}
+              className={`flex-1 px-4 py-2 rounded-lg text-black font-semibold text-sm transition-colors shadow-sm ${type === 'error' || type === 'warning' ? 'bg-destructive hover:bg-red-700' : 'bg-primary hover:bg-primary-dark'
+                }`}
             >
               OK
             </button>
