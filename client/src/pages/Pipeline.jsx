@@ -174,8 +174,8 @@ export default function Pipeline() {
         </div>
 
         <div className="flex items-center space-x-3">
-          <div className="relative">
-            <i className="fa-solid fa-magnifying-glass absolute left-3 top-3 text-text-muted text-sm"></i>
+          <div className="relative flex items-center">
+            <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm pointer-events-none"></i>
             <input
               type="text"
               placeholder="Search deals or customer..."

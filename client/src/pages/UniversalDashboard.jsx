@@ -155,10 +155,10 @@ const UniversalDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 pb-7">
         {/* Metric 1: Pending Approvals */}
         <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 "></div>
+       
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
-
+              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Gatekeeper Queue</span>
               <span className="font-bold text-sm text-text-main pt-0.5">Pending Approvals</span>
             </div>
             <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-status/10 text-rose-status border border-rose-status/20 text-xs font-bold">
@@ -172,8 +172,8 @@ const UniversalDashboard = () => {
             </div>
             <span className="font-mono text-sm font-bold text-text-main">{formatCurrency(pendingValue)}</span>
           </div>
-          <div className="pt-3 mt-4 border-t border-surface-soft flex items-center justify-end">
-            
+          <div className="pt-3 mt-4 border-t border-surface-soft flex items-center justify-between">
+            <span className="text-xs text-text-muted">{pendingDeals.length > 0 ? `${pendingDeals.length} awaiting review` : 'All cleared'}</span>
             <Link to="/app/approvals" className="text-xs font-semibold text-rose-status hover:underline flex items-center gap-0.5">
               Resolve <span className="material-symbols-outlined text-xs">arrow_forward</span>
             </Link>
@@ -181,10 +181,11 @@ const UniversalDashboard = () => {
         </div>
 
         {/* Metric 2: Open Quotations */}
-        <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group">
+        <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group overflow-hidden">
+         
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
-              
+              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Deal Desk Active</span>
               <span className="font-bold text-sm text-text-main pt-0.5">Open Quotations</span>
             </div>
             <span className="p-2 rounded-xl bg-amber-status/10 text-amber-status border border-amber-status/20">
@@ -210,7 +211,8 @@ const UniversalDashboard = () => {
         </div>
 
         {/* Metric 3: At-Risk Deals */}
-        <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group">
+        <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group overflow-hidden">
+         
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">AI Deal Sentry</span>
@@ -234,7 +236,8 @@ const UniversalDashboard = () => {
         </div>
 
         {/* Metric 4: Revenue Recognized */}
-        <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group">
+        <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group overflow-hidden">
+         
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Financial Performance</span>
@@ -281,7 +284,7 @@ const UniversalDashboard = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="relative">
+                <div className="relative flex items-center">
                   <input
                     className="pl-8 pr-3 py-1.5 rounded-xl bg-white border border-surface-soft text-text-main text-xs placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
                     placeholder="Filter pipeline..."
@@ -289,7 +292,7 @@ const UniversalDashboard = () => {
                     value={filterText}
                     onChange={(e) => setFilterText(e.target.value)}
                   />
-                  <span className="material-symbols-outlined absolute left-2.5 top-2 text-text-muted text-sm">search</span>
+                  <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-sm pointer-events-none">search</span>
                 </div>
               </div>
             </div>
