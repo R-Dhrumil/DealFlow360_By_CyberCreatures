@@ -651,21 +651,23 @@ const UniversalDashboard = () => {
 
                 // Map status → pipeline step index (0-based)
                 const PIPELINE_STEPS = [
-                  'Query', 'Requirement', 'Quotation', 'Manager',
-                  'Finance', 'Client', 'Order', 'Factory', 'Billing', 'Completed'
+                  'Inquiry', 'Quotation', 'Approval', 'Client Confirmation', 'Billing', 'Completed'
                 ];
                 const statusStepMap = {
                   draft: 1,
-                  pending_approval: 3,
-                  pending_finance_approval: 4,
-                  approved: 5,
-                  confirmed: 6,
-                  rejected: 2,
-                  won: 9,
-                  completed: 9
+                  rejected: 1,
+                  pending_approval: 2,
+                  pending_finance_approval: 2,
+                  pending_admin_approval: 2,
+                  approved: 3,
+                  sent: 3,
+                  negotiating: 3,
+                  confirmed: 4,
+                  won: 5,
+                  completed: 5
                 };
                 const currentStep = statusStepMap[deal.status?.toLowerCase()] ?? 1;
-                const currentStepLabel = PIPELINE_STEPS[currentStep] || 'Requirement';
+                const currentStepLabel = PIPELINE_STEPS[currentStep] || 'Quotation';
 
                 const riskColor = riskVal >= 7 ? 'text-red-600 bg-red-50 border-red-200' :
                                   riskVal >= 4 ? 'text-amber-600 bg-amber-50 border-amber-200' :
