@@ -367,7 +367,7 @@ export default function CustomerDashboard() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {quotations.map(q => {
+                {quotations.map((q, idx) => {
                   const totalVal = Number(q.total_amount || q.totalAmount || 0);
                   const baseVal = Number(q.base_amount || q.baseAmount || totalVal);
                   const discountVal = Number(q.total_discount || q.totalDiscount || Math.max(0, baseVal - totalVal));
@@ -382,9 +382,16 @@ export default function CustomerDashboard() {
                     >
                       <div className="space-y-3">
                         <div className="flex justify-between items-start">
-                          <span className="font-mono font-bold text-emerald-700 text-xs bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
-                            {quoteCode}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-emerald-700 text-xs bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                              {quoteCode}
+                            </span>
+                            {idx === 0 && (
+                              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-emerald-300">
+                                Latest
+                              </span>
+                            )}
+                          </div>
                           <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${stage.badgeClass}`}>
                             {stage.label}
                           </span>
