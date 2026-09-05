@@ -182,6 +182,9 @@ const UniversalDashboard = () => {
     .filter(q => q.status === 'approved' || q.status === 'confirmed')
     .reduce((sum, q) => sum + (Number(q.total_amount) || 0), 0);
 
+  const draftCount = quotations.filter(q => q.status === 'draft').length;
+  const approvalGateCount = pendingDeals.length;
+
   // Filtered deals for table
   const filteredQuotations = quotations.filter(q => {
     const matchesSearch = 
