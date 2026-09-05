@@ -336,7 +336,7 @@ class QuotationService {
       }
 
       // Role-based access
-      if (quotation.status === 'pending_finance_approval' && !['finance', 'admin'].includes(userRole)) {
+      if (quotation.status === 'pending_finance_approval' && !['finance', 'finance_manager', 'admin', 'super_admin'].includes(userRole)) {
         throw ApiError.forbidden('Only Finance or Admin can approve this high-risk quotation');
       }
       if (quotation.status === 'pending_admin_approval' && !['admin', 'super_admin'].includes(userRole)) {
@@ -362,7 +362,7 @@ class QuotationService {
       let newStatus = 'approved';
       let newApprovalLevel = null;
 
-      if (['sales_manager', 'finance'].includes(userRole)) {
+      if (['sales_manager', 'finance', 'finance_manager'].includes(userRole)) {
         // Check manager's own discount authority
         const { maxDiscount: mgMaxDiscount } = await getUserDiscountAuthority(companyId, userId);
         const authorityCheck = await checkDiscountAuthority(quotationId, mgMaxDiscount);
@@ -441,8 +441,8 @@ class QuotationService {
       quotation = await quotationRepository.findByIdAndCompanyForUpdate(quotationId, companyId, client);
       if (!quotation) throw ApiError.notFound('Quotation not found');
 
-      if (quotation.status === 'pending_finance_approval' && !['finance', 'admin'].includes(userRole)) {
-        throw ApiError.forbidden('Only Finance can reject this high-risk quotation');
+      if (quotation.status === 'pending_finance_approval' && !['finance', 'finance_manager', 'admin', 'super_admin'].includes(userRole)) {
+        throw ApiError.forbidden('Only Finance or Admin can reject this high-risk quotation');
       }
       if (quotation.status === 'pending_admin_approval' && !['admin', 'super_admin'].includes(userRole)) {
         throw ApiError.forbidden('Only Admin can reject this quotation');

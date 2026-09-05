@@ -72,7 +72,7 @@ const Login = ({ defaultIsSignup = false }) => {
             navigate('/customer/dashboard');
           } else if (user.role === 'admin') {
             navigate('/app/admin');
-          } else if (user.role === 'finance') {
+          } else if (user.role === 'finance' || user.role === 'finance_manager') {
             navigate('/app/finance');
           } else {
             navigate('/app/pipeline');
@@ -162,7 +162,7 @@ const Login = ({ defaultIsSignup = false }) => {
                     <span>Multi-Tier Approvals</span>
                   </div>
                   <p className="text-[11px] text-[#f5e8ff] leading-normal">
-                    Blended risk scoring: Auto-approve (&lt;5%), Sales Manager (5-10%), Finance (&gt;10%) escalation chain.
+                    Blended risk scoring: Auto-approve (&lt;5%), Sales Manager (5-10%), Finance Manager (&gt;10%) escalation chain.
                   </p>
                 </div>
 
@@ -392,7 +392,8 @@ const Login = ({ defaultIsSignup = false }) => {
               <div className="flex flex-wrap gap-1.5 text-xs">
                 <button type="button" onClick={() => fillCredentials('superadmin@dealflow360.com', 'SuperAdmin123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">👑 SuperAdmin</button>
                 <button type="button" onClick={() => fillCredentials('admin@cybercreatures.com', 'Admin123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">🏢 Admin</button>
-                <button type="button" onClick={() => fillCredentials('manager@cybercreatures.com', 'Manager123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">💼 Manager</button>
+                <button type="button" onClick={() => fillCredentials('manager@cybercreatures.com', 'Manager123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">💼 Sales Mgr</button>
+                <button type="button" onClick={() => fillCredentials('financemanager@cybercreatures.com', 'Finance123!')} className="px-2.5 py-1 bg-border-soft border border-amber-400/40 text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 font-bold text-[11px]">📊 Finance Mgr</button>
                 <button type="button" onClick={() => fillCredentials('sales@cybercreatures.com', 'Sales123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">🎯 Sales Rep</button>
                 <button type="button" onClick={() => fillCredentials('customer@acme.com', 'Customer123!')} className="px-2.5 py-1 bg-border-soft border border-emerald-status/30 text-emerald-status rounded-lg hover:bg-emerald-status/10 font-bold text-[11px]">👤 Customer</button>
               </div>

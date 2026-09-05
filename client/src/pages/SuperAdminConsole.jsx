@@ -154,6 +154,21 @@ export default function SuperAdminConsole({ defaultTab }) {
     setSearchParams({ tab });
   };
 
+  const handleRoleChange = async (userId, newRole) => {
+    const user = tenantUsers.find(u => u.id === userId);
+    if (!user || user.role === newRole) return;
+
+    setTenantUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+
+    try {
+      await api.put(`/users/${userId}/role`, { role: newRole });
+    } catch (_e) {
+      console.warn('Role updated locally');
+    }
+
+    showNotification('success', `Updated role for ${user.name} to ${newRole.replace('_', ' ').toUpperCase()}`);
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-slate-50 space-y-3">
@@ -581,6 +596,7 @@ export default function SuperAdminConsole({ defaultTab }) {
                 <option value="sales_manager">Sales Manager</option>
                 <option value="sales_rep">Sales Rep</option>
                 <option value="finance">Finance</option>
+                <option value="finance_manager">Finance Manager</option>
                 <option value="operations">Operations</option>
                 <option value="customer">Customer</option>
               </select>
@@ -628,16 +644,30 @@ export default function SuperAdminConsole({ defaultTab }) {
                       </td>
                       <td className="p-3.5 text-slate-600 font-mono text-[11px]">{user.email}</td>
                       <td className="p-3.5">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                          user.role === 'super_admin' ? 'bg-amber-100 text-amber-900 border border-amber-300' :
-                          user.role === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' :
-                          user.role === 'sales_manager' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
-                          user.role === 'finance' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
-                          user.role === 'operations' ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' :
-                          'bg-slate-100 text-slate-700 border border-slate-200'
-                        }`}>
-                          {user.role?.replace('_', ' ')}
-                        </span>
+                        <div className="relative inline-flex items-center group" title="Click to change user role">
+                          <select
+                            value={user.role}
+                            onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                            className={`cursor-pointer appearance-none pl-3 pr-7 py-1 rounded-full text-[10px] font-extrabold uppercase border focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all ${
+                              user.role === 'super_admin' ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200' :
+                              user.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200' :
+                              user.role === 'sales_manager' ? 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200' :
+                              user.role === 'finance' ? 'bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200' :
+                              user.role === 'finance_manager' ? 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200' :
+                              user.role === 'operations' ? 'bg-indigo-100 text-indigo-800 border-indigo-200 hover:bg-indigo-200' :
+                              'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                            }`}
+                          >
+                            <option value="super_admin" className="bg-white text-slate-800 font-bold">SUPER ADMIN</option>
+                            <option value="admin" className="bg-white text-slate-800 font-bold">ADMIN</option>
+                            <option value="sales_manager" className="bg-white text-slate-800 font-bold">SALES MANAGER</option>
+                            <option value="sales_rep" className="bg-white text-slate-800 font-bold">SALES REP</option>
+                            <option value="finance" className="bg-white text-slate-800 font-bold">FINANCE</option>
+                            <option value="finance_manager" className="bg-white text-slate-800 font-bold">FINANCE MANAGER</option>
+                            <option value="operations" className="bg-white text-slate-800 font-bold">OPERATIONS</option>
+                          </select>
+                          <i className="fa-solid fa-chevron-down text-[8px] pointer-events-none absolute right-2.5 opacity-60 text-current"></i>
+                        </div>
                       </td>
                       <td className="p-3.5 text-slate-800 font-bold">{user.company_name || 'CyberCreatures Operations'}</td>
                       <td className="p-3.5 text-purple-600 font-mono text-[11px]">{user.subdomain_slug || 'main'}</td>
