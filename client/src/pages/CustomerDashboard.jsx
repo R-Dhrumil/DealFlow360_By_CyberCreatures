@@ -140,7 +140,7 @@ export default function CustomerDashboard() {
             <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-2 inline-block">
               Customer Account Active
             </span>
-            <h1 className="text-2xl font-white font-bold">Welcome back, {customer.name}!</h1>
+            <h1 className="text-2xl text-white font-bold">Welcome back, {customer.name}!</h1>
             <p className="text-sm text-text-muted mt-1">Browse admin products catalog, request quote proposals, or negotiate custom discounts with your sales rep.</p>
           </div>
 
@@ -149,8 +149,8 @@ export default function CustomerDashboard() {
             <button
               onClick={() => handleTabChange('products')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'products'
-                  ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
-                  : 'bg-surface-soft text-text-muted hover:bg-slate-700'
+                ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
+                : 'bg-surface-soft text-text-muted hover:bg-slate-700'
                 }`}
             >
               <i className="fa-solid fa-boxes-stacked mr-1.5"></i> Browse Product Catalog
@@ -158,8 +158,8 @@ export default function CustomerDashboard() {
             <button
               onClick={() => handleTabChange('quotations')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'quotations'
-                  ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
-                  : 'bg-surface-soft text-text-muted hover:bg-slate-700'
+                ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
+                : 'bg-surface-soft text-text-muted hover:bg-slate-700'
                 }`}
             >
               <i className="fa-solid fa-file-invoice mr-1.5"></i> My Proposals & Records ({quotations.length})
@@ -167,8 +167,8 @@ export default function CustomerDashboard() {
             <button
               onClick={() => handleTabChange('profile')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'profile'
-                  ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
-                  : 'bg-surface-soft text-text-muted hover:bg-slate-700'
+                ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
+                : 'bg-surface-soft text-text-muted hover:bg-slate-700'
                 }`}
             >
               <i className="fa-solid fa-id-card mr-1.5"></i> Personal Profile
@@ -210,8 +210,8 @@ export default function CustomerDashboard() {
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${selectedCategory === cat
-                      ? 'bg-emerald-600 text-text-main shadow'
-                      : 'bg-white text-slate-700 hover:bg-slate-100 border border-surface-soft'
+                    ? 'bg-emerald-600 text-text-main shadow'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-surface-soft'
                     }`}
                 >
                   {cat}
@@ -319,8 +319,8 @@ export default function CustomerDashboard() {
                             {quoteCode}
                           </span>
                           <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${q.status === 'accepted' || q.status === 'approved' || q.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' :
-                              q.status === 'pending_approval' ? 'bg-amber-100 text-amber-800' :
-                                'bg-blue-100 text-blue-800'
+                            q.status === 'pending_approval' ? 'bg-amber-100 text-amber-800' :
+                              'bg-blue-100 text-blue-800'
                             }`}>
                             {statusLabel}
                           </span>
