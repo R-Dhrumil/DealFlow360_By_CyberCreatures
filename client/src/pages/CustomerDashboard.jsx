@@ -179,7 +179,7 @@ export default function CustomerDashboard() {
                 : 'bg-surface-soft text-text-muted hover:bg-slate-700'
                 }`}
             >
-              <i className="fa-solid fa-id-card mr-1.5"></i> Personal Profile
+              {/* <i className="fa-solid fa-id-card mr-1.5"></i> Personal Profile */}
             </button>
           </div>
         </div>
