@@ -158,8 +158,42 @@ class QuotationRepository {
       [quotationId]
     );
 
+    const logRes = await db.query(
+      `SELECT al.*, u.name as approver_name
+       FROM approvals_log al
+       LEFT JOIN users u ON al.approver_id = u.id
+       WHERE al.quotation_id = $1
+       ORDER BY al.timestamp DESC`,
+      [quotationId]
+    );
+
     quote.lines = linesRes.rows;
+    quote.approval_history = logRes.rows;
     return quote;
+  }
+
+  async getNegotiationMessages(quotationId) {
+    const crypto = require('crypto');
+    const res = await db.query(
+      `SELECT id, quotation_id, sender_type, message as content, message, counter_discount, timestamp as created_at, timestamp
+       FROM negotiation_messages
+       WHERE quotation_id = $1
+       ORDER BY timestamp ASC`,
+      [quotationId]
+    );
+    return res.rows;
+  }
+
+  async createNegotiationMessage(quotationId, senderType, message, counterDiscount = null) {
+    const msgId = 'msg_' + crypto.randomUUID();
+    const normalizedSenderType = (senderType === 'sales_rep' || senderType === 'rep') ? 'rep' : 'customer';
+    const res = await db.query(
+      `INSERT INTO negotiation_messages (id, quotation_id, sender_type, message, counter_discount)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, quotation_id, sender_type, message as content, message, counter_discount, timestamp as created_at, timestamp`,
+      [msgId, quotationId, normalizedSenderType, message, counterDiscount]
+    );
+    return res.rows[0];
   }
 
   async findByIdAndCompany(quotationId, companyId) {

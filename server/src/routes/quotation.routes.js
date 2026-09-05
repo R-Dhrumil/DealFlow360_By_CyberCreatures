@@ -21,4 +21,7 @@ router.put('/:id/counter', asyncWrap((req, res) => quotationController.counterOf
 router.post('/', checkRole('sales_rep', 'admin'), asyncWrap((req, res) => quotationController.create(req, res)));
 router.put('/:id/submit', checkRole('sales_rep', 'admin'), asyncWrap((req, res) => quotationController.submit(req, res)));
 
+router.get('/:id/messages', asyncWrap((req, res) => quotationController.getMessages(req, res)));
+router.post('/:id/messages', asyncWrap((req, res) => quotationController.postMessage(req, res)));
+
 module.exports = router;

@@ -5,8 +5,8 @@ async function getGlobalSettings() {
   if (result.rows.length === 0) {
     // Insert default if none exists
     const insertResult = await pool.query(`
-      INSERT INTO global_settings (site_name, tagline) 
-      VALUES ('DealFlow360', 'B2B Sales Operations Platform') 
+      INSERT INTO global_settings (id, site_name, tagline) 
+      VALUES ('gs_default', 'DealFlow360', 'B2B Sales Operations Platform') 
       RETURNING *
     `);
     return insertResult.rows[0];

@@ -13,12 +13,27 @@ export default function QuotationView() {
 
   const fetchQuotation = async () => {
     try {
-      // For demo, we are using the pending approvals route which includes lines,
-      // but realistically we should have a specific GET /quotations/:id endpoint.
-      // Since we don't have it yet, we'll mock the data fetching or use a simplified approach.
-      // For now, let's pretend we have a robust endpoint.
-      
-      // MOCK DATA for Hybrid Billing Display demo purposes
+      if (!quotationId) return;
+      const res = await api.get(`/quotations/${quotationId}`);
+      if (res.data) {
+        setQuotation(res.data);
+      } else {
+        setQuotation({
+          id: quotationId,
+          status: 'approved',
+          customer_name: 'Acme Corp',
+          created_at: new Date().toISOString(),
+          lines: [
+            { id: 1, product_name: 'Enterprise Server X1', category: 'Hardware', line_type: 'one_time', quantity: 2, unit_price: 5000, discount_percent: 10 },
+            { id: 2, product_name: 'Implementation Services', category: 'Services', line_type: 'one_time', quantity: 1, unit_price: 2500, discount_percent: 0 },
+            { id: 3, product_name: 'SaaS Platform License', category: 'Software', line_type: 'recurring', quantity: 50, unit_price: 100, discount_percent: 15 },
+            { id: 4, product_name: 'Premium Support', category: 'Software', line_type: 'recurring', quantity: 1, unit_price: 1000, discount_percent: 5 },
+          ]
+        });
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to fetch quotation', error);
       setQuotation({
         id: quotationId,
         status: 'approved',
@@ -31,9 +46,6 @@ export default function QuotationView() {
           { id: 4, product_name: 'Premium Support', category: 'Software', line_type: 'recurring', quantity: 1, unit_price: 1000, discount_percent: 5 },
         ]
       });
-      setLoading(false);
-    } catch (error) {
-      console.error('Failed to fetch quotation', error);
       setLoading(false);
     }
   };

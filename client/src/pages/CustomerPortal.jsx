@@ -17,11 +17,16 @@ export default function CustomerPortal() {
   // E-Signature state
   const [showSignModal, setShowSignModal] = useState(false);
   const canvasRef = useRef(null);
+  const messagesEndRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
 
   useEffect(() => {
     fetchQuotationAndMessages();
   }, [quotationId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const fetchQuotationAndMessages = async () => {
     try {
@@ -30,9 +35,20 @@ export default function CustomerPortal() {
       if (res.data) {
         setQuotation(res.data);
       }
-      setMessages([
-        { id: 1, sender_type: 'sales_rep', content: `Proposal #${quotationId.split('-')[0]} loaded. Feel free to review line items, propose counter discounts, or e-sign below.`, created_at: new Date().toISOString() }
-      ]);
+      try {
+        const msgRes = await api.get(`/quotations/${quotationId}/messages`);
+        if (msgRes.data && msgRes.data.length > 0) {
+          setMessages(msgRes.data);
+        } else {
+          setMessages([
+            { id: 1, sender_type: 'sales_rep', content: `Proposal #${quotationId.split('-')[0]} loaded. Feel free to review line items, propose counter discounts, or e-sign below.`, created_at: new Date().toISOString() }
+          ]);
+        }
+      } catch (err) {
+        setMessages([
+          { id: 1, sender_type: 'sales_rep', content: `Proposal #${quotationId.split('-')[0]} loaded. Feel free to review line items, propose counter discounts, or e-sign below.`, created_at: new Date().toISOString() }
+        ]);
+      }
       setLoading(false);
     } catch (error) {
       console.error('Failed to fetch data', error);
@@ -59,32 +75,53 @@ export default function CustomerPortal() {
       if (refreshed.data) {
         setQuotation(refreshed.data);
       }
-      const newMsg = {
-        id: Date.now(),
-        sender_type: 'customer',
-        content: `Submitted counter-proposal with revised discounts. Sent to Sales Manager for review.`,
-        created_at: new Date().toISOString()
-      };
-      setMessages(prev => [...prev, newMsg]);
+
+      // Save persistent counter proposal message
+      try {
+        const msgRes = await api.post(`/quotations/${quotation.id}/messages`, {
+          content: 'Submitted counter-proposal with revised discounts. Sent to Sales Manager for review.',
+          sender_type: 'customer'
+        });
+        setMessages(prev => [...prev, msgRes.data]);
+      } catch (mErr) {
+        const newMsg = {
+          id: Date.now(),
+          sender_type: 'customer',
+          content: `Submitted counter-proposal with revised discounts. Sent to Sales Manager for review.`,
+          created_at: new Date().toISOString()
+        };
+        setMessages(prev => [...prev, newMsg]);
+      }
+
       setIsCounterSubmitted(true);
     } catch (err) {
       console.error('Failed to submit counter proposal', err);
     }
   };
 
-  const sendMessage = (e) => {
+  const sendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
-    
-    const newMsg = {
-      id: Date.now(),
-      sender_type: 'customer',
-      content: newMessage,
-      created_at: new Date().toISOString()
-    };
-    
-    setMessages([...messages, newMsg]);
+
+    const msgContent = newMessage;
     setNewMessage('');
+
+    try {
+      const res = await api.post(`/quotations/${quotationId}/messages`, {
+        content: msgContent,
+        sender_type: 'customer'
+      });
+      setMessages(prev => [...prev, res.data]);
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      const fallbackMsg = {
+        id: Date.now(),
+        sender_type: 'customer',
+        content: msgContent,
+        created_at: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, fallbackMsg]);
+    }
   };
 
   const startDrawing = (e) => {
@@ -182,6 +219,7 @@ export default function CustomerPortal() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+        {/* STATUS BANNER: PENDING APPROVAL */}
         {quotation.status === 'pending_approval' && (
           <div className="mb-6 bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl flex items-center justify-between">
             <div className="flex items-center space-x-3 text-amber-800">
@@ -197,6 +235,56 @@ export default function CustomerPortal() {
           </div>
         )}
 
+        {/* STATUS BANNER: APPROVED */}
+        {(quotation.status === 'approved' || quotation.status === 'accepted' || quotation.status === 'confirmed') && (
+          <div className="mb-6 bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-xl flex items-center justify-between">
+            <div className="flex items-center space-x-3 text-emerald-800">
+              <i className="fa-solid fa-circle-check text-2xl text-emerald-600"></i>
+              <div>
+                <h4 className="font-bold text-sm">Quotation & Counter Offer Approved</h4>
+                <p className="text-xs text-emerald-700">
+                  {quotation.approval_history && quotation.approval_history.length > 0 && quotation.approval_history[0].reason
+                    ? `Manager Note: "${quotation.approval_history[0].reason}"`
+                    : 'Management has reviewed and approved the requested pricing and discount terms.'}
+                </p>
+                {quotation.approval_history && quotation.approval_history[0] && (
+                  <span className="text-[11px] text-emerald-600 block mt-0.5">
+                    Approved by {quotation.approval_history[0].approver_name || 'Sales Manager'} on {new Date(quotation.approval_history[0].timestamp).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            </div>
+            <span className="text-xs font-mono font-bold bg-emerald-200 text-emerald-900 px-2.5 py-1 rounded-md">
+              Offer Approved
+            </span>
+          </div>
+        )}
+
+        {/* STATUS BANNER: REJECTED */}
+        {quotation.status === 'rejected' && (
+          <div className="mb-6 bg-red-500/10 border border-red-500/30 p-4 rounded-xl flex items-center justify-between">
+            <div className="flex items-center space-x-3 text-red-800">
+              <i className="fa-solid fa-circle-xmark text-2xl text-red-600"></i>
+              <div>
+                <h4 className="font-bold text-sm text-red-900">Counter Offer / Quotation Rejected</h4>
+                <p className="text-xs text-red-700">
+                  {quotation.approval_history && quotation.approval_history.length > 0 && quotation.approval_history[0].reason
+                    ? `Rejection Reason: "${quotation.approval_history[0].reason}"`
+                    : 'Management has rejected the requested discount terms as they exceed company margin thresholds.'}
+                </p>
+                {quotation.approval_history && quotation.approval_history[0] && (
+                  <span className="text-[11px] text-red-600 block mt-0.5">
+                    Reviewed by {quotation.approval_history[0].approver_name || 'Sales Manager'} on {new Date(quotation.approval_history[0].timestamp).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            </div>
+            <span className="text-xs font-mono font-bold bg-red-200 text-red-900 px-2.5 py-1 rounded-md">
+              Proposal Rejected
+            </span>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Main Line Items & Counter Discount Proposal Tool */}
@@ -208,7 +296,7 @@ export default function CustomerPortal() {
                   <p className="text-xs text-text-muted">Propose counter discounts directly per line item</p>
                 </div>
                 <span className="text-xs bg-slate-200 text-slate-700 px-2.5 py-1 rounded-md font-semibold">
-                  Customer Tier: {quotation.customer_tier}
+                  Customer Tier: {quotation.customer_tier || 'Gold'}
                 </span>
               </div>
               
@@ -267,6 +355,51 @@ export default function CustomerPortal() {
               </div>
             </div>
 
+            {/* Manager Decision & Governance Audit History */}
+            {quotation.approval_history && quotation.approval_history.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm border border-surface-soft overflow-hidden p-6 space-y-4">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                  <h3 className="font-bold text-slate-800 text-sm flex items-center">
+                    <i className="fa-solid fa-shield-halved mr-2 text-indigo-600"></i>
+                    Manager Approval / Rejection Decision History
+                  </h3>
+                  <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                    Audit Log ({quotation.approval_history.length})
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {quotation.approval_history.map(log => {
+                    const isApprove = log.action === 'approve' || log.action === 'approved';
+                    const isReject = log.action === 'reject' || log.action === 'rejected';
+                    return (
+                      <div key={log.id} className="p-3 rounded-xl border border-slate-100 bg-slate-50 flex items-start justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                              isApprove ? 'bg-emerald-100 text-emerald-800' :
+                              isReject ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {log.action}
+                            </span>
+                            <span className="text-xs font-bold text-slate-800">
+                              {log.approver_name || 'Sales Manager'}
+                            </span>
+                          </div>
+                          {log.reason && (
+                            <p className="text-xs text-slate-600 italic">"{log.reason}"</p>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Negotiation Chat */}
             <div className="bg-white rounded-xl shadow-sm border border-surface-soft overflow-hidden flex flex-col h-[420px]">
               <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
@@ -278,20 +411,21 @@ export default function CustomerPortal() {
               </div>
               
               <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/50">
-                {messages.map(msg => (
-                  <div key={msg.id} className={`flex ${msg.sender_type === 'customer' ? 'justify-end' : 'justify-start'}`}>
+                {messages.map((msg, idx) => (
+                  <div key={msg.id || idx} className={`flex ${msg.sender_type === 'customer' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${
                       msg.sender_type === 'customer' 
                         ? 'bg-primary text-text-main rounded-tr-sm' 
                         : 'bg-white border border-surface-soft text-slate-800 rounded-tl-sm'
                     }`}>
-                      <p className="text-sm">{msg.content}</p>
+                      <p className="text-sm">{msg.content || msg.message}</p>
                       <p className={`text-[10px] mt-1 text-right ${msg.sender_type === 'customer' ? 'text-on-primary/70' : 'text-text-muted'}`}>
-                        {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        {msg.created_at || msg.timestamp ? new Date(msg.created_at || msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
                       </p>
                     </div>
                   </div>
                 ))}
+                <div ref={messagesEndRef} />
               </div>
               
               <div className="p-4 bg-white border-t border-slate-100">

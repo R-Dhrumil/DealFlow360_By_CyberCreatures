@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuoteCode, formatSKU } from '../utils/formatters';
 
 export default function CustomerDashboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const userStr = localStorage.getItem('user');
   const customer = userStr ? JSON.parse(userStr) : {
     name: 'Acme Procurement Team',
@@ -13,7 +14,9 @@ export default function CustomerDashboard() {
     company_name: 'Acme Corporation'
   };
 
-  const [activeTab, setActiveTab] = useState('products');
+  const tabFromUrl = searchParams.get('tab');
+  const initialTab = tabFromUrl || localStorage.getItem('customerActiveTab') || 'products';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,6 +26,18 @@ export default function CustomerDashboard() {
   // Product Detail Modal State
   const [selectedProductDetail, setSelectedProductDetail] = useState(null);
   const [modalQuantity, setModalQuantity] = useState(1);
+
+  useEffect(() => {
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSearchParams({ tab }, { replace: true });
+    localStorage.setItem('customerActiveTab', tab);
+  };
 
   useEffect(() => {
     fetchCatalogProducts();
@@ -66,14 +81,14 @@ export default function CustomerDashboard() {
       setInquirySuccess(`Success! ${quoteCode} generated for ${product.name} (Qty: ${quantity}) and assigned to your sales rep.`);
       await fetchQuotations();
       if (selectedProductDetail) setSelectedProductDetail(null);
-      setActiveTab('quotations');
+      handleTabChange('quotations');
     } catch (err) {
       console.error('Failed to request quote:', err);
       setInquirySuccess(`Quote request for ${product.name} submitted! Switching to proposals...`);
       setTimeout(() => setInquirySuccess(''), 4000);
       await fetchQuotations();
       if (selectedProductDetail) setSelectedProductDetail(null);
-      setActiveTab('quotations');
+      handleTabChange('quotations');
     }
   };
 
@@ -132,7 +147,7 @@ export default function CustomerDashboard() {
           {/* FIRST TAB: Browse Product Catalog */}
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setActiveTab('products')}
+              onClick={() => handleTabChange('products')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'products'
                   ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
@@ -142,17 +157,17 @@ export default function CustomerDashboard() {
               <i className="fa-solid fa-boxes-stacked mr-1.5"></i> Browse Product Catalog
             </button>
             <button
-              onClick={() => setActiveTab('quotations')}
+              onClick={() => handleTabChange('quotations')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'quotations'
                   ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
                   : 'bg-surface-soft text-text-muted hover:bg-slate-700'
               }`}
             >
-              <i className="fa-solid fa-file-invoice mr-1.5"></i> My Proposals ({quotations.length})
+              <i className="fa-solid fa-file-invoice mr-1.5"></i> My Proposals & Records ({quotations.length})
             </button>
             <button
-              onClick={() => setActiveTab('profile')}
+              onClick={() => handleTabChange('profile')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'profile'
                   ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'

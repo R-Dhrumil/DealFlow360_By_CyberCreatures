@@ -1,6 +1,7 @@
 const quotationService = require('../services/quotation.service');
 const quotationRepository = require('../repositories/quotation.repository');
 const db = require('../config/db');
+const crypto = require('crypto');
 const { logAction } = require('../services/audit.service');
 
 class QuotationController {
@@ -28,26 +29,35 @@ class QuotationController {
 
     // 2. Resolve IDs
     const companyId = product.company_id || 'c1';
-    const customerId = req.user?.customerId || req.user?.id || 'cust1';
+    let customerId = req.user?.customerId || req.user?.id || 'cust1';
     
+    // Ensure customerId exists in customers table
+    const custCheck = await db.query('SELECT id FROM customers WHERE id = $1', [customerId]);
+    if (custCheck.rows.length === 0) {
+      const firstCust = await db.query('SELECT id FROM customers LIMIT 1');
+      customerId = firstCust.rows[0]?.id || 'cust1';
+    }
+
     // Find active sales rep
     const repRes = await db.query("SELECT id FROM users WHERE company_id = $1 AND role = 'sales_rep' LIMIT 1", [companyId]);
     const salesRepId = repRes.rows[0]?.id || 'u4';
 
-    // 3. Create Quotation
+    // 3. Create Quotation with unique ID
+    const quoteId = 'q_' + crypto.randomUUID();
     const quoteRes = await db.query(
-      `INSERT INTO quotations (company_id, customer_id, sales_rep_id, status, blended_risk_score)
-       VALUES ($1, $2, $3, 'draft', 0.00)
+      `INSERT INTO quotations (id, company_id, customer_id, sales_rep_id, status, blended_risk_score)
+       VALUES ($1, $2, $3, $4, 'draft', 0.00)
        RETURNING *`,
-      [companyId, customerId, salesRepId]
+      [quoteId, companyId, customerId, salesRepId]
     );
     const newQuote = quoteRes.rows[0];
 
-    // 4. Create Quotation Line
+    // 4. Create Quotation Line with unique ID
+    const lineId = 'ql_' + crypto.randomUUID();
     await db.query(
-      `INSERT INTO quotation_lines (quotation_id, product_id, quantity, unit_price, discount_percent, line_type)
-       VALUES ($1, $2, $3, $4, 0.00, 'one_time')`,
-      [newQuote.id, product.id, qty, product.base_price]
+      `INSERT INTO quotation_lines (id, quotation_id, product_id, quantity, unit_price, discount_percent, line_type)
+       VALUES ($1, $2, $3, $4, $5, 0.00, 'one_time')`,
+      [lineId, newQuote.id, product.id, qty, product.base_price]
     );
 
     await logAction('quotation', newQuote.id, salesRepId, 'customer_requested', {
@@ -150,6 +160,29 @@ class QuotationController {
       15.00
     );
     return res.json({ success: true, quotation: updated });
+  }
+
+  async getMessages(req, res) {
+    const quotationId = req.params.id;
+    const messages = await quotationRepository.getNegotiationMessages(quotationId);
+    return res.json(messages || []);
+  }
+
+  async postMessage(req, res) {
+    const quotationId = req.params.id;
+    const { content, message, sender_type, counter_discount } = req.body;
+    const msgText = content || message;
+    if (!msgText || !msgText.trim()) {
+      return res.status(400).json({ error: 'Message content is required' });
+    }
+    const senderType = sender_type || (req.user?.role === 'customer' ? 'customer' : 'rep');
+    const newMsg = await quotationRepository.createNegotiationMessage(
+      quotationId,
+      senderType,
+      msgText,
+      counter_discount || null
+    );
+    return res.status(201).json(newMsg);
   }
 }
 
