@@ -269,9 +269,9 @@ const UniversalDashboard = () => {
       </div>
 
       {/* Main Stage Split-Plane Workspace */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-7">
-        {/* Left / Center Stage: Active Deal Pipeline Board (8 cols) */}
-        <div className="lg:col-span-8 flex flex-col rounded-2xl bg-white border border-surface-soft shadow-sm overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pb-7">
+        {/* Left / Center Stage: Active Deal Pipeline Board (10 cols) */}
+        <div className="lg:col-span-10 flex flex-col rounded-2xl bg-white border border-surface-soft shadow-sm overflow-hidden">
           {/* Table Header & Quick Stage Filter Pills */}
           <div className="p-5 bg-border-soft border-b border-surface-soft flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -357,15 +357,15 @@ const UniversalDashboard = () => {
           </div>
           
           {/* High Density Deal Table */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-border-soft/60 border-b border-surface-soft text-[11px] font-bold uppercase tracking-wider text-text-muted">
-                  <th className="py-3 px-5 font-semibold">Account &amp; Deal</th>
-                  <th className="py-3 px-4 font-semibold">Line Items</th>
-                  <th className="py-3 px-4 font-semibold">Stage</th>
-                  <th className="py-3 px-4 font-semibold text-right">ACV Value</th>
-                  <th className="py-3 px-5 font-semibold text-right">Action</th>
+                  <th className="py-3 px-4 font-semibold">Account &amp; Deal</th>
+                  <th className="py-3 px-3 font-semibold">Line Items</th>
+                  <th className="py-3 px-3 font-semibold">Stage</th>
+                  <th className="py-3 px-3 font-semibold text-right">ACV Value</th>
+                  <th className="py-3 px-4 font-semibold text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-soft text-xs">
@@ -387,49 +387,49 @@ const UniversalDashboard = () => {
                     const riskVal = Number(deal.blended_risk_score) || 0;
                     return (
                       <tr key={deal.id} className="hover:bg-border-soft/40 transition-colors group">
-                        <td className="py-3.5 px-5">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-surface-soft text-primary font-bold flex items-center justify-center flex-shrink-0 text-xs">
+                        <td className="py-3 px-4 max-w-[260px]">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-primary/10 border border-surface-soft text-primary font-bold flex items-center justify-center flex-shrink-0 text-xs">
                               {deal.customer_name ? deal.customer_name.charAt(0).toUpperCase() : 'Q'}
                             </div>
                             <div className="flex flex-col min-w-0">
-                              <span className="font-bold text-xs text-text-main truncate group-hover:text-primary transition-colors">
+                              <span className="font-bold text-xs text-text-main truncate group-hover:text-primary transition-colors" title={deal.product_summary || deal.customer_name || 'Enterprise Account'}>
                                 {deal.product_summary || deal.customer_name || 'Enterprise Account'}
                               </span>
-                              <span className="text-[11px] text-text-muted font-mono">
-                                {formatQuoteCode(deal.id)} • Account: {deal.customer_name || 'Acme Corp'} • Rep: {deal.sales_rep_name || 'RevOps'}
+                              <span className="text-[11px] text-text-muted font-mono truncate" title={`${formatQuoteCode(deal.id)} • Account: ${deal.customer_name || 'Acme Corp'} • Rep: ${deal.sales_rep_name || 'RevOps'}`}>
+                                {formatQuoteCode(deal.id)} • {deal.customer_name || 'Acme Corp'}
                               </span>
                             </div>
                           </div>
                         </td>
-                        <td className="py-3.5 px-4">
+                        <td className="py-3 px-3">
                           <div className="flex flex-col">
-                            <span className="font-semibold text-text-main text-xs">
+                            <span className="font-semibold text-text-main text-xs whitespace-nowrap">
                               {deal.lines_count ? `${deal.lines_count} Line Item(s)` : 'Configured Bundle'}
                             </span>
-                            <span className="text-[11px] text-text-muted">{deal.customer_email || 'CPQ Standard'}</span>
+                            <span className="text-[11px] text-text-muted truncate max-w-[140px]">{deal.customer_email || 'CPQ Standard'}</span>
                           </div>
                         </td>
-                        <td className="py-3.5 px-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${badge.bg} ${badge.text} border ${badge.border} text-[11px] font-bold`}>
+                        <td className="py-3 px-3">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${badge.bg} ${badge.text} border ${badge.border} text-[11px] font-bold whitespace-nowrap`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`}></span> {badge.label}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-right">
+                        <td className="py-3 px-3 text-right">
                           <div className="flex flex-col items-end">
-                            <span className="font-mono font-bold text-xs text-text-main">
+                            <span className="font-mono font-bold text-xs text-text-main whitespace-nowrap">
                               ${Number(deal.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                             {riskVal >= 5 && (
-                              <span className="text-[11px] font-bold text-rose-status bg-rose-status/10 border border-rose-status/20 px-1.5 py-0.5 rounded">
+                              <span className="text-[10px] font-bold text-rose-status bg-rose-status/10 border border-rose-status/20 px-1.5 py-0.5 rounded whitespace-nowrap">
                                 Risk: {riskVal.toFixed(1)}
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="py-3.5 px-5 text-right">
+                        <td className="py-3 px-4 text-right">
                           {deal.status?.includes('pending') ? (
-                            <Link to="/app/approvals" className="px-2.5 py-1.5 rounded-lg bg-primary text-on-primary text-[11px] font-semibold hover:bg-primary-dark transition-colors inline-flex items-center gap-1 shadow-xs">
+                            <Link to="/app/approvals" className="px-2.5 py-1 rounded-lg bg-primary text-on-primary text-[11px] font-semibold hover:bg-primary-dark transition-colors inline-flex items-center gap-1 shadow-xs whitespace-nowrap">
                               <span>Approve</span>
                               <span className="material-symbols-outlined text-xs">check</span>
                             </Link>
@@ -458,18 +458,18 @@ const UniversalDashboard = () => {
           </div>
         </div>
         
-        {/* Right Stage: Deal Health & Risk Feed (4 cols) */}
-        <div className="lg:col-span-4 flex flex-col gap-5">
-          <div className="flex flex-col p-5 rounded-2xl bg-white border border-surface-soft shadow-sm">
-            <div className="flex items-center justify-between pb-3.5 border-b border-surface-soft">
-              <div className="flex items-center gap-2.5">
-                <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-rose-status/10 text-rose-status border border-rose-status/20">
-                  <span className="material-symbols-outlined text-lg">crisis_alert</span>
-                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-status ring-2 ring-white"></span>
+        {/* Right Stage: Deal Health & Risk Feed (2 cols) */}
+        <div className="lg:col-span-2 flex flex-col gap-4">
+          <div className="flex flex-col p-4 rounded-2xl bg-white border border-surface-soft shadow-sm">
+            <div className="flex items-center justify-between pb-3 border-b border-surface-soft">
+              <div className="flex items-center gap-2">
+                <div className="relative flex items-center justify-center w-7 h-7 rounded-xl bg-rose-status/10 text-rose-status border border-rose-status/20 flex-shrink-0">
+                  <span className="material-symbols-outlined text-base">crisis_alert</span>
+                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-rose-status ring-2 ring-white"></span>
                 </div>
-                <div>
-                  <h3 className="font-bold text-sm text-text-main">Deal Health &amp; Risk Feed</h3>
-                  <span className="text-[11px] text-text-muted">Real-time CPQ Guardrail Telemetry</span>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-xs text-text-main truncate" title="Deal Health & Risk Feed">Deal Risk Feed</h3>
+                  <span className="text-[10px] text-text-muted block truncate">Guardrail Telemetry</span>
                 </div>
               </div>
             </div>
