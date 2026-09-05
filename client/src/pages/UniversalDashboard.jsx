@@ -124,11 +124,7 @@ const UniversalDashboard = () => {
       {/* Executive Action & Control Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6">
         <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-primary px-2.5 py-0.5 rounded-md bg-white border border-surface-soft shadow-xs">Executive Cockpit</span>
-            <span className="text-surface-soft text-sm">|</span>
-            <span className="text-xs font-medium text-text-muted">Active CPQ Engine: v4.8 Global</span>
-          </div>
+         
           <h1 className="text-2xl font-extrabold text-text-main tracking-tight">Revenue Operations Command</h1>
         </div>
         
@@ -162,7 +158,7 @@ const UniversalDashboard = () => {
           <div className="absolute top-0 left-0 right-0 h-1 "></div>
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Gatekeeper Queue</span>
+
               <span className="font-bold text-sm text-text-main pt-0.5">Pending Approvals</span>
             </div>
             <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-status/10 text-rose-status border border-rose-status/20 text-xs font-bold">
@@ -176,8 +172,8 @@ const UniversalDashboard = () => {
             </div>
             <span className="font-mono text-sm font-bold text-text-main">{formatCurrency(pendingValue)}</span>
           </div>
-          <div className="pt-3 mt-4 border-t border-surface-soft flex items-center justify-between">
-            <span className="text-xs text-text-muted">{pendingDeals.length > 0 ? `${pendingDeals.length} requires VP review` : 'All cleared'}</span>
+          <div className="pt-3 mt-4 border-t border-surface-soft flex items-center justify-end">
+            
             <Link to="/app/approvals" className="text-xs font-semibold text-rose-status hover:underline flex items-center gap-0.5">
               Resolve <span className="material-symbols-outlined text-xs">arrow_forward</span>
             </Link>
@@ -188,7 +184,7 @@ const UniversalDashboard = () => {
         <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group">
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Deal Desk Active</span>
+              
               <span className="font-bold text-sm text-text-main pt-0.5">Open Quotations</span>
             </div>
             <span className="p-2 rounded-xl bg-amber-status/10 text-amber-status border border-amber-status/20">
