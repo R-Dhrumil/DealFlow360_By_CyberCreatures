@@ -287,12 +287,12 @@ export default function AdminWorkspace() {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-surface-soft text-text-muted font-bold bg-slate-50">
-                    <th className="p-3">SKU</th>
-                    <th className="p-3">Product Name</th>
-                    <th className="p-3">Category</th>
-                    <th className="p-3 text-right">Base Price ($)</th>
-                    <th className="p-3 text-center">Floor Margin</th>
-                    <th className="p-3 text-center">Status</th>
+                    <th className="p-2.5 w-24 text-left">SKU</th>
+                    <th className="p-2.5">Product Name</th>
+                    <th className="p-2.5 whitespace-nowrap">Category</th>
+                    <th className="p-2.5 text-right whitespace-nowrap">Base Price ($)</th>
+                    <th className="p-2.5 text-center whitespace-nowrap">Floor Margin</th>
+                    <th className="p-2.5 text-center whitespace-nowrap">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -307,31 +307,37 @@ export default function AdminWorkspace() {
                       </td>
                     </tr>
                   ) : (
-                    filteredProducts.map(p => (
-                      <tr key={p.id} className="hover:bg-purple-50/40 transition-colors">
-                        <td className="p-3 font-mono font-bold text-text-muted">{p.sku || 'SKU-00' + p.id}</td>
-                        <td className="p-3 font-extrabold text-text-main">{p.name}</td>
-                        <td className="p-3">
-                          <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg text-[10px] font-bold">
-                            {p.category}
-                          </span>
-                        </td>
-                        <td className="p-3 text-right font-black text-purple-700">
-                          ${typeof p.base_price === 'number' ? p.base_price.toLocaleString() : p.base_price}
-                          <span className="text-[10px] text-text-muted font-normal block">/ {p.unit || 'unit'}</span>
-                        </td>
-                        <td className="p-3 text-center">
-                          <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px]">
-                            Min {p.min_margin || 25}%
-                          </span>
-                        </td>
-                        <td className="p-3 text-center">
-                          <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-[10px]">
-                            Active
-                          </span>
-                        </td>
-                      </tr>
-                    ))
+                    filteredProducts.map(p => {
+                      const fullSku = p.sku || ('SKU-00' + p.id);
+                      const shortSku = fullSku.length > 12 ? `${fullSku.substring(0, 10)}…` : fullSku;
+                      return (
+                        <tr key={p.id} className="hover:bg-purple-50/40 transition-colors">
+                          <td className="p-2.5 font-mono font-bold text-text-muted text-[11px] whitespace-nowrap w-24 max-w-[100px] overflow-hidden text-ellipsis" title={fullSku}>
+                            {shortSku}
+                          </td>
+                          <td className="p-2.5 font-extrabold text-text-main">{p.name}</td>
+                          <td className="p-2.5 whitespace-nowrap">
+                            <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg text-[10px] font-bold">
+                              {p.category}
+                            </span>
+                          </td>
+                          <td className="p-2.5 text-right font-black text-purple-700 whitespace-nowrap">
+                            ${typeof p.base_price === 'number' ? p.base_price.toLocaleString() : p.base_price}
+                            <span className="text-[10px] text-text-muted font-normal block">/ {p.unit || 'unit'}</span>
+                          </td>
+                          <td className="p-2.5 text-center whitespace-nowrap">
+                            <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px] inline-block whitespace-nowrap">
+                              Min {p.min_margin || 25}%
+                            </span>
+                          </td>
+                          <td className="p-2.5 text-center whitespace-nowrap">
+                            <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-[10px] inline-block whitespace-nowrap">
+                              Active
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
