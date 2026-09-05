@@ -85,21 +85,35 @@ class QuotationRepository {
     return { data: result.rows, totalCount };
   }
 
-  async findByCustomer(customerId, customerEmail = null, limit = 50, offset = 0) {
+  async findByCustomer(customerId, customerEmail = null, customerName = null, limit = 50, offset = 0) {
+    const cleanEmail = customerEmail ? customerEmail.trim().toLowerCase() : null;
+    const emailDomain = cleanEmail && cleanEmail.includes('@') ? cleanEmail.split('@')[1] : null;
+    const cleanName = customerName ? customerName.trim() : null;
+
     const countRes = await db.query(
       `SELECT COUNT(*) as count FROM (
          SELECT q.id FROM quotations q 
          LEFT JOIN customers c ON q.customer_id = c.id
          WHERE ($1::text IS NOT NULL AND q.customer_id = $1::text)
-            OR ($2::text IS NOT NULL AND LOWER(c.email) = LOWER($2::text))
+            OR ($2::text IS NOT NULL AND LOWER(c.email) = $2::text)
+            OR ($3::text IS NOT NULL AND (
+                  LOWER(c.name) ILIKE '%' || LOWER($3::text) || '%'
+               OR LOWER($3::text) ILIKE '%' || LOWER(c.name) || '%'
+            ))
+            OR ($4::text IS NOT NULL AND LOWER(c.email) ILIKE '%@' || $4::text)
          UNION ALL
          SELECT i.id FROM inquiries i
          LEFT JOIN customers c ON i.customer_id = c.id
          WHERE (($1::text IS NOT NULL AND i.customer_id = $1::text)
-            OR ($2::text IS NOT NULL AND LOWER(c.email) = LOWER($2::text)))
-           AND NOT EXISTS (SELECT 1 FROM quotations q WHERE q.inquiry_id = i.id)
-       ) as total`,
-      [customerId || null, customerEmail ? customerEmail.trim() : null]
+            OR ($2::text IS NOT NULL AND LOWER(c.email) = $2::text)
+            OR ($3::text IS NOT NULL AND (
+                  LOWER(c.name) ILIKE '%' || LOWER($3::text) || '%'
+               OR LOWER($3::text) ILIKE '%' || LOWER(c.name) || '%'
+            ))
+            OR ($4::text IS NOT NULL AND LOWER(c.email) ILIKE '%@' || $4::text))
+            AND NOT EXISTS (SELECT 1 FROM quotations q WHERE q.inquiry_id = i.id)
+        ) as total`,
+      [customerId || null, cleanEmail, cleanName, emailDomain]
     );
     const totalCount = parseInt(countRes.rows[0]?.count || 0, 10);
 
@@ -108,6 +122,7 @@ class QuotationRepository {
          q.id, q.status, q.blended_risk_score, q.created_at, q.updated_at,
          c.name as customer_name, c.email as customer_email,
          u.name as sales_rep_name,
+         u.role as sales_rep_role,
          COALESCE(STRING_AGG(DISTINCT p.name, ', '), 'Custom Proposal') as product_summary,
          COALESCE(SUM(ql.unit_price * ql.quantity * (1 - ql.discount_percent/100)), 0) as total_amount,
          COALESCE(SUM(ql.unit_price * ql.quantity), 0) as base_amount,
@@ -119,8 +134,13 @@ class QuotationRepository {
        LEFT JOIN quotation_lines ql ON q.id = ql.quotation_id
        LEFT JOIN products p ON ql.product_id = p.id
        WHERE ($1::text IS NOT NULL AND q.customer_id = $1::text)
-          OR ($2::text IS NOT NULL AND LOWER(c.email) = LOWER($2::text))
-       GROUP BY q.id, c.name, c.email, u.name
+          OR ($2::text IS NOT NULL AND LOWER(c.email) = $2::text)
+          OR ($3::text IS NOT NULL AND (
+                LOWER(c.name) ILIKE '%' || LOWER($3::text) || '%'
+             OR LOWER($3::text) ILIKE '%' || LOWER(c.name) || '%'
+          ))
+          OR ($4::text IS NOT NULL AND LOWER(c.email) ILIKE '%@' || $4::text)
+       GROUP BY q.id, c.name, c.email, u.name, u.role
        
        UNION ALL
        
@@ -128,6 +148,7 @@ class QuotationRepository {
          i.id, 'pending_rep_quote' as status, 0 as blended_risk_score, i.created_at, i.updated_at,
          c.name as customer_name, c.email as customer_email,
          'Pending Assignment' as sales_rep_name,
+         'sales_rep' as sales_rep_role,
          p.name as product_summary,
          (p.base_price * i.quantity) as total_amount,
          (p.base_price * i.quantity) as base_amount,
@@ -137,12 +158,24 @@ class QuotationRepository {
        LEFT JOIN customers c ON i.customer_id = c.id
        LEFT JOIN products p ON i.product_id = p.id
        WHERE (($1::text IS NOT NULL AND i.customer_id = $1::text)
-          OR ($2::text IS NOT NULL AND LOWER(c.email) = LOWER($2::text)))
+          OR ($2::text IS NOT NULL AND LOWER(c.email) = $2::text)
+          OR ($3::text IS NOT NULL AND (
+                LOWER(c.name) ILIKE '%' || LOWER($3::text) || '%'
+             OR LOWER($3::text) ILIKE '%' || LOWER(c.name) || '%'
+          ))
+          OR ($4::text IS NOT NULL AND LOWER(c.email) ILIKE '%@' || $4::text))
          AND NOT EXISTS (SELECT 1 FROM quotations q WHERE q.inquiry_id = i.id)
        
-       ORDER BY created_at DESC
-       LIMIT $3 OFFSET $4`,
-      [customerId || null, customerEmail ? customerEmail.trim() : null, limit, offset]
+       ORDER BY 
+         CASE 
+           WHEN status IN ('approved', 'confirmed') THEN 1 
+           WHEN status IN ('pending_approval', 'negotiating') THEN 2
+           ELSE 3 
+         END ASC,
+         COALESCE(updated_at, created_at) DESC,
+         created_at DESC
+       LIMIT $5 OFFSET $6`,
+      [customerId || null, cleanEmail, cleanName, emailDomain, limit, offset]
     );
     return { data: result.rows, totalCount };
   }

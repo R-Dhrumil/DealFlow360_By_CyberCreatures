@@ -158,19 +158,23 @@ class QuotationController {
     if (req.user && req.user.role === 'customer') {
       const customerId = req.user.customerId || req.user.id;
       let customerEmail = req.user.email || null;
-      if (!customerEmail && customerId) {
+      let customerName = req.user.name || null;
+      if ((!customerEmail || !customerName) && customerId) {
         try {
-          const cRes = await db.query('SELECT email FROM customers WHERE id = $1', [customerId]);
-          if (cRes.rows.length > 0) customerEmail = cRes.rows[0].email;
+          const cRes = await db.query('SELECT name, email FROM customers WHERE id = $1', [customerId]);
+          if (cRes.rows.length > 0) {
+            if (!customerEmail) customerEmail = cRes.rows[0].email;
+            if (!customerName) customerName = cRes.rows[0].name;
+          }
         } catch (e) {
           // ignore error
         }
       }
-      if (!customerId && !customerEmail) {
+      if (!customerId && !customerEmail && !customerName) {
         res.set('X-Total-Count', 0);
         return res.json([]);
       }
-      const customerQuotes = await quotationRepository.findByCustomer(customerId, customerEmail, limit, offset);
+      const customerQuotes = await quotationRepository.findByCustomer(customerId, customerEmail, customerName, limit, offset);
       res.set('X-Total-Count', customerQuotes ? customerQuotes.totalCount : 0);
       return res.json(customerQuotes ? customerQuotes.data : []);
     }
@@ -204,12 +208,19 @@ class QuotationController {
     let targetQuoteId = null;
 
     if (customerId) {
-      const custRes = await db.query(
-        'SELECT id FROM quotations WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 1',
-        [customerId]
-      );
-      if (custRes.rows.length > 0) {
-        targetQuoteId = custRes.rows[0].id;
+      let custEmail = req.user?.email || null;
+      let custName = req.user?.name || null;
+      try {
+        const cRes = await db.query('SELECT name, email FROM customers WHERE id = $1', [customerId]);
+        if (cRes.rows.length > 0) {
+          if (!custEmail) custEmail = cRes.rows[0].email;
+          if (!custName) custName = cRes.rows[0].name;
+        }
+      } catch (e) {}
+
+      const custQuotes = await quotationRepository.findByCustomer(customerId, custEmail, custName, 1, 0);
+      if (custQuotes?.data?.length > 0) {
+        targetQuoteId = custQuotes.data[0].id;
       }
     }
 

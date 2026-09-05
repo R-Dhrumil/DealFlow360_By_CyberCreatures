@@ -121,15 +121,30 @@ class QuotationService {
         );
         if (existingCust.rows.length > 0) {
           customerId = existingCust.rows[0].id;
-        } else {
-          const newCustId = 'cust_' + crypto.randomUUID().substring(0, 8);
-          const nameToUse = (customerName && customerName.trim()) ? customerName.trim() : cleanEmail.split('@')[0];
-          await client.query(
-            'INSERT INTO customers (id, name, email, password_hash) VALUES ($1, $2, $3, $4)',
-            [newCustId, nameToUse, cleanEmail, 'guest']
-          );
-          customerId = newCustId;
         }
+      }
+
+      // If still not resolved, check by customer name (e.g. Acme Corp)
+      if (!customerId && customerName && customerName.trim()) {
+        const cleanName = customerName.trim().toLowerCase();
+        const existingByName = await client.query(
+          'SELECT id FROM customers WHERE LOWER(name) = LOWER($1) OR LOWER(name) LIKE $2 LIMIT 1',
+          [cleanName, `%${cleanName}%`]
+        );
+        if (existingByName.rows.length > 0) {
+          customerId = existingByName.rows[0].id;
+        }
+      }
+
+      if (!customerId && customerEmail && customerEmail.trim()) {
+        const cleanEmail = customerEmail.trim().toLowerCase();
+        const newCustId = 'cust_' + crypto.randomUUID().substring(0, 8);
+        const nameToUse = (customerName && customerName.trim()) ? customerName.trim() : cleanEmail.split('@')[0];
+        await client.query(
+          'INSERT INTO customers (id, name, email, password_hash) VALUES ($1, $2, $3, $4)',
+          [newCustId, nameToUse, cleanEmail, 'guest']
+        );
+        customerId = newCustId;
       }
 
       if (!customerId) {
