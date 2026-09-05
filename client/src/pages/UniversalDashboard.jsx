@@ -124,11 +124,7 @@ const UniversalDashboard = () => {
       {/* Executive Action & Control Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6">
         <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-primary px-2.5 py-0.5 rounded-md bg-white border border-surface-soft shadow-xs">Executive Cockpit</span>
-            <span className="text-surface-soft text-sm">|</span>
-            <span className="text-xs font-medium text-text-muted">Active CPQ Engine: v4.8 Global</span>
-          </div>
+         
           <h1 className="text-2xl font-extrabold text-text-main tracking-tight">Revenue Operations Command</h1>
         </div>
         
@@ -159,7 +155,7 @@ const UniversalDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 pb-7">
         {/* Metric 1: Pending Approvals */}
         <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-rose-status"></div>
+       
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Gatekeeper Queue</span>
@@ -177,7 +173,7 @@ const UniversalDashboard = () => {
             <span className="font-mono text-sm font-bold text-text-main">{formatCurrency(pendingValue)}</span>
           </div>
           <div className="pt-3 mt-4 border-t border-surface-soft flex items-center justify-between">
-            <span className="text-xs text-text-muted">{pendingDeals.length > 0 ? `${pendingDeals.length} requires VP review` : 'All cleared'}</span>
+            <span className="text-xs text-text-muted">{pendingDeals.length > 0 ? `${pendingDeals.length} awaiting review` : 'All cleared'}</span>
             <Link to="/app/approvals" className="text-xs font-semibold text-rose-status hover:underline flex items-center gap-0.5">
               Resolve <span className="material-symbols-outlined text-xs">arrow_forward</span>
             </Link>
@@ -185,7 +181,8 @@ const UniversalDashboard = () => {
         </div>
 
         {/* Metric 2: Open Quotations */}
-        <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group">
+        <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group overflow-hidden">
+         
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Deal Desk Active</span>
@@ -214,7 +211,8 @@ const UniversalDashboard = () => {
         </div>
 
         {/* Metric 3: At-Risk Deals */}
-        <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group">
+        <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group overflow-hidden">
+         
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">AI Deal Sentry</span>
@@ -238,7 +236,8 @@ const UniversalDashboard = () => {
         </div>
 
         {/* Metric 4: Revenue Recognized */}
-        <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group">
+        <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-white border border-surface-soft shadow-sm hover:shadow-md transition-all group overflow-hidden">
+         
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Financial Performance</span>
@@ -270,8 +269,8 @@ const UniversalDashboard = () => {
 
       {/* Main Stage Split-Plane Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pb-7">
-        {/* Left / Center Stage: Active Deal Pipeline Board (10 cols) */}
-        <div className="lg:col-span-10 flex flex-col rounded-2xl bg-white border border-surface-soft shadow-sm overflow-hidden">
+        {/* Left / Center Stage: Active Deal Pipeline Board (8 cols on lg, 9 cols on xl) */}
+        <div className="lg:col-span-8 xl:col-span-9 flex flex-col rounded-2xl bg-white border border-surface-soft shadow-sm overflow-hidden">
           {/* Table Header & Quick Stage Filter Pills */}
           <div className="p-5 bg-border-soft border-b border-surface-soft flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -285,7 +284,7 @@ const UniversalDashboard = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="relative">
+                <div className="relative flex items-center">
                   <input
                     className="pl-8 pr-3 py-1.5 rounded-xl bg-white border border-surface-soft text-text-main text-xs placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
                     placeholder="Filter pipeline..."
@@ -293,7 +292,7 @@ const UniversalDashboard = () => {
                     value={filterText}
                     onChange={(e) => setFilterText(e.target.value)}
                   />
-                  <span className="material-symbols-outlined absolute left-2.5 top-2 text-text-muted text-sm">search</span>
+                  <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-sm pointer-events-none">search</span>
                 </div>
               </div>
             </div>
@@ -458,11 +457,11 @@ const UniversalDashboard = () => {
           </div>
         </div>
         
-        {/* Right Stage: Deal Health & Risk Feed (2 cols) */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
-          <div className="flex flex-col p-4 rounded-2xl bg-white border border-surface-soft shadow-sm">
+        {/* Right Stage: Deal Health & Risk Feed (4 cols on lg, 3 cols on xl) */}
+        <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-4">
+          <div className="flex flex-col p-4 rounded-2xl bg-white border border-surface-soft shadow-sm overflow-hidden">
             <div className="flex items-center justify-between pb-3 border-b border-surface-soft">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <div className="relative flex items-center justify-center w-7 h-7 rounded-xl bg-rose-status/10 text-rose-status border border-rose-status/20 flex-shrink-0">
                   <span className="material-symbols-outlined text-base">crisis_alert</span>
                   <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-rose-status ring-2 ring-white"></span>
@@ -474,20 +473,22 @@ const UniversalDashboard = () => {
               </div>
             </div>
             
-            <div className="flex flex-col gap-3 pt-3.5">
+            <div className="flex flex-col gap-3 pt-3">
               {atRiskDeals.length === 0 ? (
-                <div className="p-3.5 rounded-xl bg-border-soft border border-surface-soft text-xs text-text-muted text-center">
+                <div className="p-3 rounded-xl bg-border-soft border border-surface-soft text-xs text-text-muted text-center">
                   All deals currently within risk guardrails.
                 </div>
               ) : (
                 atRiskDeals.map((riskDeal) => (
-                  <div key={riskDeal.id} className="p-3.5 rounded-xl bg-border-soft border border-surface-soft flex flex-col gap-2 shadow-2xs">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
+                  <div key={riskDeal.id} className="p-3 rounded-xl bg-border-soft border border-surface-soft flex flex-col gap-2 shadow-2xs overflow-hidden">
+                    <div className="flex items-center justify-between gap-2 min-w-0">
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
                         <span className="w-2 h-2 rounded-full bg-rose-status flex-shrink-0"></span>
-                        <span className="font-bold text-xs text-text-main">{riskDeal.customer_name || 'Account'}</span>
+                        <span className="font-bold text-xs text-text-main truncate" title={riskDeal.customer_name || 'Account'}>
+                          {riskDeal.customer_name || 'Account'}
+                        </span>
                       </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-status/10 text-rose-status border border-rose-status/20 uppercase">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-status/10 text-rose-status border border-rose-status/20 uppercase whitespace-nowrap flex-shrink-0">
                         Score: {Number(riskDeal.blended_risk_score || 0).toFixed(1)}
                       </span>
                     </div>
@@ -500,21 +501,21 @@ const UniversalDashboard = () => {
             </div>
           </div>
           
-          <div className="p-5 rounded-2xl bg-white border border-surface-soft shadow-sm flex items-center justify-between gap-4">
-            <div className="flex flex-col">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Pipeline Velocity</span>
-              <span className="font-bold text-sm text-text-main pt-0.5">Q3 CPQ Velocity</span>
+          <div className="p-4 rounded-2xl bg-white border border-surface-soft shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 overflow-hidden">
+            <div className="flex flex-col min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Pipeline Velocity</span>
+              <span className="font-bold text-xs sm:text-sm text-text-main pt-0.5">Q3 CPQ Velocity</span>
               <span className="text-xs font-bold text-emerald-status pt-0.5">14.8 Days Cycle Time</span>
-              <span className="text-[11px] text-text-muted pt-1">Active DB Pipeline connected</span>
+              <span className="text-[10px] text-text-muted pt-1 truncate">Active DB Connected</span>
             </div>
-            <div className="relative w-20 h-20 flex-shrink-0 flex items-center justify-center">
+            <div className="relative w-16 h-16 flex-shrink-0 self-center sm:self-auto flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                 <path className="text-border-soft stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" strokeWidth="3.5"></path>
                 <path className="text-emerald-status stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" strokeDasharray="82, 100" strokeLinecap="round" strokeWidth="3.5"></path>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="font-extrabold text-sm text-text-main">82%</span>
-                <span className="font-bold text-text-muted text-[8px] tracking-wide uppercase">HEALTH</span>
+                <span className="font-extrabold text-xs text-text-main">82%</span>
+                <span className="font-bold text-text-muted text-[7px] tracking-wide uppercase">HEALTH</span>
               </div>
             </div>
           </div>
