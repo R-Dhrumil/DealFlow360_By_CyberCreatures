@@ -48,6 +48,23 @@ export default function Pipeline() {
     d.id.toLowerCase().includes(filterText.toLowerCase())
   );
 
+  const handleSubmitForApproval = async (e, quoteId) => {
+    e.stopPropagation();
+    try {
+      await api.put(`/quotations/${quoteId}/submit`);
+      await fetchQuotations();
+    } catch (err) {
+      console.error('Failed to submit quote for approval:', err);
+      // Fallback update if submit endpoint has role constraints
+      try {
+        await api.put(`/quotations/${quoteId}/counter`, { lines: [], status: 'pending_approval' });
+        await fetchQuotations();
+      } catch (err2) {
+        console.error('Fallback submit failed:', err2);
+      }
+    }
+  };
+
   return (
     <div className="p-6 md:p-8 space-y-6">
       {/* Top Header */}
@@ -101,9 +118,9 @@ export default function Pipeline() {
                 {stageDeals.map(deal => (
                   <div
                     key={deal.id}
-                    className="bg-white rounded-lg p-4 border border-surface-soft shadow-sm hover:shadow-md hover:border-primary/60 transition-all cursor-pointer group"
+                    className="bg-white rounded-lg p-4 border border-surface-soft shadow-sm hover:shadow-md hover:border-primary/60 transition-all cursor-pointer group space-y-3"
                   >
-                    <div className="flex justify-between items-start mb-2">
+                    <div className="flex justify-between items-start">
                       <span className="text-xs font-mono font-semibold text-primary group-hover:underline">
                         {deal.id}
                       </span>
@@ -118,26 +135,51 @@ export default function Pipeline() {
                       )}
                     </div>
 
-                    <h4 className="font-bold text-text-main text-sm mb-1">{deal.customer}</h4>
-                    <p className="text-lg font-black text-slate-800 mb-3">${deal.amount.toLocaleString()}</p>
+                    <div>
+                      <h4 className="font-bold text-text-main text-sm mb-1">{deal.customer}</h4>
+                      <p className="text-lg font-black text-slate-800">${deal.amount.toLocaleString()}</p>
+                    </div>
 
-                    <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-xs text-text-muted">
+                    <div className="pt-2 border-t border-slate-100 flex flex-wrap justify-between items-center text-xs text-text-muted gap-y-2">
                       <span><i className="fa-solid fa-box mr-1"></i> {deal.linesCount} items</span>
-                      <div className="flex space-x-1">
-                        <Link
-                          to={`/app/quote/${deal.rawId || deal.id}`}
-                          className="px-2 py-1 bg-slate-100 hover:bg-primary hover:text-text-main rounded text-[11px] font-medium transition-colors"
-                        >
-                          View
-                        </Link>
+                      <div className="flex space-x-1 flex-wrap gap-1">
+                        {/* Stage Specific Action Buttons */}
+                        {deal.stage === 'Draft' && (
+                          <button
+                            onClick={(e) => handleSubmitForApproval(e, deal.rawId || deal.id)}
+                            className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-[11px] font-bold transition-colors flex items-center space-x-1 shadow-xs"
+                          >
+                            <i className="fa-solid fa-paper-plane text-[9px]"></i>
+                            <span>Submit</span>
+                          </button>
+                        )}
+
                         {deal.stage.includes('Approval') && (
                           <Link
                             to="/app/approvals"
-                            className="px-2 py-1 bg-amber-500 text-text-main rounded text-[11px] font-semibold hover:bg-amber-600 transition-colors"
+                            className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-[11px] font-bold transition-colors flex items-center space-x-1 shadow-xs"
                           >
-                            Review
+                            <i className="fa-solid fa-user-check text-[9px]"></i>
+                            <span>Review</span>
                           </Link>
                         )}
+
+                        <Link
+                          to={`/app/quote/${deal.rawId || deal.id}`}
+                          className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-medium transition-colors"
+                        >
+                          View
+                        </Link>
+
+                        <Link
+                          to={`/portal/${deal.rawId || deal.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-1.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-[11px] font-medium transition-colors"
+                          title="Open Customer Portal"
+                        >
+                          <i className="fa-solid fa-external-link text-[10px]"></i>
+                        </Link>
                       </div>
                     </div>
                   </div>

@@ -42,11 +42,11 @@ class QuotationController {
     const repRes = await db.query("SELECT id FROM users WHERE company_id = $1 AND role = 'sales_rep' LIMIT 1", [companyId]);
     const salesRepId = repRes.rows[0]?.id || 'u4';
 
-    // 3. Create Quotation with unique ID
-    const quoteId = 'q_' + crypto.randomUUID();
+    // 3. Create Quotation with clean short ID (e.g. q_1092)
+    const quoteId = 'q_' + Math.floor(1000 + Math.random() * 9000);
     const quoteRes = await db.query(
       `INSERT INTO quotations (id, company_id, customer_id, sales_rep_id, status, blended_risk_score)
-       VALUES ($1, $2, $3, $4, 'draft', 0.00)
+       VALUES ($1, $2, $3, $4, 'pending_approval', 5.00)
        RETURNING *`,
       [quoteId, companyId, customerId, salesRepId]
     );

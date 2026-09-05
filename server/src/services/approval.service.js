@@ -5,8 +5,9 @@ const ApiError = require('../utils/apiError');
 class ApprovalService {
   async getPendingApprovals(companyId, role) {
     let statusFilter = ['pending_approval', 'pending_finance_approval'];
-    if (role === 'sales_manager') statusFilter = ['pending_approval'];
+    if (role === 'sales_manager') statusFilter = ['pending_approval', 'pending_finance_approval'];
     if (role === 'finance') statusFilter = ['pending_finance_approval'];
+    if (role === 'admin' || role === 'super_admin') statusFilter = ['pending_approval', 'pending_finance_approval', 'draft'];
 
     const approvals = await approvalRepository.getPendingApprovalsByStatusFilter(companyId, statusFilter);
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
+import { formatQuoteCode } from '../utils/formatters';
 
 export default function QuotationView() {
   const { id: quotationId } = useParams();
@@ -65,35 +66,85 @@ export default function QuotationView() {
   const recurringLines = quotation.lines.filter(l => l.line_type === 'recurring');
 
   const calculateTotal = (lines) => {
+    if (!lines || !Array.isArray(lines)) return 0;
     return lines.reduce((total, line) => {
-      const netPrice = line.unit_price * (1 - line.discount_percent / 100);
-      return total + (netPrice * line.quantity);
+      const uPrice = Number(line.unit_price) || 0;
+      const dPercent = Number(line.discount_percent) || 0;
+      const qty = Number(line.quantity) || 1;
+      const netPrice = uPrice * (1 - dPercent / 100);
+      return total + (netPrice * qty);
     }, 0);
   };
 
   const oneTimeTotal = calculateTotal(oneTimeLines);
   const recurringTotal = calculateTotal(recurringLines);
 
+  const handleApprove = async () => {
+    try {
+      await api.put(`/quotations/${quotationId}/approve`);
+      const res = await api.get(`/quotations/${quotationId}`);
+      if (res.data) setQuotation(res.data);
+      alert('Quotation approved successfully!');
+    } catch (err) {
+      console.error('Failed to approve quotation:', err);
+      alert('Failed to approve quotation.');
+    }
+  };
+
+  const handleReject = async () => {
+    const reason = prompt('Please enter a rejection reason:');
+    if (reason === null) return;
+    try {
+      await api.put(`/quotations/${quotationId}/reject`, { reason });
+      const res = await api.get(`/quotations/${quotationId}`);
+      if (res.data) setQuotation(res.data);
+      alert('Quotation rejected.');
+    } catch (err) {
+      console.error('Failed to reject quotation:', err);
+      alert('Failed to reject quotation.');
+    }
+  };
+
   return (
-    <div className="p-6 md:p-12">
-      <header className="mb-8 flex justify-between items-end">
+    <div className="p-6 md:p-12 space-y-6">
+      <header className="mb-8 flex flex-wrap justify-between items-end gap-4">
         <div>
-          <div className="flex items-center space-x-3 mb-2">
-            <h1 className="text-2xl font-bold text-slate-800">Quotation #{quotation.id?.split('-')[0]}</h1>
-            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full uppercase tracking-wider print:hidden">
-              {quotation.status}
+          <div className="flex items-center space-x-3 mb-2 flex-wrap gap-y-1">
+            <h1 className="text-2xl font-bold text-slate-800">Quotation #{formatQuoteCode(quotation.id)}</h1>
+            <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider print:hidden ${
+              quotation.status === 'approved' || quotation.status === 'accepted' || quotation.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' :
+              quotation.status === 'rejected' ? 'bg-red-100 text-red-800' :
+              'bg-amber-100 text-amber-800'
+            }`}>
+              {quotation.status?.replace(/_/g, ' ')}
             </span>
           </div>
-          <p className="text-text-muted">Prepared for <span className="font-semibold text-slate-700">{quotation.customer_name}</span></p>
+          <p className="text-text-muted text-xs">Prepared for <span className="font-semibold text-slate-700">{quotation.customer_name || 'Customer'}</span> &bull; Account Rep: <span className="font-semibold text-slate-700">{quotation.sales_rep_name || 'Sales Rep'}</span></p>
         </div>
-        <div className="flex space-x-3 print:hidden">
-          <button onClick={() => window.print()} className="btn-secondary text-sm">
-            <i className="fa-solid fa-file-pdf mr-2"></i>
+        <div className="flex space-x-2 flex-wrap gap-y-2 print:hidden">
+          {(quotation.status === 'pending_approval' || quotation.status === 'draft') && (
+            <>
+              <button onClick={handleApprove} className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center space-x-1.5">
+                <i className="fa-solid fa-circle-check"></i>
+                <span>Approve Proposal</span>
+              </button>
+              <button onClick={handleReject} className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center space-x-1.5">
+                <i className="fa-solid fa-circle-xmark"></i>
+                <span>Reject</span>
+              </button>
+            </>
+          )}
+          <Link to={`/portal/${quotation.id}`} target="_blank" className="px-3.5 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5">
+            <i className="fa-solid fa-external-link"></i>
+            <span>Customer Portal</span>
+          </Link>
+          <button onClick={() => window.print()} className="btn-secondary text-xs">
+            <i className="fa-solid fa-file-pdf mr-1.5"></i>
             Download PDF
           </button>
-          <Link to={`/app/fulfillment/${quotation.id}`} className="btn-secondary text-sm">
-            <i className="fa-solid fa-truck mr-2"></i>
-            View Fulfillment Plan
+          <Link to={`/app/fulfillment/${quotation.id}`} className="btn-secondary text-xs">
+            <i className="fa-solid fa-truck mr-1.5"></i>
+            Fulfillment Plan
           </Link>
         </div>
       </header>
@@ -119,14 +170,17 @@ export default function QuotationView() {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {oneTimeLines.map(line => {
-                  const netPrice = line.unit_price * (1 - line.discount_percent / 100);
+                  const uPrice = Number(line.unit_price) || 0;
+                  const dPercent = Number(line.discount_percent) || 0;
+                  const qty = Number(line.quantity) || 1;
+                  const netPrice = uPrice * (1 - dPercent / 100);
                   return (
                     <tr key={line.id}>
                       <td className="px-6 py-4 font-medium text-slate-800">{line.product_name} <span className="text-xs text-text-muted font-normal block">{line.category}</span></td>
-                      <td className="px-6 py-4 text-right text-slate-600">{line.quantity}</td>
-                      <td className="px-6 py-4 text-right text-slate-600">${line.unit_price.toFixed(2)}</td>
-                      <td className="px-6 py-4 text-right text-slate-600">{line.discount_percent}%</td>
-                      <td className="px-6 py-4 text-right font-semibold text-slate-800">${(netPrice * line.quantity).toFixed(2)}</td>
+                      <td className="px-6 py-4 text-right text-slate-600">{qty}</td>
+                      <td className="px-6 py-4 text-right text-slate-600">${uPrice.toFixed(2)}</td>
+                      <td className="px-6 py-4 text-right text-slate-600">{dPercent}%</td>
+                      <td className="px-6 py-4 text-right font-semibold text-slate-800">${(netPrice * qty).toFixed(2)}</td>
                     </tr>
                   )
                 })}
@@ -152,14 +206,17 @@ export default function QuotationView() {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {recurringLines.map(line => {
-                  const netPrice = line.unit_price * (1 - line.discount_percent / 100);
+                  const uPrice = Number(line.unit_price) || 0;
+                  const dPercent = Number(line.discount_percent) || 0;
+                  const qty = Number(line.quantity) || 1;
+                  const netPrice = uPrice * (1 - dPercent / 100);
                   return (
                     <tr key={line.id}>
                       <td className="px-6 py-4 font-medium text-slate-800">{line.product_name} <span className="text-xs text-text-muted font-normal block">{line.category}</span></td>
-                      <td className="px-6 py-4 text-right text-slate-600">{line.quantity}</td>
-                      <td className="px-6 py-4 text-right text-slate-600">${line.unit_price.toFixed(2)}</td>
-                      <td className="px-6 py-4 text-right text-slate-600">{line.discount_percent}%</td>
-                      <td className="px-6 py-4 text-right font-semibold text-primary">${(netPrice * line.quantity).toFixed(2)}</td>
+                      <td className="px-6 py-4 text-right text-slate-600">{qty}</td>
+                      <td className="px-6 py-4 text-right text-slate-600">${uPrice.toFixed(2)}</td>
+                      <td className="px-6 py-4 text-right text-slate-600">{dPercent}%</td>
+                      <td className="px-6 py-4 text-right font-semibold text-primary">${(netPrice * qty).toFixed(2)}</td>
                     </tr>
                   )
                 })}

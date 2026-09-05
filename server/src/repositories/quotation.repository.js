@@ -4,7 +4,7 @@ const { logAction } = require('../services/audit.service');
 
 class QuotationRepository {
   async createQuotation(companyId, customerId, salesRepId, status = 'draft', client = db) {
-    const qId = 'q_' + crypto.randomUUID();
+    const qId = 'q_' + Math.floor(1000 + Math.random() * 9000);
     const result = await client.query(
       `INSERT INTO quotations (id, company_id, customer_id, sales_rep_id, status)
        VALUES ($1, $2, $3, $4, $5)
