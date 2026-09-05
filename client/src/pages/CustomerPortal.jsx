@@ -25,11 +25,27 @@ export default function CustomerPortal() {
 
   useEffect(() => {
     fetchQuotationAndMessages();
+    const interval = setInterval(() => {
+      fetchMessagesOnly();
+    }, 3000);
+    return () => clearInterval(interval);
   }, [quotationId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const fetchMessagesOnly = async () => {
+    try {
+      if (!quotationId) return;
+      const msgRes = await api.get(`/quotations/${quotationId}/messages`);
+      if (msgRes.data && msgRes.data.length > 0) {
+        setMessages(msgRes.data);
+      }
+    } catch (err) {
+      // silent fail during background polling
+    }
+  };
 
   const fetchQuotationAndMessages = async () => {
     try {

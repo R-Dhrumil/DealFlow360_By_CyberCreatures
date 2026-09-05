@@ -17,6 +17,24 @@ export default function ApprovalQueue() {
     fetchApprovals();
   }, []);
 
+  useEffect(() => {
+    if (!expandedId) return;
+    const fetchActiveMessages = async () => {
+      try {
+        const msgRes = await api.get(`/quotations/${expandedId}/messages`);
+        if (msgRes.data) {
+          setMessagesMap(prev => ({ ...prev, [expandedId]: msgRes.data }));
+        }
+      } catch (err) {
+        // silent
+      }
+    };
+
+    fetchActiveMessages();
+    const interval = setInterval(fetchActiveMessages, 3000);
+    return () => clearInterval(interval);
+  }, [expandedId]);
+
   const fetchApprovals = async () => {
     try {
       setLoading(true);
