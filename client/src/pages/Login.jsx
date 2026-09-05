@@ -39,91 +39,51 @@ const Login = ({ defaultIsSignup = false }) => {
     try {
       if (isSignup) {
         // Unified Sign Up
-        try {
-          const res = await api.post('/auth/signup', {
-            accountType,
-            name,
-            email,
-            password,
-            companyName: accountType === 'admin' ? companyName : undefined
-          });
+        const res = await api.post('/auth/signup', {
+          accountType,
+          name,
+          email,
+          password,
+          companyName: accountType === 'admin' ? companyName : undefined
+        });
 
-          if (res.data && res.data.token) {
-            localStorage.setItem('token', res.data.token);
-            localStorage.setItem('user', JSON.stringify(res.data.user));
+        if (res.data && res.data.token) {
+          localStorage.setItem('token', res.data.token);
+          localStorage.setItem('user', JSON.stringify(res.data.user));
 
-            const role = res.data.user?.role;
-            if (role === 'super_admin') navigate('/app/superadmin');
-            else if (role === 'customer') navigate('/customer/dashboard');
-            else navigate('/app/pipeline');
-            return;
-          }
-        } catch (apiErr) {
-          // Local fallback signup if DB connection is unavailable
-          const role = accountType === 'admin' ? 'admin' : 'customer';
-          const newUser = {
-            id: 'user-' + Date.now(),
-            name: name || 'Demo User',
-            email: email,
-            role: role,
-            companyId: 'comp-01'
-          };
-          localStorage.setItem('token', 'jwt-token-demo-' + Date.now());
-          localStorage.setItem('user', JSON.stringify(newUser));
-
-          if (role === 'customer') navigate('/customer/dashboard');
+          const role = res.data.user?.role;
+          if (role === 'super_admin') navigate('/app/superadmin');
+          else if (role === 'customer') navigate('/customer/dashboard');
+          else if (role === 'admin') navigate('/app/admin');
           else navigate('/app/pipeline');
           return;
         }
       } else {
         // Unified Login
-        try {
-          const res = await api.post('/auth/login', { email, password });
-          if (res.data && res.data.token) {
-            localStorage.setItem('token', res.data.token);
-            const user = res.data.user;
-            localStorage.setItem('user', JSON.stringify(user));
+        const res = await api.post('/auth/login', { email, password });
+        if (res.data && res.data.token) {
+          localStorage.setItem('token', res.data.token);
+          const user = res.data.user;
+          localStorage.setItem('user', JSON.stringify(user));
 
-            if (user.role === 'super_admin') {
-              navigate('/app/superadmin');
-            } else if (user.role === 'customer') {
-              navigate('/customer/dashboard');
-            } else if (user.role === 'admin') {
-              navigate('/app/admin');
-            } else if (user.role === 'finance') {
-              navigate('/app/finance');
-            } else {
-              navigate('/app/pipeline');
-            }
-            return;
+          if (user.role === 'super_admin') {
+            navigate('/app/superadmin');
+          } else if (user.role === 'customer') {
+            navigate('/customer/dashboard');
+          } else if (user.role === 'admin') {
+            navigate('/app/admin');
+          } else if (user.role === 'finance') {
+            navigate('/app/finance');
+          } else {
+            navigate('/app/pipeline');
           }
-        } catch (apiErr) {
-          // Client-side quick bypass check for demo test credentials if backend fails
-          const clean = email.trim().toLowerCase();
-          let demoRole = 'sales_rep';
-          if (clean.includes('superadmin')) demoRole = 'super_admin';
-          else if (clean.includes('customer')) demoRole = 'customer';
-          else if (clean.includes('admin')) demoRole = 'admin';
-          else if (clean.includes('finance')) demoRole = 'finance';
-          else if (clean.includes('manager')) demoRole = 'sales_manager';
-
-          const demoUser = {
-            id: 'demo-' + Date.now(),
-            name: email.split('@')[0] || 'Test User',
-            email: email,
-            role: demoRole
-          };
-          localStorage.setItem('token', 'demo-token-' + Date.now());
-          localStorage.setItem('user', JSON.stringify(demoUser));
-
-          if (demoRole === 'super_admin') navigate('/app/superadmin');
-          else if (demoRole === 'customer') navigate('/customer/dashboard');
-          else navigate('/app/pipeline');
           return;
         }
       }
     } catch (err) {
-      setError('An authentication error occurred. Please try again.');
+      console.error('Authentication failed:', err);
+      const serverMsg = err.response?.data?.error || err.response?.data?.message || 'Invalid email or password. Please try again.';
+      setError(serverMsg);
     } finally {
       setLoading(false);
     }

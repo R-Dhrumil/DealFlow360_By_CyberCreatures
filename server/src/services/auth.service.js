@@ -29,7 +29,68 @@ class AuthService {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Check Pre-seeded Demo Credentials (for quick testing)
+    // 1. Check Internal Users Table (Admin, Sales Manager, Finance, Sales Rep, Super Admin)
+    try {
+      const user = await userRepository.findByEmail(cleanEmail);
+      if (user) {
+        const isValidPassword = await bcrypt.compare(password, user.password_hash);
+        if (isValidPassword) {
+          const token = jwt.sign(
+            { userId: user.id, companyId: user.company_id, role: user.role },
+            config.jwtSecret,
+            { expiresIn: config.jwtExpiresIn }
+          );
+          return {
+            token,
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              companyId: user.company_id
+            }
+          };
+        } else {
+          // User email exists in DB but password is wrong
+          throw ApiError.unauthorized('Invalid email or password');
+        }
+      }
+    } catch (err) {
+      if (err instanceof ApiError) throw err;
+      console.warn('DB user lookup error:', err.message);
+    }
+
+    // 2. Check Customer Table
+    try {
+      const customer = await customerRepository.findByEmail(cleanEmail);
+      if (customer) {
+        const isValidPassword = await bcrypt.compare(password, customer.password_hash);
+        if (isValidPassword) {
+          const token = jwt.sign(
+            { customerId: customer.id, role: 'customer' },
+            config.jwtSecret,
+            { expiresIn: config.jwtExpiresIn }
+          );
+          return {
+            token,
+            user: {
+              id: customer.id,
+              name: customer.name,
+              email: customer.email,
+              role: 'customer'
+            }
+          };
+        } else {
+          // Customer email exists in DB but password is wrong
+          throw ApiError.unauthorized('Invalid email or password');
+        }
+      }
+    } catch (err) {
+      if (err instanceof ApiError) throw err;
+      console.warn('Customer DB lookup error:', err.message);
+    }
+
+    // 3. Fallback Check Pre-seeded DEMO_ACCOUNTS array
     const demoMatch = DEMO_ACCOUNTS.find(
       acc => acc.email.toLowerCase() === cleanEmail && acc.password === password
     );
@@ -51,59 +112,7 @@ class AuthService {
       };
     }
 
-    // 2. Check Internal Users Table (Admin, Sales Manager, Finance, Sales Rep)
-    try {
-      const user = await userRepository.findByEmail(cleanEmail);
-      if (user) {
-        const isValidPassword = await bcrypt.compare(password, user.password_hash);
-        if (isValidPassword) {
-          const token = jwt.sign(
-            { userId: user.id, companyId: user.company_id, role: user.role },
-            config.jwtSecret,
-            { expiresIn: config.jwtExpiresIn }
-          );
-          return {
-            token,
-            user: {
-              id: user.id,
-              name: user.name,
-              email: user.email,
-              role: user.role,
-              companyId: user.company_id
-            }
-          };
-        }
-      }
-    } catch (err) {
-      console.warn('DB lookup failed in unifiedLogin, checking fallback customers:', err.message);
-    }
-
-    // 3. Check Customer Table
-    try {
-      const customer = await customerRepository.findByEmail(cleanEmail);
-      if (customer) {
-        const isValidPassword = await bcrypt.compare(password, customer.password_hash);
-        if (isValidPassword) {
-          const token = jwt.sign(
-            { customerId: customer.id, role: 'customer' },
-            config.jwtSecret,
-            { expiresIn: config.jwtExpiresIn }
-          );
-          return {
-            token,
-            user: {
-              id: customer.id,
-              name: customer.name,
-              email: customer.email,
-              role: 'customer'
-            }
-          };
-        }
-      }
-    } catch (err) {
-      console.warn('Customer lookup failed in unifiedLogin:', err.message);
-    }
-
+    // 4. Invalid credentials
     throw ApiError.unauthorized('Invalid email or password');
   }
 

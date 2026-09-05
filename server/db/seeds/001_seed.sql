@@ -8,30 +8,30 @@ INSERT INTO companies (id, name, logo_url, subdomain_slug) VALUES
 ('11111111-1111-1111-1111-111111111111', 'CyberCreatures Global', 'https://via.placeholder.com/150/702963/FFFFFF?text=CyberCreatures', 'cybercreatures'),
 ('22222222-2222-2222-2222-222222222222', 'Vertex Cloud Technologies', 'https://via.placeholder.com/150/10B981/FFFFFF?text=Vertex', 'vertex');
 
--- 2. Insert Users (Password: Admin123! / Manager123! / Sales123! / Finance123! / password123)
+-- 2. Insert Users (Password: SuperAdmin123! / Admin123! / Manager123! / Sales123! / Finance123!)
 -- CyberCreatures Users
 INSERT INTO users (id, company_id, name, email, password_hash, role) VALUES 
-('11111111-1111-1111-1111-100000000000', '11111111-1111-1111-1111-111111111111', 'Super Admin', 'superadmin@dealflow360.com', '$2b$10$wN9iJ7u/Qx4z0K.J/U7wOuOQvP/7w.9k2M9V9G/N/37jM.Gj6gQxC', 'super_admin'),
-('11111111-1111-1111-1111-100000000001', '11111111-1111-1111-1111-111111111111', 'CyberCreatures Admin', 'admin@cybercreatures.com', '$2b$10$wN9iJ7u/Qx4z0K.J/U7wOuOQvP/7w.9k2M9V9G/N/37jM.Gj6gQxC', 'admin'),
-('11111111-1111-1111-1111-100000000002', '11111111-1111-1111-1111-111111111111', 'Sarah Manager', 'manager@cybercreatures.com', '$2b$10$wN9iJ7u/Qx4z0K.J/U7wOuOQvP/7w.9k2M9V9G/N/37jM.Gj6gQxC', 'sales_manager'),
-('11111111-1111-1111-1111-100000000003', '11111111-1111-1111-1111-111111111111', 'M. Shah', 'sales@cybercreatures.com', '$2b$10$wN9iJ7u/Qx4z0K.J/U7wOuOQvP/7w.9k2M9V9G/N/37jM.Gj6gQxC', 'sales_rep'),
-('11111111-1111-1111-1111-100000000004', '11111111-1111-1111-1111-111111111111', 'Finance Lead', 'finance@cybercreatures.com', '$2b$10$wN9iJ7u/Qx4z0K.J/U7wOuOQvP/7w.9k2M9V9G/N/37jM.Gj6gQxC', 'finance'),
-('11111111-1111-1111-1111-100000000005', '11111111-1111-1111-1111-111111111111', 'J. Rao', 'j.rao@cybercreatures.com', '$2b$10$wN9iJ7u/Qx4z0K.J/U7wOuOQvP/7w.9k2M9V9G/N/37jM.Gj6gQxC', 'sales_rep'),
-('11111111-1111-1111-1111-100000000006', '11111111-1111-1111-1111-111111111111', 'Jim Halpert', 'j.halpert@cybercreatures.com', '$2b$10$wN9iJ7u/Qx4z0K.J/U7wOuOQvP/7w.9k2M9V9G/N/37jM.Gj6gQxC', 'sales_rep');
+('11111111-1111-1111-1111-100000000000', '11111111-1111-1111-1111-111111111111', 'Super Admin', 'superadmin@dealflow360.com', '$2b$10$kCMIb1hLJGj03WoNSADWK.QSTqRSJ6Htn3o7iXKn6dRIQXgtyTMT6', 'super_admin'),
+('11111111-1111-1111-1111-100000000001', '11111111-1111-1111-1111-111111111111', 'CyberCreatures Admin', 'admin@cybercreatures.com', '$2b$10$pD7pRAT.XkYzwIpr/jlzpujw84rgWR98turse0M22P/YSXZ6CMNgm', 'admin'),
+('11111111-1111-1111-1111-100000000002', '11111111-1111-1111-1111-111111111111', 'Sarah Manager', 'manager@cybercreatures.com', '$2b$10$LDSmhVjVVS3v0pYUnQ4WxO07aLpIo0h6USxnqvySqBKV6LP4eam2i', 'sales_manager'),
+('11111111-1111-1111-1111-100000000003', '11111111-1111-1111-1111-111111111111', 'M. Shah', 'sales@cybercreatures.com', '$2b$10$oyAD0GU22wk712.zDbS/E.FaiijyBrsnOd7w7X0JVZ8XXJOXxmyGS', 'sales_rep'),
+('11111111-1111-1111-1111-100000000004', '11111111-1111-1111-1111-111111111111', 'Finance Lead', 'finance@cybercreatures.com', '$2b$10$xlRfvsg84Srmy3YrPJQqBun/jn8cwvUpbnA2Hrv27ae0mFzRNgAxS', 'finance'),
+('11111111-1111-1111-1111-100000000005', '11111111-1111-1111-1111-111111111111', 'J. Rao', 'j.rao@cybercreatures.com', '$2b$10$oyAD0GU22wk712.zDbS/E.FaiijyBrsnOd7w7X0JVZ8XXJOXxmyGS', 'sales_rep'),
+('11111111-1111-1111-1111-100000000006', '11111111-1111-1111-1111-111111111111', 'Jim Halpert', 'j.halpert@cybercreatures.com', '$2b$10$oyAD0GU22wk712.zDbS/E.FaiijyBrsnOd7w7X0JVZ8XXJOXxmyGS', 'sales_rep');
 
 -- Vertex Users
 INSERT INTO users (id, company_id, name, email, password_hash, role) VALUES 
-('22222222-2222-2222-2222-200000000001', '22222222-2222-2222-2222-222222222222', 'Vertex Admin', 'admin@vertex.com', '$2b$10$wN9iJ7u/Qx4z0K.J/U7wOuOQvP/7w.9k2M9V9G/N/37jM.Gj6gQxC', 'admin'),
-('22222222-2222-2222-2222-200000000002', '22222222-2222-2222-2222-222222222222', 'Mike Manager', 'manager@vertex.com', '$2b$10$wN9iJ7u/Qx4z0K.J/U7wOuOQvP/7w.9k2M9V9G/N/37jM.Gj6gQxC', 'sales_manager'),
-('22222222-2222-2222-2222-200000000003', '22222222-2222-2222-2222-222222222222', 'Lisa Rep', 'rep@vertex.com', '$2b$10$wN9iJ7u/Qx4z0K.J/U7wOuOQvP/7w.9k2M9V9G/N/37jM.Gj6gQxC', 'sales_rep');
+('22222222-2222-2222-2222-200000000001', '22222222-2222-2222-2222-222222222222', 'Vertex Admin', 'admin@vertex.com', '$2b$10$pD7pRAT.XkYzwIpr/jlzpujw84rgWR98turse0M22P/YSXZ6CMNgm', 'admin'),
+('22222222-2222-2222-2222-200000000002', '22222222-2222-2222-2222-222222222222', 'Mike Manager', 'manager@vertex.com', '$2b$10$LDSmhVjVVS3v0pYUnQ4WxO07aLpIo0h6USxnqvySqBKV6LP4eam2i', 'sales_manager'),
+('22222222-2222-2222-2222-200000000003', '22222222-2222-2222-2222-222222222222', 'Lisa Rep', 'rep@vertex.com', '$2b$10$oyAD0GU22wk712.zDbS/E.FaiijyBrsnOd7w7X0JVZ8XXJOXxmyGS', 'sales_rep');
 
 -- 3. Insert Customers
 INSERT INTO customers (id, name, email, password_hash) VALUES 
-('33333333-3333-3333-3333-333333333331', 'Acme Corp', 'customer@acme.com', '$2b$10$wN9iJ7u/Qx4z0K.J/U7wOuOQvP/7w.9k2M9V9G/N/37jM.Gj6gQxC'),
-('33333333-3333-3333-3333-333333333332', 'Globex Corporation', 'purchasing@globex.com', '$2b$10$wN9iJ7u/Qx4z0K.J/U7wOuOQvP/7w.9k2M9V9G/N/37jM.Gj6gQxC'),
-('33333333-3333-3333-3333-333333333333', 'Soylent Corp', 'procurement@soylent.com', '$2b$10$wN9iJ7u/Qx4z0K.J/U7wOuOQvP/7w.9k2M9V9G/N/37jM.Gj6gQxC'),
-('33333333-3333-3333-3333-333333333334', 'Delta Systems LLC', 'contact@deltasystems.com', '$2b$10$wN9iJ7u/Qx4z0K.J/U7wOuOQvP/7w.9k2M9V9G/N/37jM.Gj6gQxC'),
-('33333333-3333-3333-3333-333333333335', 'Hyperion Logistics', 'ops@hyperionlogistics.com', '$2b$10$wN9iJ7u/Qx4z0K.J/U7wOuOQvP/7w.9k2M9V9G/N/37jM.Gj6gQxC');
+('33333333-3333-3333-3333-333333333331', 'Acme Corp', 'customer@acme.com', '$2b$10$1mei/6Yi3zPvmEKKPZIEN.lh9ZUYHsAoDNZO5NSUbxlDNRVunrqaW'),
+('33333333-3333-3333-3333-333333333332', 'Globex Corporation', 'purchasing@globex.com', '$2b$10$1mei/6Yi3zPvmEKKPZIEN.lh9ZUYHsAoDNZO5NSUbxlDNRVunrqaW'),
+('33333333-3333-3333-3333-333333333333', 'Soylent Corp', 'procurement@soylent.com', '$2b$10$1mei/6Yi3zPvmEKKPZIEN.lh9ZUYHsAoDNZO5NSUbxlDNRVunrqaW'),
+('33333333-3333-3333-3333-333333333334', 'Delta Systems LLC', 'contact@deltasystems.com', '$2b$10$1mei/6Yi3zPvmEKKPZIEN.lh9ZUYHsAoDNZO5NSUbxlDNRVunrqaW'),
+('33333333-3333-3333-3333-333333333335', 'Hyperion Logistics', 'ops@hyperionlogistics.com', '$2b$10$1mei/6Yi3zPvmEKKPZIEN.lh9ZUYHsAoDNZO5NSUbxlDNRVunrqaW');
 
 -- 4. Insert Products (CyberCreatures - Hardware, Services, Software)
 INSERT INTO products (id, company_id, name, category, base_price, unit, tax_rate, description, is_promoted, margin_percent) VALUES 
