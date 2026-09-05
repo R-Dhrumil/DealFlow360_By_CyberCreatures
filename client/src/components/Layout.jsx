@@ -4,7 +4,6 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 const DEMO_USERS = [
   { name: 'Alex Rep', email: 'rep@dealflow360.com', role: 'sales_rep', label: 'Sales Rep' },
   { name: 'Sarah Manager', email: 'manager@dealflow360.com', role: 'sales_manager', label: 'Sales Manager' },
-  { name: 'David Finance', email: 'finance@dealflow360.com', role: 'finance', label: 'Finance Lead' },
   { name: 'Fiona Finance Mgr', email: 'financemanager@cybercreatures.com', role: 'finance_manager', label: 'Finance Manager' },
   { name: 'Elena Admin', email: 'admin@dealflow360.com', role: 'admin', label: 'Admin' },
   { name: 'Omar Operations', email: 'ops@dealflow360.com', role: 'operations', label: 'Operations' }
@@ -23,13 +22,13 @@ export default function Layout() {
   };
 
   const navItems = [
-    { name: 'Pipeline', path: '/app/pipeline', icon: 'fa-diagram-project', roles: ['sales_rep', 'sales_manager', 'finance', 'finance_manager', 'admin'] },
-    { name: 'Dashboard', path: '/app/dashboard', icon: 'fa-chart-pie', roles: ['sales_rep', 'sales_manager', 'finance', 'finance_manager', 'admin'] },
+    { name: 'Pipeline', path: '/app/pipeline', icon: 'fa-diagram-project', roles: ['sales_rep', 'sales_manager', 'finance_manager', 'admin'] },
+    { name: 'Dashboard', path: '/app/dashboard', icon: 'fa-chart-pie', roles: ['sales_rep', 'sales_manager', 'finance_manager', 'admin'] },
     { name: 'Quotation Builder', path: '/app/quote', icon: 'fa-file-invoice-dollar', roles: ['sales_rep', 'sales_manager', 'finance_manager', 'admin'] },
     { name: 'Inquiries', path: '/app/inquiries', icon: 'fa-inbox', roles: ['sales_rep', 'sales_manager', 'finance_manager', 'admin'] },
-    { name: 'Approvals', path: '/app/approvals', icon: 'fa-check-double', roles: ['sales_manager', 'admin', 'finance', 'finance_manager', 'sales_rep'] },
+    { name: 'Approvals', path: '/app/approvals', icon: 'fa-check-double', roles: ['sales_manager', 'admin', 'finance_manager', 'sales_rep'] },
     { name: 'Operations Hub', path: '/app/operations', icon: 'fa-boxes-packing', roles: ['operations', 'admin'] },
-    { name: 'Finance Hub', path: '/app/finance', icon: 'fa-coins', roles: ['finance', 'finance_manager', 'admin', 'sales_manager'] },
+    { name: 'Finance Hub', path: '/app/finance', icon: 'fa-coins', roles: ['finance_manager', 'admin', 'sales_manager'] },
     { name: 'Admin Operations', path: '/app/admin', icon: 'fa-user-gear', roles: ['admin'] },
     { name: 'Reporting', path: '/app/reporting', icon: 'fa-chart-bar', roles: ['sales_manager', 'finance_manager', 'admin'] },
     { name: 'Global Tenants', path: '/app/superadmin', search: '?tab=tenants', icon: 'fa-globe', roles: ['super_admin'] },
