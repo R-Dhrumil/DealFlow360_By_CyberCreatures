@@ -213,12 +213,12 @@ export default function ApprovalQueue() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button
+                          {/* <button
                             onClick={() => toggleExpand(approval.id)}
                             className="text-text-muted hover:text-primary px-3 py-1 font-semibold text-xs border border-surface-soft rounded-lg bg-white shadow-xs"
                           >
                             {expandedId === approval.id ? 'Hide' : 'Review & Decide'}
-                          </button>
+                          </button> */}
                         </td>
                       </tr>
 
