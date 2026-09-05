@@ -314,7 +314,7 @@ export default function CustomerDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {quotations.map(q => {
                   const statusLabel = (q.status || 'draft').replace(/_/g, ' ');
-                  const totalVal = Number(q.amount || q.amount || 0);
+                  const totalVal = Number(q.total_amount || q.totalAmount || 0);
                   const quoteCode = formatQuoteCode(q.id);
                   return (
                     <div
