@@ -1,1 +1,1 @@
-module = exports = require('../src/routes/warehouse.routes');
+module.exports = require('../src/routes/warehouse.routes');
