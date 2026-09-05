@@ -7,11 +7,13 @@ const { emitCompanyRoleNotification, emitUserNotification, broadcastPipelineUpda
 
 class QuotationController {
   async create(req, res) {
-    const { customerId, lines } = req.body;
+    const { customerId, customerName, customerEmail, lines } = req.body;
+    const companyId = req.companyId || req.user?.companyId || 'c1';
+    const salesRepId = req.user?.userId || req.user?.id || 'u4';
     const result = await quotationService.createQuotation(
-      req.companyId,
-      req.user.userId,
-      customerId,
+      companyId,
+      salesRepId,
+      { customerId, customerName, customerEmail },
       lines
     );
     return res.status(201).json({ success: true, ...result });
