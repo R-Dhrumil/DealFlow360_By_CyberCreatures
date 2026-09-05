@@ -7,16 +7,39 @@ import { useCurrency } from '../contexts/CurrencyContext';
 // ── Role-Level Discount Authority Configuration Panel ──────────────────────────
 function DiscountAuthorityPanel({ showNotification }) {
   const ROLES = [
-    { key: 'sales_rep', label: 'Sales Rep', icon: 'fa-user', color: 'blue', defaultMax: 10 },
-    { key: 'sales_manager', label: 'Sales Manager', icon: 'fa-user-tie', color: 'purple', defaultMax: 20 },
-    { key: 'finance_manager', label: 'Finance Manager', icon: 'fa-user-gear', color: 'amber', defaultMax: 35 },
-    { key: 'admin', label: 'Admin (Floor Override)', icon: 'fa-shield-halved', color: 'rose', defaultMax: 100 },
+    {
+      key: 'sales_rep',
+      label: 'Sales Rep',
+      tierBadge: 'Tier 1 • Frontline',
+      icon: 'fa-user',
+      color: 'blue',
+      defaultMax: 10,
+      description: 'Standard discount limit for direct quote generation without requiring escalation.',
+    },
+    {
+      key: 'sales_manager',
+      label: 'Sales Manager',
+      tierBadge: 'Tier 2 • Escalation',
+      icon: 'fa-user-tie',
+      color: 'purple',
+      defaultMax: 20,
+      description: 'Can approve quotes exceeding rep limits or approaching minimum floor margin.',
+    },
+    {
+      key: 'admin',
+      label: 'Admin (Floor Override)',
+      tierBadge: 'Tier 3 • Executive',
+      icon: 'fa-shield-halved',
+      color: 'rose',
+      defaultMax: 100,
+      description: 'Executive floor override ceiling; allows quoting below standard floor prices.',
+    },
   ];
 
   const [roleLimits, setRoleLimits] = useState(
     ROLES.reduce((acc, r) => { acc[r.key] = r.defaultMax; return acc; }, {})
   );
-  const [saving, setSaving] = useState(false);
+  const [savingKey, setSavingKey] = useState(null);
 
   useEffect(() => {
     api.get('/approvals/config/discount-tiers').then(res => {
@@ -30,7 +53,7 @@ function DiscountAuthorityPanel({ showNotification }) {
 
   const saveRoleLimit = async (roleKey) => {
     try {
-      setSaving(true);
+      setSavingKey(roleKey);
       await api.put('/approvals/config/discount-tiers', {
         tierName: roleKey,
         maxDiscountPercent: roleLimits[roleKey]
@@ -39,68 +62,163 @@ function DiscountAuthorityPanel({ showNotification }) {
     } catch {
       showNotification('error', 'Failed to save discount authority.');
     } finally {
-      setSaving(false);
+      setSavingKey(null);
     }
   };
 
-  const colorMap = {
-    blue: 'bg-blue-50 border-blue-200 text-blue-700',
-    purple: 'bg-purple-50 border-purple-200 text-purple-700',
-    orange: 'bg-orange-50 border-orange-200 text-orange-700',
-    rose: 'bg-rose-50 border-rose-200 text-rose-700',
+  const roleStyles = {
+    blue: {
+      card: 'bg-gradient-to-b from-blue-50/70 to-white border-blue-200/80 hover:border-blue-300',
+      iconBg: 'bg-blue-100 text-blue-600',
+      badge: 'bg-blue-100/80 text-blue-700 border-blue-200',
+      inputFocus: 'focus:border-blue-400 focus:ring-blue-100',
+      sliderAccent: 'accent-blue-600',
+      btn: 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs',
+    },
+    purple: {
+      card: 'bg-gradient-to-b from-purple-50/70 to-white border-purple-200/80 hover:border-purple-300',
+      iconBg: 'bg-purple-100 text-purple-600',
+      badge: 'bg-purple-100/80 text-purple-700 border-purple-200',
+      inputFocus: 'focus:border-purple-400 focus:ring-purple-100',
+      sliderAccent: 'accent-purple-600',
+      btn: 'bg-purple-600 hover:bg-purple-700 text-white shadow-xs',
+    },
+    rose: {
+      card: 'bg-gradient-to-b from-rose-50/70 to-white border-rose-200/80 hover:border-rose-300',
+      iconBg: 'bg-rose-100 text-rose-600',
+      badge: 'bg-rose-100/80 text-rose-700 border-rose-200',
+      inputFocus: 'focus:border-rose-400 focus:ring-rose-100',
+      sliderAccent: 'accent-rose-600',
+      btn: 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs',
+    },
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
-      <div className="flex items-center gap-2">
-        <i className="fa-solid fa-scale-balanced text-primary"></i>
+    <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-5">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+          <i className="fa-solid fa-scale-balanced text-lg"></i>
+        </div>
         <div>
-          <h3 className="font-extrabold text-text-main text-base">Salesperson Discount Authority</h3>
+          <h3 className="font-extrabold text-text-main text-base sm:text-lg">Salesperson Discount Authority</h3>
           <p className="text-xs text-text-muted">
-            Configure the maximum discount % each role can offer without requiring escalation.
-            Exceeding this triggers automatic manager/admin approval.
+            Configure the maximum discount percentage each sales role can offer before triggering automated escalation.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {ROLES.map(role => (
-          <div key={role.key} className={`rounded-xl border p-4 space-y-3 ${colorMap[role.color]}`}>
-            <div className="flex items-center gap-2">
-              <i className={`fa-solid ${role.icon} text-sm`}></i>
-              <span className="font-bold text-sm">{role.label}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min="0"
-                max="100"
-                step="0.5"
-                className="flex-1 px-3 py-2 text-xs font-bold bg-white/80 border border-white rounded-xl outline-none text-slate-800 text-center"
-                value={roleLimits[role.key] || 0}
-                onChange={e => setRoleLimits(prev => ({ ...prev, [role.key]: parseFloat(e.target.value) || 0 }))}
-              />
-              <span className="text-sm font-black">%</span>
-            </div>
-            {role.key === 'admin' && (
-              <p className="text-[10px] font-medium opacity-80">Admin can approve even below floor price — this sets their discount ceiling for manager-level checks.</p>
-            )}
-            <button
-              onClick={() => saveRoleLimit(role.key)}
-              disabled={saving}
-              className="w-full py-1.5 bg-white/70 hover:bg-white text-xs font-bold rounded-lg transition-all border border-white/50"
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
+        {ROLES.map(role => {
+          const style = roleStyles[role.color];
+          const currentVal = roleLimits[role.key] ?? 0;
+          const isSaving = savingKey === role.key;
+
+          return (
+            <div
+              key={role.key}
+              className={`rounded-2xl border p-5 sm:p-6 flex flex-col justify-between transition-all duration-200 shadow-xs hover:shadow-md ${style.card}`}
             >
-              Save
-            </button>
-          </div>
-        ))}
+              <div>
+                {/* Header: Icon + Title + Tier Pill */}
+                <div className="flex items-start justify-between gap-3 mb-3.5">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-base shadow-xs ${style.iconBg}`}>
+                      <i className={`fa-solid ${role.icon}`}></i>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-800 text-sm sm:text-base leading-tight">
+                        {role.label}
+                      </h4>
+                      <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${style.badge}`}>
+                        {role.tierBadge}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Role Description */}
+                <p className="text-xs text-slate-600 leading-relaxed min-h-[38px] mb-4">
+                  {role.description}
+                </p>
+
+                {/* Numeric Input & Range */}
+                <div className="bg-white/90 rounded-xl p-3.5 border border-slate-200/80 space-y-2.5 mb-5 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-600">Discount Ceiling</span>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.5"
+                        className={`w-20 px-2.5 py-1.5 text-sm font-extrabold bg-slate-50 border border-slate-200 rounded-lg outline-none text-slate-800 text-right focus:ring-2 ${style.inputFocus}`}
+                        value={currentVal}
+                        onChange={e => {
+                          const val = Math.min(100, Math.max(0, parseFloat(e.target.value) || 0));
+                          setRoleLimits(prev => ({ ...prev, [role.key]: val }));
+                        }}
+                      />
+                      <span className="text-sm font-black text-slate-700">%</span>
+                    </div>
+                  </div>
+
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="0.5"
+                    value={currentVal}
+                    onChange={e => setRoleLimits(prev => ({ ...prev, [role.key]: parseFloat(e.target.value) || 0 }))}
+                    className={`w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer ${style.sliderAccent}`}
+                  />
+                  <div className="flex justify-between text-[10px] text-slate-400 font-medium">
+                    <span>0% (Floor)</span>
+                    <span>50%</span>
+                    <span>100% (Full)</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <button
+                type="button"
+                onClick={() => saveRoleLimit(role.key)}
+                disabled={isSaving}
+                className={`w-full py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${style.btn}`}
+              >
+                {isSaving ? (
+                  <>
+                    <i className="fa-solid fa-circle-notch fa-spin text-xs"></i>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-floppy-disk text-xs"></i>
+                    <span>Save {role.label} Limit</span>
+                  </>
+                )}
+              </button>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="text-xs text-slate-500 bg-slate-50 rounded-xl p-3 border border-slate-200">
-        <strong>Approval escalation chain: </strong>
-        Sales Rep (auto-approve within limit) →
-        <span className="text-amber-600 font-bold"> Sales Manager </span> (if rep exceeds limit or net price &lt; floor price) →
-        <span className="text-rose-600 font-bold"> Company Admin </span> (if manager can't approve or floor price still violated).
+      <div className="text-xs text-slate-600 bg-slate-50/80 rounded-xl p-3.5 border border-slate-200 flex flex-wrap items-center gap-2">
+        <span className="font-bold text-slate-700 flex items-center gap-1.5">
+          <i className="fa-solid fa-arrow-right-arrow-left text-primary text-[11px]"></i>
+          Escalation Chain:
+        </span>
+        <span className="text-blue-700 font-semibold bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 text-[11px]">
+          Sales Rep <span className="text-slate-400 font-normal">(auto-approve within limit)</span>
+        </span>
+        <i className="fa-solid fa-arrow-right text-slate-400 text-[10px]"></i>
+        <span className="text-purple-700 font-semibold bg-purple-50 px-2.5 py-1 rounded-md border border-purple-200 text-[11px]">
+          Sales Manager <span className="text-slate-400 font-normal">(if limit exceeded or &lt; floor margin)</span>
+        </span>
+        <i className="fa-solid fa-arrow-right text-slate-400 text-[10px]"></i>
+        <span className="text-rose-700 font-semibold bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200 text-[11px]">
+          Company Admin <span className="text-slate-400 font-normal">(floor price override / final sign-off)</span>
+        </span>
       </div>
     </div>
   );
