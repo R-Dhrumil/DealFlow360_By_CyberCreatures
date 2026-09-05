@@ -15,8 +15,17 @@ export default function AdminWorkspace() {
   const [newProdUnit, setNewProdUnit] = useState('unit');
 
   // Governance Tiers State
-  const [tiers, setTiers] = useState([]);
-  const [categoryRules, setCategoryRules] = useState([]);
+  const [tiers, setTiers] = useState([
+    { id: 'dt-1', tier: 'Bronze', maxDiscount: 5.0, minMargin: 35.0, approver: 'Sales Manager' },
+    { id: 'dt-2', tier: 'Silver', maxDiscount: 10.0, minMargin: 30.0, approver: 'Sales Manager' },
+    { id: 'dt-3', tier: 'Gold', maxDiscount: 15.0, minMargin: 25.0, approver: 'Finance Lead' },
+    { id: 'dt-4', tier: 'Platinum Enterprise', maxDiscount: 22.0, minMargin: 20.0, approver: 'Admin Override' }
+  ]);
+  const [categoryRules, setCategoryRules] = useState([
+    { category: 'Hardware', maxDiscount: 12.0, defaultMargin: 40.0 },
+    { category: 'Software', maxDiscount: 25.0, defaultMargin: 85.0 },
+    { category: 'Services', maxDiscount: 18.0, defaultMargin: 65.0 }
+  ]);
   const [newTierName, setNewTierName] = useState('');
   const [newTierDiscount, setNewTierDiscount] = useState('');
   const [newTierMargin, setNewTierMargin] = useState('');
@@ -29,12 +38,21 @@ export default function AdminWorkspace() {
   const [newRole, setNewRole] = useState('sales_rep');
 
   // Warehouses State
-  const [warehouses, setWarehouses] = useState([]);
+  const [warehouses, setWarehouses] = useState([
+    { id: 'wh-1', name: 'CyberCreatures East Coast Distribution', location: 'New York, NY', shippingCostWeight: 1.0, stockCount: 160 },
+    { id: 'wh-2', name: 'CyberCreatures West Coast Depot', location: 'San Jose, CA', shippingCostWeight: 1.15, stockCount: 105 },
+    { id: 'wh-3', name: 'CyberCreatures EMEA Logistics Depot', location: 'London, UK', shippingCostWeight: 1.50, stockCount: 40 }
+  ]);
   const [newWhName, setNewWhName] = useState('');
   const [newWhLoc, setNewWhLoc] = useState('');
 
   // Audit Logs State
-  const [auditLogs, setAuditLogs] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([
+    { id: 'LOG-9081', action: 'PRODUCT_CREATED', entity: 'NextGen Enterprise Firewall', user: 'CyberCreatures Admin', role: 'admin', timestamp: '2026-09-02 14:22', details: 'Added to catalog at $3,800 base price' },
+    { id: 'LOG-9082', action: 'TIER_CONFIG_UPDATED', entity: 'Platinum Enterprise', user: 'CyberCreatures Admin', role: 'admin', timestamp: '2026-09-03 09:15', details: 'Updated max discount ceiling to 22.0%' },
+    { id: 'LOG-9083', action: 'DISCOUNT_ESCALATED', entity: 'Quotation QT-44444444', user: 'M. Shah', role: 'sales_rep', timestamp: '2026-09-04 16:40', details: 'Escalated 22% discount on Delta Systems LLC deal' },
+    { id: 'LOG-9084', action: 'USER_PROVISIONED', entity: 'Jim Halpert', user: 'CyberCreatures Admin', role: 'admin', timestamp: '2026-09-05 10:05', details: 'Provisioned as Sales Representative' }
+  ]);
 
   useEffect(() => {
     fetchProducts();
@@ -716,7 +734,7 @@ export default function AdminWorkspace() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {INITIAL_AUDIT_LOGS.map(log => (
+                {auditLogs.map(log => (
                   <tr key={log.id} className="hover:bg-purple-50/40 transition-colors">
                     <td className="p-3 font-mono font-bold text-text-muted">{log.id}</td>
                     <td className="p-3 font-bold text-purple-700">{log.action}</td>
