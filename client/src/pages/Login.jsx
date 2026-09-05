@@ -130,88 +130,88 @@ const Login = ({ defaultIsSignup = false }) => {
   };
 
   return (
-    <main className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 lg:p-10 bg-border-soft font-body-md text-text-body antialiased">
+    <main className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 lg:p-10 bg-[#f5e8ff] font-sans text-[#4b4356] antialiased">
       <div className="flex flex-col w-full max-w-7xl">
         <div className="w-full min-h-[760px] grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
 
-          {/* Left Column: Ambient Brand Showcase & Architecture Overview */}
-          <div className="lg:col-span-6 xl:col-span-7 relative flex flex-col justify-between p-7 md:p-10 lg:p-12 rounded-2xl bg-slate-900 text-white border border-slate-800 shadow-2xl overflow-hidden">
-            {/* Soft Ambient Radial Glows */}
-            <div className="absolute -top-24 -left-20 w-96 h-96 rounded-full bg-purple-600/20 blur-3xl pointer-events-none"></div>
-            <div className="absolute -bottom-20 -right-16 w-96 h-96 rounded-full bg-emerald-600/20 blur-3xl pointer-events-none"></div>
+          {/* Left Column: Deep Purple Royal Ambient Showcase */}
+          <div className="lg:col-span-6 xl:col-span-7 relative flex flex-col justify-between p-7 md:p-10 lg:p-12 rounded-2xl bg-gradient-to-br from-[#4a1843] via-[#702963] to-[#361131] text-white border border-[#9d3c8c]/40 shadow-2xl overflow-hidden">
+            {/* Soft Ambient Purple Radial Glows */}
+            <div className="absolute -top-24 -left-20 w-96 h-96 rounded-full bg-[#9d3c8c]/30 blur-3xl pointer-events-none"></div>
+            <div className="absolute -bottom-20 -right-16 w-96 h-96 rounded-full bg-[#006877]/20 blur-3xl pointer-events-none"></div>
 
             {/* Top Branding & Metric Pill */}
             <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 bg-gradient-to-tr from-purple-600 to-indigo-500 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg border border-purple-400/30">
+                <div className="w-11 h-11 bg-gradient-to-tr from-[#9d3c8c] to-[#702963] rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg border border-[#b854a7]/40">
                   DF
                 </div>
                 <div>
                   <span className="font-extrabold text-2xl text-white tracking-wide block leading-tight">DealFlow360</span>
-                  <span className="text-[11px] text-purple-300 font-mono">Enterprise Sales Operations Engine</span>
+                  <span className="text-[11px] text-[#f5e8ff] font-mono">Enterprise Sales Operations Engine</span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-800/90 border border-purple-500/30 shadow-md backdrop-blur-md">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span className="text-[10px] text-purple-300 font-bold uppercase tracking-wider font-mono">Telemetry</span>
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#4a1843]/80 border border-[#b854a7]/40 shadow-md backdrop-blur-md">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#059669] animate-pulse"></span>
+                <span className="text-[10px] text-[#f5e8ff] font-bold uppercase tracking-wider font-mono">Live Operations</span>
                 <span className="text-xs text-white font-extrabold font-mono pl-1">$42.8M+</span>
-                <span className="text-[11px] text-slate-400">Quotes Structured</span>
+                <span className="text-[11px] text-[#e2d0f5]">Quotes Structured</span>
               </div>
             </div>
 
             {/* Center Architecture Pillars */}
             <div className="relative z-10 my-8 space-y-5">
               <div>
-                <span className="text-[11px] font-bold text-amber-400 uppercase tracking-widest block mb-1">
+                <span className="text-[11px] font-bold text-amber-300 uppercase tracking-widest block mb-1">
                   Architectural CPQ Guardrails
                 </span>
                 <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-snug">
                   Unified Sales Governance &amp; CPQ Engine
                 </h2>
-                <p className="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
+                <p className="text-xs text-[#f5e8ff] mt-1 max-w-xl leading-relaxed">
                   Role-separated workspaces, automated discount risk scoring, and real-time customer negotiations.
                 </p>
               </div>
 
-              {/* 4 Feature Cards Grid */}
+              {/* 4 Feature Cards Grid in Purple Theme */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 hover:border-purple-500/50 transition-all space-y-1.5 backdrop-blur-sm">
-                  <div className="flex items-center space-x-2 text-purple-400 font-bold text-xs">
+                <div className="p-4 rounded-2xl bg-[#5b1f51]/70 border border-[#9d3c8c]/40 hover:border-white/40 transition-all space-y-1.5 backdrop-blur-sm shadow-sm">
+                  <div className="flex items-center space-x-2 text-amber-300 font-bold text-xs">
                     <span className="material-symbols-outlined text-lg">crown</span>
                     <span>Super Admin Console</span>
                   </div>
-                  <p className="text-[11px] text-slate-300 leading-normal">
+                  <p className="text-[11px] text-[#f5e8ff] leading-normal">
                     Business card analytics, win/loss rate progress bars &amp; tenant user directory governance.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 hover:border-purple-500/50 transition-all space-y-1.5 backdrop-blur-sm">
-                  <div className="flex items-center space-x-2 text-indigo-400 font-bold text-xs">
+                <div className="p-4 rounded-2xl bg-[#5b1f51]/70 border border-[#9d3c8c]/40 hover:border-white/40 transition-all space-y-1.5 backdrop-blur-sm shadow-sm">
+                  <div className="flex items-center space-x-2 text-purple-200 font-bold text-xs">
                     <span className="material-symbols-outlined text-lg">admin_panel_settings</span>
                     <span>Admin Operations</span>
                   </div>
-                  <p className="text-[11px] text-slate-300 leading-normal">
+                  <p className="text-[11px] text-[#f5e8ff] leading-normal">
                     Product &amp; base price listings, discount tier ceilings, and warehouse inventory setup.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 hover:border-purple-500/50 transition-all space-y-1.5 backdrop-blur-sm">
-                  <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs">
+                <div className="p-4 rounded-2xl bg-[#5b1f51]/70 border border-[#9d3c8c]/40 hover:border-white/40 transition-all space-y-1.5 backdrop-blur-sm shadow-sm">
+                  <div className="flex items-center space-x-2 text-amber-300 font-bold text-xs">
                     <span className="material-symbols-outlined text-lg">verified</span>
                     <span>Multi-Tier Approvals</span>
                   </div>
-                  <p className="text-[11px] text-slate-300 leading-normal">
+                  <p className="text-[11px] text-[#f5e8ff] leading-normal">
                     Blended risk scoring: Auto-approve (&lt;5%), Sales Manager (5-10%), Finance (&gt;10%) escalation chain.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 hover:border-emerald-500/50 transition-all space-y-1.5 backdrop-blur-sm">
-                  <div className="flex items-center space-x-2 text-emerald-400 font-bold text-xs">
+                <div className="p-4 rounded-2xl bg-[#5b1f51]/70 border border-[#9d3c8c]/40 hover:border-white/40 transition-all space-y-1.5 backdrop-blur-sm shadow-sm">
+                  <div className="flex items-center space-x-2 text-emerald-300 font-bold text-xs">
                     <span className="material-symbols-outlined text-lg">storefront</span>
                     <span>Customer Self-Serve</span>
                   </div>
-                  <p className="text-[11px] text-slate-300 leading-normal">
+                  <p className="text-[11px] text-[#f5e8ff] leading-normal">
                     Browse admin product catalog, request proposals, negotiate line discounts &amp; E-sign.
                   </p>
                 </div>
@@ -219,34 +219,33 @@ const Login = ({ defaultIsSignup = false }) => {
             </div>
 
             {/* Bottom Stats Footer */}
-            <div className="relative z-10 p-4 rounded-2xl bg-slate-800/90 border border-slate-700/80 flex flex-wrap items-center justify-between gap-4 text-xs">
+            <div className="relative z-10 p-4 rounded-2xl bg-[#4a1843]/90 border border-[#9d3c8c]/40 flex flex-wrap items-center justify-between gap-4 text-xs">
               <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span className="text-slate-300 font-semibold">99.9% Margin Floor Safeguard</span>
+                <span className="w-2 h-2 rounded-full bg-[#059669]"></span>
+                <span className="text-[#f5e8ff] font-semibold">99.9% Margin Floor Safeguard</span>
               </div>
-              <div className="flex items-center space-x-3 text-slate-400 font-mono text-[11px]">
-                <span className="text-purple-300 font-bold">⚡ 44% Faster Deals</span>
+              <div className="flex items-center space-x-3 text-[#e2d0f5] font-mono text-[11px]">
+                <span className="text-amber-300 font-bold">⚡ 44% Faster Deals</span>
                 <span>•</span>
                 <span className="text-emerald-300 font-bold">🔒 SOC-2 Certified</span>
               </div>
             </div>
           </div>
 
-
-          {/* Right Column: Authentication Suite */}
-          <div className="lg:col-span-6 xl:col-span-5 flex flex-col justify-between p-7 md:p-10 rounded-2xl bg-white border border-surface-soft shadow-xl">
+          {/* Right Column: Authentication Form in Purple Theme */}
+          <div className="lg:col-span-6 xl:col-span-5 flex flex-col justify-between p-7 md:p-10 rounded-2xl bg-white border border-[#e2d0f5] shadow-xl">
             <div>
               {/* Mode Switcher Tabs */}
-              <div className="flex items-center p-1 rounded-xl bg-border-soft border border-surface-soft mb-6">
+              <div className="flex items-center p-1 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] mb-6">
                 <button
-                  className={`flex-1 py-2.5 rounded-lg font-headline-sm text-xs text-center transition-all ${!isSignup ? 'bg-primary text-white font-bold shadow-md' : 'text-text-muted hover:text-text-main font-semibold'}`}
+                  className={`flex-1 py-2.5 rounded-lg text-xs font-bold text-center transition-all ${!isSignup ? 'bg-[#702963] text-white shadow-md' : 'text-[#6b6278] hover:text-[#110d1a] font-semibold'}`}
                   onClick={() => { setIsSignup(false); setError(''); }}
                   type="button"
                 >
                   Sign In
                 </button>
                 <button
-                  className={`flex-1 py-2.5 rounded-lg font-headline-sm text-xs text-center transition-all ${isSignup ? 'bg-primary text-white font-bold shadow-md' : 'text-text-muted hover:text-text-main font-semibold'}`}
+                  className={`flex-1 py-2.5 rounded-lg text-xs font-bold text-center transition-all ${isSignup ? 'bg-[#702963] text-white shadow-md' : 'text-[#6b6278] hover:text-[#110d1a] font-semibold'}`}
                   onClick={() => { setIsSignup(true); setError(''); }}
                   type="button"
                 >
@@ -256,13 +255,13 @@ const Login = ({ defaultIsSignup = false }) => {
 
               {/* Header Titles */}
               <div className="mb-6">
-                <span className="font-label-sm text-xs font-bold text-primary uppercase tracking-widest">
+                <span className="text-xs font-bold text-[#702963] uppercase tracking-widest block">
                   {isSignup ? 'Create New Account' : 'Sign In to Your Workspace'}
                 </span>
-                <h1 className="font-headline-lg text-2xl md:text-3xl font-bold text-text-main mt-1 tracking-tight">
+                <h1 className="text-2xl md:text-3xl font-extrabold text-[#110d1a] mt-1 tracking-tight">
                   {isSignup ? 'Get Started with DealFlow360' : 'Sign In to DealFlow360'}
                 </h1>
-                <p className="font-body-md text-xs text-text-muted mt-1">
+                <p className="text-xs text-[#6b6278] mt-1">
                   {isSignup
                     ? 'Select your account type below to set up your DealFlow360 access.'
                     : 'Enter your credentials — your user role will be detected automatically.'}
@@ -282,7 +281,7 @@ const Login = ({ defaultIsSignup = false }) => {
                 {/* Account Type Selector (ONLY in Sign Up Mode) */}
                 {isSignup && (
                   <div className="space-y-2">
-                    <label className="block font-label-md text-xs font-bold text-text-main uppercase tracking-wider">
+                    <label className="block text-xs font-bold text-[#110d1a] uppercase tracking-wider">
                       Select Account Type
                     </label>
                     <div className="grid grid-cols-2 gap-3">
@@ -290,8 +289,8 @@ const Login = ({ defaultIsSignup = false }) => {
                         type="button"
                         onClick={() => setAccountType('admin')}
                         className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${accountType === 'admin'
-                            ? 'bg-primary/10 border-primary text-primary ring-2 ring-primary/30 font-bold'
-                            : 'bg-border-soft border-surface-soft text-text-muted hover:border-primary/50'
+                            ? 'bg-[#702963]/10 border-[#702963] text-[#702963] ring-2 ring-[#702963]/30 font-bold'
+                            : 'bg-[#faf2ff] border-[#e2d0f5] text-[#6b6278] hover:border-[#702963]/50'
                           }`}
                       >
                         <span className="material-symbols-outlined text-xl mb-1 text-primary">domain</span>
@@ -305,8 +304,8 @@ const Login = ({ defaultIsSignup = false }) => {
                         type="button"
                         onClick={() => setAccountType('customer')}
                         className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${accountType === 'customer'
-                            ? 'bg-emerald-status/10 border-emerald-status text-emerald-status ring-2 ring-emerald-status/30 font-bold'
-                            : 'bg-border-soft border-surface-soft text-text-muted hover:border-emerald-status/50'
+                            ? 'bg-[#059669]/10 border-[#059669] text-[#059669] ring-2 ring-[#059669]/30 font-bold'
+                            : 'bg-[#faf2ff] border-[#e2d0f5] text-[#6b6278] hover:border-[#059669]/50'
                           }`}
                       >
                         <span className="material-symbols-outlined text-xl mb-1 text-emerald-status">person</span>
@@ -321,11 +320,11 @@ const Login = ({ defaultIsSignup = false }) => {
 
                 {isSignup && (
                   <div className="space-y-1.5">
-                    <label className="block font-label-md text-xs font-semibold text-text-main">Full Name</label>
+                    <label className="block text-xs font-semibold text-[#110d1a]">Full Name</label>
                     <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">person</span>
+                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">person</span>
                       <input
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-border-soft border border-surface-soft text-text-main font-body-md text-xs placeholder-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] text-xs placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963]"
                         placeholder="e.g. Sarah Connor"
                         type="text"
                         value={name}
@@ -338,11 +337,11 @@ const Login = ({ defaultIsSignup = false }) => {
 
                 {isSignup && accountType === 'admin' && (
                   <div className="space-y-1.5">
-                    <label className="block font-label-md text-xs font-semibold text-text-main">Company / Organization Name</label>
+                    <label className="block text-xs font-semibold text-[#110d1a]">Company / Organization Name</label>
                     <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">corporate_fare</span>
+                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">corporate_fare</span>
                       <input
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-border-soft border border-surface-soft text-text-main font-body-md text-xs placeholder-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] text-xs placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963]"
                         placeholder="e.g. CyberCreatures Inc."
                         type="text"
                         value={companyName}
@@ -355,11 +354,11 @@ const Login = ({ defaultIsSignup = false }) => {
 
                 {/* Email Field */}
                 <div className="space-y-1.5">
-                  <label className="block font-label-md text-xs font-semibold text-text-main">Email Address</label>
+                  <label className="block text-xs font-semibold text-[#110d1a]">Email Address</label>
                   <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">alternate_email</span>
+                    <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">alternate_email</span>
                     <input
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-border-soft border border-surface-soft text-text-main font-body-md text-xs placeholder-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] text-xs placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963]"
                       placeholder="name@example.com"
                       type="email"
                       value={email}
@@ -372,12 +371,12 @@ const Login = ({ defaultIsSignup = false }) => {
                 {/* Password Field */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="block font-label-md text-xs font-semibold text-text-main">Password</label>
+                    <label className="block text-xs font-semibold text-[#110d1a]">Password</label>
                   </div>
                   <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">lock</span>
+                    <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">lock</span>
                     <input
-                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-border-soft border border-surface-soft text-text-main font-data-tabular text-xs placeholder-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] text-xs placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963]"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={password}
@@ -385,7 +384,7 @@ const Login = ({ defaultIsSignup = false }) => {
                       required
                     />
                     <button
-                      className="absolute right-3 top-2.5 text-text-muted hover:text-text-main transition-colors"
+                      className="absolute right-3 top-2.5 text-[#6b6278] hover:text-[#110d1a] transition-colors"
                       onClick={() => setShowPassword(!showPassword)}
                       type="button"
                     >
@@ -398,7 +397,7 @@ const Login = ({ defaultIsSignup = false }) => {
                 <div className="pt-2">
                   <button
                     disabled={loading}
-                    className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-dark text-white font-headline-sm text-xs font-bold tracking-wide text-center flex items-center justify-center gap-2 shadow-lg shadow-primary/25 transition-all focus:outline-none focus:ring-2 focus:ring-primary active:scale-[0.99] disabled:opacity-70"
+                    className="w-full py-3 px-4 rounded-xl bg-[#702963] hover:bg-[#55104b] text-white text-xs font-bold tracking-wide text-center flex items-center justify-center gap-2 shadow-lg shadow-[#702963]/25 transition-all focus:outline-none focus:ring-2 focus:ring-[#702963] active:scale-[0.99] disabled:opacity-70"
                     type="submit"
                   >
                     {loading ? (
