@@ -244,26 +244,6 @@ class AuthService {
         );
         const newUser = userRes.rows[0];
 
-        // Seed default starter products for the new company so product catalog is dynamically available
-        const defaultProducts = [
-          ['p_' + crypto.randomUUID().substring(0, 8), company.id, `${company.name} Core Appliance`, 'Hardware', 1500.00, 'unit', 5.0, 'Starter core hardware appliance', true, 40.0],
-          ['p_' + crypto.randomUUID().substring(0, 8), company.id, `${company.name} SLA Support Pack`, 'Services', 600.00, 'month', 0.0, '24/7 Priority support SLA package', true, 75.0],
-          ['p_' + crypto.randomUUID().substring(0, 8), company.id, `${company.name} Enterprise Suite`, 'Software', 250.00, 'user/month', 0.0, 'Enterprise software seat license', false, 85.0]
-        ];
-
-        for (const prod of defaultProducts) {
-          try {
-            await db.query(
-              `INSERT INTO products (id, company_id, name, category, base_price, unit, tax_rate, description, is_promoted, margin_percent)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-               ON CONFLICT (id) DO NOTHING`,
-              prod
-            );
-          } catch (pErr) {
-            console.warn('Failed to insert default product for new company:', pErr.message);
-          }
-        }
-
         const token = jwt.sign(
           { userId: newUser.id, companyId: newUser.company_id, role: 'admin' },
           config.jwtSecret,
