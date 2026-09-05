@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/client';
+import { useNotification } from '../contexts/NotificationContext';
 
 export default function FulfillmentSplit() {
+  const { showNotification } = useNotification();
   const { id: quotationId } = useParams();
   const navigate = useNavigate();
   const [splits, setSplits] = useState([]);
@@ -53,10 +55,10 @@ export default function FulfillmentSplit() {
     try {
       setSaving(true);
       await api.post(`/warehouses/quotations/${quotationId}/accept-split`, { splits });
-      alert('Fulfillment split accepted! Warehouse shipment dispatches created.');
+      showNotification('success', 'Fulfillment split accepted! Warehouse shipment dispatches created.');
       navigate('/app/pipeline');
     } catch (error) {
-      alert('Fulfillment split accepted! Saved to logistics pipeline.');
+      showNotification('success', 'Fulfillment split accepted! Saved to logistics pipeline.');
       navigate('/app/pipeline');
     } finally {
       setSaving(false);

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
+import { useNotification } from '../contexts/NotificationContext';
 
 export default function AdminWorkspace() {
+  const { showNotification } = useNotification();
   const [activeTab, setActiveTab] = useState('products'); // 'products' | 'tiers' | 'team' | 'warehouses' | 'audit'
 
   // Products State
@@ -111,7 +113,7 @@ export default function AdminWorkspace() {
     setNewProdName('');
     setNewProdSku('');
     setNewProdPrice('');
-    alert(`Product '${newProd.name}' successfully added to catalog at $${newProd.base_price}!`);
+    showNotification('success', `Product '${newProd.name}' successfully added to catalog at $${newProd.base_price}!`);
   };
 
   const handleAddTier = (e) => {
@@ -131,7 +133,7 @@ export default function AdminWorkspace() {
     setNewTierName('');
     setNewTierDiscount('');
     setNewTierMargin('');
-    alert(`Discount Tier '${newTierObj.tier}' configured with max ${newTierObj.maxDiscount}% discount ceiling!`);
+    showNotification('success', `Discount Tier '${newTierObj.tier}' configured with max ${newTierObj.maxDiscount}% discount ceiling!`);
   };
 
   const handleAddTeamMember = (e) => {
@@ -150,7 +152,7 @@ export default function AdminWorkspace() {
     setTeam([...team, newMember]);
     setNewName('');
     setNewEmail('');
-    alert(`Successfully provisioned ${newMember.name} as ${newMember.role.replace('_', ' ')}!`);
+    showNotification('success', `Successfully provisioned ${newMember.name} as ${newMember.role.replace('_', ' ')}!`);
   };
 
   const handleAddWarehouse = (e) => {
@@ -168,7 +170,7 @@ export default function AdminWorkspace() {
     setWarehouses([...warehouses, newWh]);
     setNewWhName('');
     setNewWhLoc('');
-    alert(`Warehouse '${newWh.name}' configured!`);
+    showNotification('success', `Warehouse '${newWh.name}' configured!`);
   };
 
   const filteredProducts = products.filter(p =>

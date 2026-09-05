@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
+import { useNotification } from '../contexts/NotificationContext';
 
 export default function DealHealthDashboard() {
+  const { showNotification } = useNotification();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [nudgedDeals, setNudgedDeals] = useState([]);
@@ -37,7 +39,7 @@ export default function DealHealthDashboard() {
 
   const handleNudge = (dealId) => {
     setNudgedDeals(prev => [...prev, dealId]);
-    alert(`Nudge escalation notification sent to assigned rep for Deal #${dealId}!`);
+    showNotification('success', `Nudge escalation notification sent to assigned rep for Deal #${dealId}!`);
   };
 
   if (loading) {

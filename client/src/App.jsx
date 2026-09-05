@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import api from './api/client';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { AlertProvider } from './contexts/AlertContext';
 import LandingPage from './pages/LandingPage';
 import Marketplace from './pages/Marketplace';
 import Login from './pages/Login';
@@ -53,47 +55,51 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/marketplace" element={<Marketplace />} />
-        <Route path="/portal/:id" element={<CustomerPortal />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Login defaultIsSignup={true} />} />
-        <Route path="/customer/login" element={<Login />} />
-        <Route path="/superadmin" element={<Navigate to="/app/superadmin" replace />} />
+    <NotificationProvider>
+      <AlertProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/portal/:id" element={<CustomerPortal />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Login defaultIsSignup={true} />} />
+            <Route path="/customer/login" element={<Login />} />
+            <Route path="/superadmin" element={<Navigate to="/app/superadmin" replace />} />
 
-        {/* Customer Protected Workspace */}
-        <Route path="/customer" element={<ProtectedRoute allowedRoles={['customer']} />}>
-          <Route path="dashboard" element={<CustomerDashboard />} />
-          <Route index element={<Navigate to="dashboard" replace />} />
-        </Route>
+            {/* Customer Protected Workspace */}
+            <Route path="/customer" element={<ProtectedRoute allowedRoles={['customer']} />}>
+              <Route path="dashboard" element={<CustomerDashboard />} />
+              <Route index element={<Navigate to="dashboard" replace />} />
+            </Route>
 
-        {/* Internal Protected Routes */}
-        <Route path="/app" element={<ProtectedRoute allowedRoles={['sales_rep', 'sales_manager', 'finance', 'admin', 'super_admin', 'operations']} />}>
-          <Route element={<Layout />}>
-            <Route path="pipeline" element={<Pipeline />} />
-            <Route path="dashboard" element={<UniversalDashboard />} />
-            <Route path="quote" element={<QuotationBuilder />} />
-            <Route path="quote/:id" element={<QuotationView />} />
-            <Route path="approvals" element={<ApprovalQueue />} />
-            <Route path="fulfillment/:id" element={<FulfillmentSplit />} />
-            <Route path="reporting" element={<Reporting />} />
-            <Route path="superadmin" element={<SuperAdminConsole />} />
-            <Route path="settings" element={<SuperAdminSettings />} />
-            <Route path="admin" element={<AdminWorkspace />} />
-            <Route path="finance" element={<FinanceOperations />} />
-            <Route path="operations" element={<OperationsDashboard />} />
-            {/* Intelligent Redirect */}
-            <Route index element={<AppIndexRedirect />} />
-          </Route>
-        </Route>
+            {/* Internal Protected Routes */}
+            <Route path="/app" element={<ProtectedRoute allowedRoles={['sales_rep', 'sales_manager', 'finance', 'admin', 'super_admin', 'operations']} />}>
+              <Route element={<Layout />}>
+                <Route path="pipeline" element={<Pipeline />} />
+                <Route path="dashboard" element={<UniversalDashboard />} />
+                <Route path="quote" element={<QuotationBuilder />} />
+                <Route path="quote/:id" element={<QuotationView />} />
+                <Route path="approvals" element={<ApprovalQueue />} />
+                <Route path="fulfillment/:id" element={<FulfillmentSplit />} />
+                <Route path="reporting" element={<Reporting />} />
+                <Route path="superadmin" element={<SuperAdminConsole />} />
+                <Route path="settings" element={<SuperAdminSettings />} />
+                <Route path="admin" element={<AdminWorkspace />} />
+                <Route path="finance" element={<FinanceOperations />} />
+                <Route path="operations" element={<OperationsDashboard />} />
+                {/* Intelligent Redirect */}
+                <Route index element={<AppIndexRedirect />} />
+              </Route>
+            </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AlertProvider>
+    </NotificationProvider>
   );
 }
 
