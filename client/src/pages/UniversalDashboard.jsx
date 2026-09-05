@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
+import { formatQuoteCode } from '../utils/formatters';
 
 const formatCurrency = (val) => {
   const num = Number(val) || 0;
@@ -393,10 +394,10 @@ const UniversalDashboard = () => {
                             </div>
                             <div className="flex flex-col min-w-0">
                               <span className="font-bold text-xs text-text-main truncate group-hover:text-primary transition-colors">
-                                {deal.customer_name || 'Enterprise Account'}
+                                {deal.product_summary || deal.customer_name || 'Enterprise Account'}
                               </span>
                               <span className="text-[11px] text-text-muted font-mono">
-                                QT-{deal.id ? deal.id.slice(0, 8).toUpperCase() : 'N/A'} • Rep: {deal.sales_rep_name || 'RevOps'}
+                                {formatQuoteCode(deal.id)} • Account: {deal.customer_name || 'Acme Corp'} • Rep: {deal.sales_rep_name || 'RevOps'}
                               </span>
                             </div>
                           </div>

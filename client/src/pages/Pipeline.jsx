@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
+import { formatQuoteCode } from '../utils/formatters';
 
 const STAGES = [
   { name: 'Draft', color: 'border-slate-300 bg-slate-100 text-slate-700' },
@@ -23,8 +24,9 @@ export default function Pipeline() {
       const res = await api.get('/quotations');
       if (res.data && res.data.length > 0) {
         const formatted = res.data.map(q => ({
-          id: q.id.slice(0, 8),
-          customer: q.customer_name || 'Acme Corp',
+          rawId: q.id,
+          id: formatQuoteCode(q.id),
+          customer: q.product_summary || q.customer_name || 'Acme Corp',
           amount: parseFloat(q.total_amount || 0),
           riskScore: parseFloat(q.blended_risk_score || 0),
           stage: q.status === 'draft' ? 'Draft' : q.status === 'pending_approval' ? 'Pending Approval' : q.status === 'pending_finance_approval' ? 'Pending Finance' : q.status === 'approved' ? 'Approved' : 'Confirmed',
@@ -123,7 +125,7 @@ export default function Pipeline() {
                       <span><i className="fa-solid fa-box mr-1"></i> {deal.linesCount} items</span>
                       <div className="flex space-x-1">
                         <Link 
-                          to={`/app/quote/${deal.id}`}
+                          to={`/app/quote/${deal.rawId || deal.id}`}
                           className="px-2 py-1 bg-slate-100 hover:bg-primary-600 hover:text-text-main rounded text-[11px] font-medium transition-colors"
                         >
                           View

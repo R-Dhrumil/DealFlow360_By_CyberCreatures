@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
+import { formatQuoteCode } from '../utils/formatters';
 
 export default function CustomerPortal() {
   const { id: quotationId } = useParams();
@@ -162,8 +163,8 @@ export default function CustomerPortal() {
               {quotation.company_name.charAt(0)}
             </div>
             <div>
-              <span className="font-bold text-text-main text-base block leading-tight">{quotation.company_name} Customer Portal</span>
-              <span className="text-xs text-text-muted">Negotiable Digital Quotation #{quotation.id?.split('-')[0]}</span>
+              <span className="font-bold text-text-main text-base block leading-tight">{quotation.company_name || 'CyberCreatures'} Customer Portal</span>
+              <span className="text-xs text-text-muted">Negotiable Digital Proposal {formatQuoteCode(quotation.id)}</span>
             </div>
           </div>
 
@@ -362,7 +363,7 @@ export default function CustomerPortal() {
               </button>
             </div>
             
-            <p className="text-text-muted text-xs">Draw your signature inside the box to accept terms for Quotation #{quotation.id?.split('-')[0]}.</p>
+            <p className="text-text-muted text-xs">Draw your signature inside the box to accept terms for Proposal {formatQuoteCode(quotation.id)}.</p>
             
             <div className="border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 overflow-hidden touch-none">
               <canvas 

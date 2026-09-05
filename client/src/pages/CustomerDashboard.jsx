@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/client';
+import { formatQuoteCode, formatSKU } from '../utils/formatters';
 
 export default function CustomerDashboard() {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ export default function CustomerDashboard() {
     try {
       const res = await api.post('/quotations/customer-request', { productId: product.id, quantity: 1 });
       const newQuote = res.data?.quotation;
-      const quoteCode = newQuote ? `QT-${newQuote.id.slice(0, 8).toUpperCase()}` : 'New Proposal';
+      const quoteCode = newQuote ? formatQuoteCode(newQuote.id) : 'QT-2026-1001';
       setInquirySuccess(`Success! ${quoteCode} generated for ${product.name} and assigned to your sales rep.`);
       await fetchQuotations();
       setActiveTab('quotations');
@@ -213,7 +214,7 @@ export default function CustomerDashboard() {
                       <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                         {p.category}
                       </span>
-                      <span className="text-[11px] font-mono text-text-muted">{p.sku || 'SKU-00' + p.id}</span>
+                      <span className="text-[11px] font-mono text-text-muted">{formatSKU(p.sku, p.id)}</span>
                     </div>
 
                     <h3 className="font-extrabold text-text-main text-base leading-snug">{p.name}</h3>
@@ -264,7 +265,7 @@ export default function CustomerDashboard() {
                 {quotations.map(q => {
                   const statusLabel = (q.status || 'draft').replace(/_/g, ' ');
                   const totalVal = Number(q.total_amount || q.totalAmount || 0);
-                  const quoteCode = q.id ? `QT-${q.id.slice(0, 8).toUpperCase()}` : 'QT-NEW';
+                  const quoteCode = formatQuoteCode(q.id);
                   return (
                     <div 
                       key={q.id}
