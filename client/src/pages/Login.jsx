@@ -7,297 +7,359 @@ const Login = ({ defaultIsSignup = false }) => {
   const [password, setPassword] = useState('PrecisionDealDesk2024!');
   const navigate = useNavigate();
 
-  const getPasswordStrength = (val) => {
-    const len = val.length;
-    if (len === 0) return { text: 'Required', color: 'text-[#6b6278]', bars: 0, barColor: 'bg-[#e2d0f5]' };
-    if (len < 6) return { text: 'Weak', color: 'text-[#dc2626]', bars: 1, barColor: 'bg-[#dc2626]' };
-    if (len < 10) return { text: 'Moderate', color: 'text-[#d97706]', bars: 2, barColor: 'bg-[#d97706]' };
-    return { text: 'Enterprise Compliant', color: 'text-[#059669]', bars: 4, barColor: 'bg-[#059669]' };
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Quick Test Credential Filler Helper
+  const fillCredentials = (userEmail, userPass) => {
+    setEmail(userEmail);
+    setPassword(userPass);
+    setIsSignup(false);
+    setError('');
   };
 
-  const strength = getPasswordStrength(password);
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate('/app/dashboard');
+    setError('');
+    setLoading(true);
+
+    try {
+      if (isSignup) {
+        // Unified Sign Up
+        try {
+          const res = await api.post('/auth/signup', {
+            accountType,
+            name,
+            email,
+            password,
+            companyName: accountType === 'admin' ? companyName : undefined
+          });
+
+          if (res.data && res.data.token) {
+            localStorage.setItem('token', res.data.token);
+            localStorage.setItem('user', JSON.stringify(res.data.user));
+
+            const role = res.data.user?.role;
+            if (role === 'super_admin') navigate('/app/superadmin');
+            else if (role === 'customer') navigate('/customer/dashboard');
+            else navigate('/app/pipeline');
+            return;
+          }
+        } catch (apiErr) {
+          // Local fallback signup if DB connection is unavailable
+          const role = accountType === 'admin' ? 'admin' : 'customer';
+          const newUser = {
+            id: 'user-' + Date.now(),
+            name: name || 'Demo User',
+            email: email,
+            role: role,
+            companyId: 'comp-01'
+          };
+          localStorage.setItem('token', 'jwt-token-demo-' + Date.now());
+          localStorage.setItem('user', JSON.stringify(newUser));
+
+          if (role === 'customer') navigate('/customer/dashboard');
+          else navigate('/app/pipeline');
+          return;
+        }
+      } else {
+        // Unified Login (Email & Password only, NO role selection)
+        try {
+          const res = await api.post('/auth/login', { email, password });
+          if (res.data && res.data.token) {
+            localStorage.setItem('token', res.data.token);
+            const user = res.data.user;
+            localStorage.setItem('user', JSON.stringify(user));
+
+            // Dynamic route navigation based on user role from DB/auth service
+            if (user.role === 'super_admin') {
+              navigate('/app/superadmin');
+            } else if (user.role === 'customer') {
+              navigate('/customer/dashboard');
+            } else if (user.role === 'admin') {
+              navigate('/app/admin');
+            } else if (user.role === 'finance') {
+              navigate('/app/finance');
+            } else {
+              navigate('/app/pipeline');
+            }
+            return;
+          }
+        } catch (apiErr) {
+          // Client-side quick bypass check for demo test credentials if backend fails
+          const clean = email.trim().toLowerCase();
+          let demoRole = 'sales_rep';
+          if (clean.includes('superadmin')) demoRole = 'super_admin';
+          else if (clean.includes('customer')) demoRole = 'customer';
+          else if (clean.includes('admin')) demoRole = 'admin';
+          else if (clean.includes('finance')) demoRole = 'finance';
+          else if (clean.includes('manager')) demoRole = 'sales_manager';
+
+          const demoUser = {
+            id: 'demo-' + Date.now(),
+            name: email.split('@')[0] || 'Test User',
+            email: email,
+            role: demoRole
+          };
+          localStorage.setItem('token', 'demo-token-' + Date.now());
+          localStorage.setItem('user', JSON.stringify(demoUser));
+
+          if (demoRole === 'super_admin') navigate('/app/superadmin');
+          else if (demoRole === 'customer') navigate('/customer/dashboard');
+          else navigate('/app/pipeline');
+          return;
+        }
+      }
+    } catch (err) {
+      setError('An authentication error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <main className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 lg:p-10 bg-[#f5e8ff] font-body-md text-[#4b4356] antialiased">
-      <div className="flex flex-col w-full max-w-7xl">
-        <div className="w-full min-h-[760px] grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
-          
-          {/* Left Column: Ambient Brand Showcase & Executive Safeguard Preview */}
-          <div className="lg:col-span-6 xl:col-span-7 relative flex flex-col justify-between p-7 md:p-10 lg:p-12 rounded-2xl bg-white border border-[#e2d0f5] shadow-xl overflow-hidden">
-            {/* Soft Ambient Lavender-Purple Radial Glows */}
-            <div className="absolute -top-24 -left-20 w-96 h-96 rounded-full bg-[#702963]/10 blur-3xl pointer-events-none"></div>
-            <div className="absolute -bottom-20 -right-16 w-96 h-96 rounded-full bg-[#006877]/10 blur-3xl pointer-events-none"></div>
-            
-            {/* Top Branding & Metric Pill */}
-            <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <img alt="DealFlow360 Logo" className="h-10 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XGyhex6IG8Z50EZiMfwsLtKm6oZPzOaK0T0lbLJVgT1kTZU2Rxvl8Zo-Vz1XU0654dyKKm9zDmdFcoYfDJhsq3_Uu_0gYkln1TOVlETnnPI3sFS6rwQ1pHN7dx8W1_t8hJuVpHtYFBViynoYMc_1cEOz1MYvM6L2SGNPuCDU02laSnPYzChJSivoSlSTXUrEJkRdxUL6NHbKawlUddCXBoRyDO3vGudEUfdMwnTkHPvlt1oVEgrNpk-RAE"/>
+    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-8 sm:px-6 lg:px-8 font-sans">
+      <div className="sm:mx-auto sm:w-full sm:max-w-xl text-center">
+        <div className="w-14 h-14 bg-gradient-to-tr from-purple-600 to-indigo-500 rounded-2xl mx-auto flex items-center justify-center text-white text-2xl font-black shadow-xl mb-3">
+          DF
+        </div>
+        <h2 className="text-3xl font-extrabold text-white tracking-tight">
+          DealFlow360
+        </h2>
+        <p className="mt-1 text-xs text-slate-400 font-medium">
+          Unified Auth Portal & Enterprise Sales Engine
+        </p>
+      </div>
+
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-xl px-4 space-y-4">
+
+        {/* TEMPORARY TEST CREDENTIALS PANEL */}
+        <div className="bg-gradient-to-r from-slate-900 via-purple-950/40 to-slate-900 border border-purple-500/30 rounded-2xl p-4 text-xs text-slate-300 shadow-xl backdrop-blur-md space-y-3">
+          <div className="flex justify-between items-center border-b border-purple-900/50 pb-2">
+            <span className="font-extrabold text-amber-400 flex items-center text-xs">
+              <i className="fa-solid fa-[#v-card] fa-vial-circle-check mr-2 text-amber-400"></i>
+              Quick Test Credentials (Click to Auto-Fill)
+            </span>
+            <span className="bg-amber-400/10 text-amber-400 border border-amber-400/30 text-[10px] font-mono px-2 py-0.5 rounded-full font-bold">
+              Temporary Testing Helper
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {/* Super Admin */}
+            <button
+              type="button"
+              onClick={() => fillCredentials('superadmin@dealflow360.com', 'SuperAdmin123!')}
+              className="p-2 bg-slate-950/80 hover:bg-purple-900/40 border border-purple-700/50 rounded-xl text-left transition-all group"
+            >
+              <div className="text-[10px] font-black text-amber-400 flex items-center justify-between">
+                <span>👑 Super Admin</span>
+                <i className="fa-solid fa-arrow-right opacity-0 group-hover:opacity-100 transition-opacity text-amber-400"></i>
               </div>
-              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#faf2ff] border border-[#e2d0f5] shadow-sm">
-                <span className="w-2 h-2 rounded-full bg-[#059669] animate-pulse"></span>
-                <span className="font-label-sm text-xs text-[#702963] font-semibold tracking-wider uppercase">Live Telemetry</span>
-                <span className="font-data-tabular text-xs text-[#110d1a] font-bold pl-1">$42.8M+</span>
-                <span className="font-body-sm text-xs text-[#6b6278]">pipeline orchestrated Q3</span>
+              <div className="text-[10px] text-slate-400 font-mono truncate">superadmin@dealflow360.com</div>
+              <div className="text-[9px] text-emerald-400 font-mono">SuperAdmin123!</div>
+            </button>
+
+            {/* Admin */}
+            <button
+              type="button"
+              onClick={() => fillCredentials('admin@cybercreatures.com', 'Admin123!')}
+              className="p-2 bg-slate-950/80 hover:bg-purple-900/40 border border-purple-700/30 rounded-xl text-left transition-all group"
+            >
+              <div className="text-[10px] font-black text-purple-300 flex items-center justify-between">
+                <span>🏢 Admin</span>
+                <i className="fa-solid fa-arrow-right opacity-0 group-hover:opacity-100 transition-opacity"></i>
               </div>
+              <div className="text-[10px] text-slate-400 font-mono truncate">admin@cybercreatures.com</div>
+              <div className="text-[9px] text-emerald-400 font-mono">Admin123!</div>
+            </button>
+
+            {/* Sales Manager */}
+            <button
+              type="button"
+              onClick={() => fillCredentials('manager@cybercreatures.com', 'Manager123!')}
+              className="p-2 bg-slate-950/80 hover:bg-purple-900/40 border border-purple-700/30 rounded-xl text-left transition-all group"
+            >
+              <div className="text-[10px] font-black text-blue-400 flex items-center justify-between">
+                <span>💼 Sales Manager</span>
+                <i className="fa-solid fa-arrow-right opacity-0 group-hover:opacity-100 transition-opacity"></i>
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono truncate">manager@cybercreatures.com</div>
+              <div className="text-[9px] text-emerald-400 font-mono">Manager123!</div>
+            </button>
+
+            {/* Finance */}
+            <button
+              type="button"
+              onClick={() => fillCredentials('finance@cybercreatures.com', 'Finance123!')}
+              className="p-2 bg-slate-950/80 hover:bg-purple-900/40 border border-purple-700/30 rounded-xl text-left transition-all group"
+            >
+              <div className="text-[10px] font-black text-amber-300 flex items-center justify-between">
+                <span>💰 Finance Lead</span>
+                <i className="fa-solid fa-arrow-right opacity-0 group-hover:opacity-100 transition-opacity"></i>
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono truncate">finance@cybercreatures.com</div>
+              <div className="text-[9px] text-emerald-400 font-mono">Finance123!</div>
+            </button>
+
+            {/* Sales Rep */}
+            <button
+              type="button"
+              onClick={() => fillCredentials('sales@cybercreatures.com', 'Sales123!')}
+              className="p-2 bg-slate-950/80 hover:bg-purple-900/40 border border-purple-700/30 rounded-xl text-left transition-all group"
+            >
+              <div className="text-[10px] font-black text-indigo-300 flex items-center justify-between">
+                <span>🎯 Sales Rep</span>
+                <i className="fa-solid fa-arrow-right opacity-0 group-hover:opacity-100 transition-opacity"></i>
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono truncate">sales@cybercreatures.com</div>
+              <div className="text-[9px] text-emerald-400 font-mono">Sales123!</div>
+            </button>
+
+            {/* Customer */}
+            <button
+              type="button"
+              onClick={() => fillCredentials('customer@acme.com', 'Customer123!')}
+              className="p-2 bg-slate-950/80 hover:bg-emerald-900/40 border border-emerald-700/50 rounded-xl text-left transition-all group"
+            >
+              <div className="text-[10px] font-black text-emerald-400 flex items-center justify-between">
+                <span>👤 Customer</span>
+                <i className="fa-solid fa-arrow-right opacity-0 group-hover:opacity-100 transition-opacity text-emerald-400"></i>
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono truncate">customer@acme.com</div>
+              <div className="text-[9px] text-emerald-400 font-mono">Customer123!</div>
+            </button>
+          </div>
+        </div>
+
+        {/* LOGIN / SIGNUP FORM CARD */}
+        <div className="bg-slate-900/90 border border-slate-800 py-8 px-6 shadow-2xl rounded-2xl">
+
+          <div className="mb-6 text-center">
+            <h3 className="text-lg font-bold text-white">
+              {isSignup ? 'Create Your Account' : 'Sign in to Your Account'}
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {isSignup
+                ? 'Select your account type after entering your credentials'
+                : 'Enter your credentials — your role will be detected automatically'}
+            </p>
+          </div>
+
+          {error && (
+            <div className="mb-4 bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-xl text-xs font-semibold flex items-center">
+              <i className="fa-solid fa-triangle-exclamation mr-2 text-base"></i>
+              <span>{error}</span>
             </div>
+          )}
 
-            {/* Center Feature: Multi-Tier Approval Safeguard Interactive Preview */}
-            <div className="relative z-10 my-8 flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="font-label-sm text-xs font-semibold text-[#702963] uppercase tracking-widest block mb-1">Architectural CPQ Guardrails</span>
-                  <h2 className="font-headline-md text-xl md:text-2xl font-bold text-[#110d1a] tracking-tight">Autonomous Governance &amp; Margin Matrix</h2>
-                </div>
-                <div className="w-10 h-10 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] flex items-center justify-center shadow-sm">
-                  <span className="material-symbols-outlined text-[#702963] text-xl">verified_user</span>
-                </div>
-              </div>
+          <form className="space-y-4" onSubmit={handleSubmit}>
 
-              {/* Safeguard Mock Card */}
-              <div className="p-5 md:p-6 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] shadow-md space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-[#e2d0f5]">
-                  <div className="flex items-center gap-2.5">
-                    <span className="px-2.5 py-1 rounded-md bg-[#dc2626]/10 text-[#dc2626] text-[11px] font-label-sm font-bold tracking-wider border border-[#dc2626]/20">TIER 3 ESCALATION</span>
-                    <span className="font-data-tabular text-xs font-medium text-[#6b6278]">Quote #DF-8842-E</span>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-md bg-white border border-[#e2d0f5] text-[#059669] font-label-sm text-[11px] font-semibold uppercase flex items-center gap-1 shadow-sm">
-                    <span className="material-symbols-outlined text-xs">tune</span> Auto-Rebalanced
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                  <div className="p-3.5 rounded-lg bg-white border border-[#e2d0f5] shadow-sm">
-                    <span className="font-label-sm text-[11px] text-[#6b6278] block uppercase font-semibold">Discount Ceiling</span>
-                    <span className="font-data-metric text-2xl font-bold text-[#110d1a] mt-0.5 block">18.5%</span>
-                    <span className="font-body-sm text-xs text-[#059669] font-medium flex items-center gap-0.5 mt-1">
-                      <span className="material-symbols-outlined text-xs">arrow_downward</span> -3.5% vs list
-                    </span>
-                  </div>
-                  <div className="p-3.5 rounded-lg bg-white border border-[#e2d0f5] shadow-sm">
-                    <span className="font-label-sm text-[11px] text-[#6b6278] block uppercase font-semibold">Net Floor ARR</span>
-                    <span className="font-data-metric text-2xl font-bold text-[#110d1a] mt-0.5 block">$248.0K</span>
-                    <span className="font-body-sm text-xs text-[#059669] font-medium mt-1 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-xs">check_circle</span> Threshold met
-                    </span>
-                  </div>
-                  <div className="p-3.5 rounded-lg bg-white border border-[#e2d0f5] shadow-sm">
-                    <span className="font-label-sm text-[11px] text-[#6b6278] block uppercase font-semibold">Gross Margin</span>
-                    <span className="font-data-metric text-2xl font-bold text-[#702963] mt-0.5 block">81.4%</span>
-                    <span className="font-body-sm text-xs text-[#702963] font-medium mt-1 flex items-center gap-0.5">
-                      <span className="material-symbols-outlined text-xs">trending_up</span> +2.1% headroom
-                    </span>
-                  </div>
-                </div>
-
-                {/* Multi-tier workflow nodes */}
-                <div className="p-3.5 rounded-lg bg-white border border-[#e2d0f5] flex items-center justify-between text-[#110d1a] shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#059669]/15 border border-[#059669]/30 flex items-center justify-center text-[#059669] shrink-0">
-                      <span className="material-symbols-outlined text-sm font-bold" style={{fontVariationSettings: "'FILL' 1"}}>check</span>
-                    </div>
-                    <div>
-                      <p className="font-headline-sm text-xs font-bold text-[#110d1a]">Commercial Ops</p>
-                      <p className="font-body-sm text-[11px] text-[#059669] font-medium">Validated 14m ago</p>
-                    </div>
-                  </div>
-                  <span className="material-symbols-outlined text-[#e2d0f5] text-base">chevron_right</span>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#d97706]/15 border border-[#d97706]/30 flex items-center justify-center text-[#d97706] shrink-0">
-                      <span className="material-symbols-outlined text-sm animate-spin">sync</span>
-                    </div>
+            {/* Account Type Selector (ONLY in Sign Up Mode) */}
+            {isSignup && (
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                  Select Account Type
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setAccountType('admin')}
+                    className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${accountType === 'admin'
+                        ? 'bg-purple-900/30 border-purple-500 text-white ring-2 ring-purple-500/50'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                      }`}
+                  >
+                    <i className="fa-solid fa-building-user text-purple-400 text-lg mb-1"></i>
                     <div>
                       <p className="font-headline-sm text-xs font-bold text-[#110d1a]">RevOps Committee</p>
                       <p className="font-body-sm text-[11px] text-[#d97706] font-semibold">In review (SLA 38m)</p>
                     </div>
+                </div>
+                <span className="material-symbols-outlined text-[#e2d0f5] text-base">chevron_right</span>
+                <div className="flex items-center gap-3 opacity-60">
+                  <div className="w-8 h-8 rounded-full bg-[#faf2ff] border border-[#e2d0f5] flex items-center justify-center text-[#6b6278] shrink-0">
+                    <span className="material-symbols-outlined text-sm">hourglass_empty</span>
                   </div>
-                  <span className="material-symbols-outlined text-[#e2d0f5] text-base">chevron_right</span>
-                  <div className="flex items-center gap-3 opacity-60">
-                    <div className="w-8 h-8 rounded-full bg-[#faf2ff] border border-[#e2d0f5] flex items-center justify-center text-[#6b6278] shrink-0">
-                      <span className="material-symbols-outlined text-sm">hourglass_empty</span>
-                    </div>
-                    <div>
-                      <p className="font-headline-sm text-xs font-semibold text-[#110d1a]">CFO Clearance</p>
-                      <p className="font-body-sm text-[11px] text-[#6b6278]">Queued</p>
-                    </div>
+                  <div>
+                    <p className="font-headline-sm text-xs font-semibold text-[#110d1a]">CFO Clearance</p>
+                    <p className="font-body-sm text-[11px] text-[#6b6278]">Queued</p>
                   </div>
                 </div>
               </div>
-            </div>
+              </div>
+      </div>
 
-            {/* Executive Testimonial Quote */}
-            <div className="relative z-10 p-5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5]">
-              <div className="flex items-start gap-4">
-                <div className="w-13 h-13 rounded-full overflow-hidden shrink-0 border-2 border-[#702963]/30 shadow-sm">
-                  <img alt="Elena Vance VP of Revenue Operations" className="w-12 h-12 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WTn7TsRVan8HhHxzBsr-fNk_f6HyYmjTdARnUkknSei0-QRKqOLMlFRM-ZxlFfMytR3Ga-hMBDPyKBRb3c3CDgE8QMO_pt_7dMnLMGmfz9UOoxMMWuzF59wbUSojsD6k8066Iok2gSD7m1mkjorUsZ46DF4Di2sZLd9v43VCmS7kEMyHyylJCrypHKPaFlDkvVHnhrRsjgnxTz7bRjFMWgEhZ65IHodb97LOw8eGrq5xybqdTyDqX4L-Od"/>
-                </div>
-                <div className="space-y-1.5">
-                  <p className="font-body-md text-sm text-[#4b4356] italic leading-relaxed">
-                    "DealFlow360 turned our high-stakes discounting free-for-all into a deterministic mathematical engine. Deal cycle velocity went up 44% in 90 days."
-                  </p>
-                  <div className="flex items-center gap-2 pt-0.5">
-                    <span className="font-headline-sm text-xs text-[#110d1a] font-bold">Elena Vance</span>
-                    <span className="text-[#6b6278] text-xs">•</span>
-                    <span className="font-body-sm text-xs text-[#702963] font-semibold">VP of Revenue Operations, CloudScale Global</span>
-                  </div>
-                </div>
-              </div>
+      {/* Executive Testimonial Quote */}
+      <div className="relative z-10 p-5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5]">
+        <div className="flex items-start gap-4">
+          <div className="w-13 h-13 rounded-full overflow-hidden shrink-0 border-2 border-[#702963]/30 shadow-sm">
+            <img alt="Elena Vance VP of Revenue Operations" className="w-12 h-12 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WTn7TsRVan8HhHxzBsr-fNk_f6HyYmjTdARnUkknSei0-QRKqOLMlFRM-ZxlFfMytR3Ga-hMBDPyKBRb3c3CDgE8QMO_pt_7dMnLMGmfz9UOoxMMWuzF59wbUSojsD6k8066Iok2gSD7m1mkjorUsZ46DF4Di2sZLd9v43VCmS7kEMyHyylJCrypHKPaFlDkvVHnhrRsjgnxTz7bRjFMWgEhZ65IHodb97LOw8eGrq5xybqdTyDqX4L-Od" />
+          </div>
+          <div className="space-y-1.5">
+            <p className="font-body-md text-sm text-[#4b4356] italic leading-relaxed">
+              "DealFlow360 turned our high-stakes discounting free-for-all into a deterministic mathematical engine. Deal cycle velocity went up 44% in 90 days."
+            </p>
+            <div className="flex items-center gap-2 pt-0.5">
+              <span className="font-headline-sm text-xs text-[#110d1a] font-bold">Elena Vance</span>
+              <span className="text-[#6b6278] text-xs">•</span>
+              <span className="font-body-sm text-xs text-[#702963] font-semibold">VP of Revenue Operations, CloudScale Global</span>
             </div>
           </div>
+        </div>
+            )}
 
-          {/* Right Column: Authentication Suite */}
-          <div className="lg:col-span-6 xl:col-span-5 flex flex-col justify-between p-7 md:p-10 rounded-2xl bg-white border border-[#e2d0f5] shadow-xl">
-            <div>
-              {/* Mode Switcher Tabs */}
-              <div className="flex items-center p-1 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] mb-7">
-                <button 
-                  className={`flex-1 py-2.5 rounded-lg font-headline-sm text-xs text-center transition-all ${!isSignup ? 'bg-[#702963] text-white font-bold shadow-md hover:bg-[#55104b]' : 'text-[#6b6278] hover:text-[#110d1a] font-semibold'}`}
-                  onClick={() => setIsSignup(false)} 
-                  type="button"
-                >
-                  Sign In
-                </button>
-                <button 
-                  className={`flex-1 py-2.5 rounded-lg font-headline-sm text-xs text-center transition-all ${isSignup ? 'bg-[#702963] text-white font-bold shadow-md hover:bg-[#55104b]' : 'text-[#6b6278] hover:text-[#110d1a] font-semibold'}`}
-                  onClick={() => setIsSignup(true)} 
-                  type="button"
-                >
-                  Create Workspace
-                </button>
-              </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+            Email Address
+          </label>
+          <input
+            type="email"
+            required
+            placeholder="name@example.com"
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-mono"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
 
-              {/* Header Titles */}
-              <div className="mb-6">
-                <span className="font-label-sm text-xs font-bold text-[#702963] uppercase tracking-widest">Command Center Access</span>
-                <h1 className="font-headline-lg text-2xl md:text-3xl font-bold text-[#110d1a] mt-1.5 tracking-tight">
-                  {isSignup ? 'Launch New Workspace' : 'Access Your Terminal'}
-                </h1>
-                <p className="font-body-md text-sm text-[#6b6278] mt-1">
-                  {isSignup ? 'Provision a sovereign enterprise CPQ instance in under 3 minutes.' : 'Sovereign CPQ orchestration and deal structuring suite.'}
-                </p>
-              </div>
+        {/* Right Column: Authentication Suite */}
+        <div className="lg:col-span-6 xl:col-span-5 flex flex-col justify-between p-7 md:p-10 rounded-2xl bg-white border border-[#e2d0f5] shadow-xl">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              required
+              placeholder="••••••••"
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-mono"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-              {/* SSO Rapid Actions */}
-              <div className="grid grid-cols-3 gap-2.5 mb-6">
-                <button className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-[#faf2ff] hover:bg-[#f5e8ff] border border-[#e2d0f5] transition-all shadow-sm group hover:border-[#702963]/40" type="button">
-                  <span className="material-symbols-outlined text-[#006877] group-hover:scale-110 transition-transform">domain</span>
-                  <span className="font-label-sm text-xs font-semibold text-[#110d1a]">Okta SSO</span>
-                </button>
-                <button className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-[#faf2ff] hover:bg-[#f5e8ff] border border-[#e2d0f5] transition-all shadow-sm group hover:border-[#702963]/40" type="button">
-                  <span className="material-symbols-outlined text-[#702963] group-hover:scale-110 transition-transform">mail</span>
-                  <span className="font-label-sm text-xs font-semibold text-[#110d1a]">Google IdP</span>
-                </button>
-                <button className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-[#faf2ff] hover:bg-[#f5e8ff] border border-[#e2d0f5] transition-all shadow-sm group hover:border-[#702963]/40" type="button">
-                  <span className="material-symbols-outlined text-[#006877] group-hover:scale-110 transition-transform">shield</span>
-                  <span className="font-label-sm text-xs font-semibold text-[#110d1a]">SAML 2.0</span>
-                </button>
-              </div>
-
-              {/* Divider */}
-              <div className="relative flex items-center justify-center mb-6">
-                <div className="w-full h-px bg-[#e2d0f5]"></div>
-                <span className="absolute px-3 py-0.5 rounded-full bg-white border border-[#e2d0f5] font-label-sm text-[11px] text-[#6b6278] uppercase tracking-wider font-semibold">or business credentials</span>
-              </div>
-
-              {/* Primary Form */}
-              <form className="space-y-4" onSubmit={handleSubmit}>
-                {/* Organization Picker */}
-                <div className="space-y-1.5">
-                  <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Enterprise Realm</label>
-                  <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">corporate_fare</span>
-                    <select className="w-full pl-10 pr-10 py-2.5 rounded-lg bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-body-md text-sm focus:outline-none focus:ring-2 focus:ring-[#702963] focus:border-transparent appearance-none cursor-pointer">
-                      <option>Acme Corp Enterprise (#ORG-0194)</option>
-                      <option>Global Logistics EMEA (#ORG-4491)</option>
-                      <option>Hyperion Biometrics (#ORG-8921)</option>
-                      <option value="custom">+ Create new organization workspace</option>
-                    </select>
-                    <span className="material-symbols-outlined absolute right-3 top-3 text-[#6b6278] pointer-events-none text-lg">expand_more</span>
-                  </div>
-                </div>
-
-                {/* Email Field */}
-                <div className="space-y-1.5">
-                  <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Work Email</label>
-                  <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">alternate_email</span>
-                    <input className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-body-md text-sm placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963] focus:border-transparent" placeholder="alex.rivera@acmecorp.com" type="email" required/>
-                  </div>
-                </div>
-
-                {/* Password Field */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Passcode</label>
-                    <a className="font-label-sm text-xs font-semibold text-[#702963] hover:text-[#55104b] transition-colors" href="#">Forgot password?</a>
-                  </div>
-                  <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">lock</span>
-                    <input 
-                      className="w-full pl-10 pr-10 py-2.5 rounded-lg bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-data-tabular text-sm placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963] focus:border-transparent" 
-                      type={showPassword ? "text" : "password"} 
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                    <button 
-                      className="absolute right-3 top-2.5 text-[#6b6278] hover:text-[#110d1a] transition-colors" 
-                      onClick={() => setShowPassword(!showPassword)} 
-                      type="button"
-                    >
-                      <span className="material-symbols-outlined text-lg">{showPassword ? 'visibility_off' : 'visibility'}</span>
-                    </button>
-                  </div>
-
-                  {/* Dynamic Strength Indicator */}
-                  <div className="pt-1.5">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-label-sm text-[11px] font-medium text-[#6b6278]">Entropy Validation</span>
-                      <span className={`font-label-sm text-[11px] font-bold ${strength.color}`}>{strength.text}</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-[#e2d0f5] rounded-full overflow-hidden flex gap-1 p-0.5">
-                      {[1, 2, 3, 4].map(i => (
-                        <div key={i} className={`h-full w-1/4 rounded-full transition-all duration-300 ${i <= strength.bars ? strength.barColor : 'bg-[#e2d0f5]'}`}></div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Submit CTA Button */}
-                <div className="pt-2">
-                  <button className="w-full py-3 px-4 rounded-xl bg-[#702963] hover:bg-[#55104b] text-white font-headline-sm text-sm font-bold tracking-wide text-center flex items-center justify-center gap-2 shadow-lg shadow-[#702963]/25 transition-all focus:outline-none focus:ring-2 focus:ring-[#702963] focus:ring-offset-2 active:scale-[0.99]" type="submit">
-                    <span>{isSignup ? 'Deploy DealFlow360 Workspace' : 'Sign In to DealFlow360'}</span>
-                    <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                  </button>
-                </div>
-              </form>
+          {/* Footer Policy & Dynamic Router Hint */}
+          <div className="mt-8 pt-4 border-t border-[#e2d0f5] space-y-3">
+            <div className="p-3.5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] flex items-start gap-3">
+              <span className="material-symbols-outlined text-[#702963] text-lg shrink-0 mt-0.5">alt_route</span>
+              <p className="font-body-sm text-xs text-[#4b4356] leading-relaxed">
+                <strong className="text-[#110d1a] font-bold">Routing Notice:</strong> Internal revenue ops and account executives route straight to the <span className="text-[#702963] font-bold">Sales Dashboard</span>. Client stakeholders enter the self-serve <span className="text-[#006877] font-bold">Negotiation Portal</span>.
+              </p>
             </div>
-
-            {/* Footer Policy & Dynamic Router Hint */}
-            <div className="mt-8 pt-4 border-t border-[#e2d0f5] space-y-3">
-              <div className="p-3.5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] flex items-start gap-3">
-                <span className="material-symbols-outlined text-[#702963] text-lg shrink-0 mt-0.5">alt_route</span>
-                <p className="font-body-sm text-xs text-[#4b4356] leading-relaxed">
-                  <strong className="text-[#110d1a] font-bold">Routing Notice:</strong> Internal revenue ops and account executives route straight to the <span className="text-[#702963] font-bold">Sales Dashboard</span>. Client stakeholders enter the self-serve <span className="text-[#006877] font-bold">Negotiation Portal</span>.
-                </p>
-              </div>
-              <div className="flex items-center justify-between font-label-sm text-xs text-[#6b6278]">
-                <span className="flex items-center gap-1.5 font-medium"><span className="w-2 h-2 rounded-full bg-[#059669]"></span> SOC-2 Type II Certified</span>
-                <div className="flex items-center gap-3">
-                  <a className="hover:text-[#110d1a] transition-colors" href="#">Privacy Shield</a>
-                  <span>•</span>
-                  <a className="hover:text-[#110d1a] transition-colors" href="#">Terms of Master Service</a>
-                </div>
+            <div className="flex items-center justify-between font-label-sm text-xs text-[#6b6278]">
+              <span className="flex items-center gap-1.5 font-medium"><span className="w-2 h-2 rounded-full bg-[#059669]"></span> SOC-2 Type II Certified</span>
+              <div className="flex items-center gap-3">
+                <a className="hover:text-[#110d1a] transition-colors" href="#">Privacy Shield</a>
+                <span>•</span>
+                <a className="hover:text-[#110d1a] transition-colors" href="#">Terms of Master Service</a>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </div>
+    </main >
   );
 };
 

@@ -14,6 +14,23 @@ const settingsController = require('../controllers/settings.controller');
 router.get('/settings', asyncWrap((req, res) => settingsController.getSettings(req, res)));
 router.put('/settings', asyncWrap((req, res) => settingsController.updateSettings(req, res)));
 
+const multer = require('multer');
+const path = require('path');
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, path.join(__dirname, '../../public/uploads/')),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '';
+    cb(null, `upload-${Date.now()}${ext}`);
+  }
+});
+const upload = multer({ storage });
+
+router.post('/upload', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  const serverUrl = req.protocol + '://' + req.get('host');
+  res.json({ url: `${serverUrl}/uploads/${req.file.filename}` });
+});
+
 // Note: Password update would ideally be in an auth or user controller, but for hackathon speed we add it here
 const { pool } = require('../config/db');
 const bcrypt = require('bcryptjs');

@@ -67,6 +67,27 @@ export default function SuperAdminSettings() {
     }
   };
 
+  const handleFileUpload = async (e, field) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await api.post('/superadmin/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (response.data && response.data.url) {
+        setSettings(prev => ({ ...prev, [field]: response.data.url }));
+        showMessage('success', `${field === 'logo_url' ? 'Logo' : 'Favicon'} uploaded! Don't forget to save settings.`);
+      }
+    } catch (error) {
+      console.error('File upload failed', error);
+      showMessage('error', 'Failed to upload file');
+    }
+  };
+
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (passwords.newPassword !== passwords.confirmPassword) {
@@ -145,25 +166,49 @@ export default function SuperAdminSettings() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Logo URL</label>
-                <input
-                  type="url"
-                  className="input-field w-full"
-                  placeholder="https://example.com/logo.png"
-                  value={settings.logo_url}
-                  onChange={(e) => setSettings({...settings, logo_url: e.target.value})}
-                />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Logo URL or Upload</label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    className="input-field w-full"
+                    placeholder="https://example.com/logo.png"
+                    value={settings.logo_url}
+                    onChange={(e) => setSettings({...settings, logo_url: e.target.value})}
+                  />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    id="logo-upload"
+                    onChange={(e) => handleFileUpload(e, 'logo_url')}
+                  />
+                  <label htmlFor="logo-upload" className="cursor-pointer bg-slate-100 border border-slate-300 hover:bg-slate-200 text-slate-700 font-bold py-2 px-4 rounded transition-colors flex items-center shrink-0">
+                    <i className="fa-solid fa-upload md:mr-2"></i> <span className="hidden md:inline">Upload</span>
+                  </label>
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Favicon URL</label>
-                <input
-                  type="url"
-                  className="input-field w-full"
-                  placeholder="https://example.com/favicon.ico"
-                  value={settings.favicon_url}
-                  onChange={(e) => setSettings({...settings, favicon_url: e.target.value})}
-                />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Favicon URL or Upload (.ico, .png)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    className="input-field w-full"
+                    placeholder="https://example.com/favicon.ico"
+                    value={settings.favicon_url}
+                    onChange={(e) => setSettings({...settings, favicon_url: e.target.value})}
+                  />
+                  <input
+                    type="file"
+                    accept=".ico,.png"
+                    className="hidden"
+                    id="favicon-upload"
+                    onChange={(e) => handleFileUpload(e, 'favicon_url')}
+                  />
+                  <label htmlFor="favicon-upload" className="cursor-pointer bg-slate-100 border border-slate-300 hover:bg-slate-200 text-slate-700 font-bold py-2 px-4 rounded transition-colors flex items-center shrink-0">
+                    <i className="fa-solid fa-upload md:mr-2"></i> <span className="hidden md:inline">Upload</span>
+                  </label>
+                </div>
               </div>
 
               <h2 className="text-lg font-bold text-slate-800 mt-8 mb-4 border-b border-slate-100 pb-2">SEO & Marketing Integrations</h2>
