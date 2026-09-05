@@ -51,7 +51,9 @@ function App() {
         <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/portal/:id" element={<CustomerPortal />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Login defaultIsSignup={true} />} />
         <Route path="/customer/login" element={<Login />} />
+        <Route path="/superadmin" element={<Navigate to="/app/superadmin" replace />} />
 
         {/* Customer Protected Workspace */}
         <Route path="/customer" element={<ProtectedRoute allowedRoles={['customer']} />}>
