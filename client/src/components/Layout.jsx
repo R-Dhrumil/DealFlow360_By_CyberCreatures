@@ -2,8 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCurrency } from '../contexts/CurrencyContext';
 
-<<<<<<< HEAD
-=======
 function CurrencyPicker() {
   const { currencies, selected, setCurrency } = useCurrency();
   const [open, setOpen] = useState(false);
@@ -61,7 +59,6 @@ function CurrencyPicker() {
   );
 }
 
->>>>>>> e9b55e6741e0a3e222557a71179777233a30aba2
 export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();

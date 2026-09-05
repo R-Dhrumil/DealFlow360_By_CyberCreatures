@@ -17,9 +17,6 @@ import CustomerDashboard from './pages/CustomerDashboard';
 import UniversalDashboard from './pages/UniversalDashboard';
 import Reporting from './pages/Reporting';
 import SuperAdminConsole from './pages/SuperAdminConsole';
-<<<<<<< HEAD
-=======
-import SuperAdminSettings from './pages/SuperAdminSettings';
 import CurrencySettings from './pages/CurrencySettings';
 import AdminWorkspace from './pages/AdminWorkspace';
 import FinanceOperations from './pages/FinanceOperations';
@@ -92,12 +89,8 @@ function App() {
                 <Route path="fulfillment/:id" element={<FulfillmentSplit />} />
                 <Route path="reporting" element={<Reporting />} />
                 <Route path="superadmin" element={<SuperAdminConsole />} />
-<<<<<<< HEAD
                 <Route path="settings" element={<Navigate to="/app/superadmin?tab=settings" replace />} />
-=======
-                <Route path="settings" element={<SuperAdminSettings />} />
                 <Route path="currency" element={<CurrencySettings />} />
->>>>>>> e9b55e6741e0a3e222557a71179777233a30aba2
                 <Route path="admin" element={<AdminWorkspace />} />
                 <Route path="finance" element={<FinanceOperations />} />
                 <Route path="operations" element={<OperationsDashboard />} />
