@@ -5,11 +5,11 @@ import api from '../api/client';
 const Login = ({ defaultIsSignup = false }) => {
   const [isSignup, setIsSignup] = useState(defaultIsSignup);
   const [showPassword, setShowPassword] = useState(false);
-  const [password, setPassword] = useState('PrecisionDealDesk2024!');
+  const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [companyName, setCompanyName] = useState('');
-  const [accountType, setAccountType] = useState('internal');
+  const [accountType, setAccountType] = useState('admin'); // 'admin' or 'customer'
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -133,213 +133,205 @@ const Login = ({ defaultIsSignup = false }) => {
     <main className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 lg:p-10 bg-[#f5e8ff] font-body-md text-[#4b4356] antialiased">
       <div className="flex flex-col w-full max-w-7xl">
         <div className="w-full min-h-[760px] grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
-          
-          {/* Left Column: Ambient Brand Showcase & Executive Safeguard Preview */}
-          <div className="lg:col-span-6 xl:col-span-7 relative flex flex-col justify-between p-7 md:p-10 lg:p-12 rounded-2xl bg-white border border-[#e2d0f5] shadow-xl overflow-hidden">
-            {/* Soft Ambient Lavender-Purple Radial Glows */}
-            <div className="absolute -top-24 -left-20 w-96 h-96 rounded-full bg-[#702963]/10 blur-3xl pointer-events-none"></div>
-            <div className="absolute -bottom-20 -right-16 w-96 h-96 rounded-full bg-[#006877]/10 blur-3xl pointer-events-none"></div>
-            
+
+          {/* Left Column: Ambient Brand Showcase & Architecture Overview */}
+          <div className="lg:col-span-6 xl:col-span-7 relative flex flex-col justify-between p-7 md:p-10 lg:p-12 rounded-2xl bg-slate-900 text-white border border-slate-800 shadow-2xl overflow-hidden">
+            {/* Soft Ambient Radial Glows */}
+            <div className="absolute -top-24 -left-20 w-96 h-96 rounded-full bg-purple-600/20 blur-3xl pointer-events-none"></div>
+            <div className="absolute -bottom-20 -right-16 w-96 h-96 rounded-full bg-emerald-600/20 blur-3xl pointer-events-none"></div>
+
             {/* Top Branding & Metric Pill */}
             <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <img alt="DealFlow360 Logo" className="h-10 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XGyhex6IG8Z50EZiMfwsLtKm6oZPzOaK0T0lbLJVgT1kTZU2Rxvl8Zo-Vz1XU0654dyKKm9zDmdFcoYfDJhsq3_Uu_0gYkln1TOVlETnnPI3sFS6rwQ1pHN7dx8W1_t8hJuVpHtYFBViynoYMc_1cEOz1MYvM6L2SGNPuCDU02laSnPYzChJSivoSlSTXUrEJkRdxUL6NHbKawlUddCXBoRyDO3vGudEUfdMwnTkHPvlt1oVEgrNpk-RAE"/>
-              </div>
-              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#faf2ff] border border-[#e2d0f5] shadow-sm">
-                <span className="w-2 h-2 rounded-full bg-[#059669] animate-pulse"></span>
-                <span className="font-label-sm text-xs text-[#702963] font-semibold tracking-wider uppercase">Live Telemetry</span>
-                <span className="font-data-tabular text-xs text-[#110d1a] font-bold pl-1">$42.8M+</span>
-                <span className="font-body-sm text-xs text-[#6b6278]">pipeline orchestrated Q3</span>
-              </div>
-            </div>
-
-            {/* Center Feature: Multi-Tier Approval Safeguard Interactive Preview */}
-            <div className="relative z-10 my-8 flex flex-col gap-4">
-              <div className="flex items-center justify-between">
+                <div className="w-11 h-11 bg-gradient-to-tr from-purple-600 to-indigo-500 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg border border-purple-400/30">
+                  DF
+                </div>
                 <div>
-                  <span className="font-label-sm text-xs font-semibold text-[#702963] uppercase tracking-widest block mb-1">Architectural CPQ Guardrails</span>
-                  <h2 className="font-headline-md text-xl md:text-2xl font-bold text-[#110d1a] tracking-tight">Autonomous Governance &amp; Margin Matrix</h2>
-                </div>
-                <div className="w-10 h-10 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] flex items-center justify-center shadow-sm">
-                  <span className="material-symbols-outlined text-[#702963] text-xl">verified_user</span>
+                  <span className="font-extrabold text-2xl text-white tracking-wide block leading-tight">DealFlow360</span>
+                  <span className="text-[11px] text-purple-300 font-mono">Enterprise Sales Operations Engine</span>
                 </div>
               </div>
 
-              {/* Safeguard Mock Card */}
-              <div className="p-5 md:p-6 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] shadow-md space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-[#e2d0f5]">
-                  <div className="flex items-center gap-2.5">
-                    <span className="px-2.5 py-1 rounded-md bg-[#dc2626]/10 text-[#dc2626] text-[11px] font-label-sm font-bold tracking-wider border border-[#dc2626]/20">TIER 3 ESCALATION</span>
-                    <span className="font-data-tabular text-xs font-medium text-[#6b6278]">Quote #DF-8842-E</span>
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-800/90 border border-purple-500/30 shadow-md backdrop-blur-md">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span className="text-[10px] text-purple-300 font-bold uppercase tracking-wider font-mono">Telemetry</span>
+                <span className="text-xs text-white font-extrabold font-mono pl-1">$42.8M+</span>
+                <span className="text-[11px] text-slate-400">Quotes Structured</span>
+              </div>
+            </div>
+
+            {/* Center Architecture Pillars */}
+            <div className="relative z-10 my-8 space-y-5">
+              <div>
+                <span className="text-[11px] font-bold text-amber-400 uppercase tracking-widest block mb-1">
+                  Architectural CPQ Guardrails
+                </span>
+                <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-snug">
+                  Unified Sales Governance &amp; CPQ Engine
+                </h2>
+                <p className="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
+                  Role-separated workspaces, automated discount risk scoring, and real-time customer negotiations.
+                </p>
+              </div>
+
+              {/* 4 Feature Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 hover:border-purple-500/50 transition-all space-y-1.5 backdrop-blur-sm">
+                  <div className="flex items-center space-x-2 text-purple-400 font-bold text-xs">
+                    <span className="material-symbols-outlined text-lg">crown</span>
+                    <span>Super Admin Console</span>
                   </div>
-                  <span className="px-2.5 py-1 rounded-md bg-white border border-[#e2d0f5] text-[#059669] font-label-sm text-[11px] font-semibold uppercase flex items-center gap-1 shadow-sm">
-                    <span className="material-symbols-outlined text-xs">tune</span> Auto-Rebalanced
-                  </span>
+                  <p className="text-[11px] text-slate-300 leading-normal">
+                    Business card analytics, win/loss rate progress bars &amp; tenant user directory governance.
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                  <div className="p-3.5 rounded-lg bg-white border border-[#e2d0f5] shadow-sm">
-                    <span className="font-label-sm text-[11px] text-[#6b6278] block uppercase font-semibold">Discount Ceiling</span>
-                    <span className="font-data-metric text-2xl font-bold text-[#110d1a] mt-0.5 block">18.5%</span>
-                    <span className="font-body-sm text-xs text-[#059669] font-medium flex items-center gap-0.5 mt-1">
-                      <span className="material-symbols-outlined text-xs">arrow_downward</span> -3.5% vs list
-                    </span>
+                <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 hover:border-purple-500/50 transition-all space-y-1.5 backdrop-blur-sm">
+                  <div className="flex items-center space-x-2 text-indigo-400 font-bold text-xs">
+                    <span className="material-symbols-outlined text-lg">admin_panel_settings</span>
+                    <span>Admin Operations</span>
                   </div>
-                  <div className="p-3.5 rounded-lg bg-white border border-[#e2d0f5] shadow-sm">
-                    <span className="font-label-sm text-[11px] text-[#6b6278] block uppercase font-semibold">Net Floor ARR</span>
-                    <span className="font-data-metric text-2xl font-bold text-[#110d1a] mt-0.5 block">$248.0K</span>
-                    <span className="font-body-sm text-xs text-[#059669] font-medium mt-1 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-xs">check_circle</span> Threshold met
-                    </span>
-                  </div>
-                  <div className="p-3.5 rounded-lg bg-white border border-[#e2d0f5] shadow-sm">
-                    <span className="font-label-sm text-[11px] text-[#6b6278] block uppercase font-semibold">Gross Margin</span>
-                    <span className="font-data-metric text-2xl font-bold text-[#702963] mt-0.5 block">81.4%</span>
-                    <span className="font-body-sm text-xs text-[#702963] font-medium mt-1 flex items-center gap-0.5">
-                      <span className="material-symbols-outlined text-xs">trending_up</span> +2.1% headroom
-                    </span>
-                  </div>
+                  <p className="text-[11px] text-slate-300 leading-normal">
+                    Product &amp; base price listings, discount tier ceilings, and warehouse inventory setup.
+                  </p>
                 </div>
 
-                {/* Multi-tier workflow nodes */}
-                <div className="p-3.5 rounded-lg bg-white border border-[#e2d0f5] flex items-center justify-between text-[#110d1a] shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#059669]/15 border border-[#059669]/30 flex items-center justify-center text-[#059669] shrink-0">
-                      <span className="material-symbols-outlined text-sm font-bold" style={{fontVariationSettings: "'FILL' 1"}}>check</span>
-                    </div>
-                    <div>
-                      <p className="font-headline-sm text-xs font-bold text-[#110d1a]">Commercial Ops</p>
-                      <p className="font-body-sm text-[11px] text-[#059669] font-medium">Validated 14m ago</p>
-                    </div>
+                <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 hover:border-purple-500/50 transition-all space-y-1.5 backdrop-blur-sm">
+                  <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs">
+                    <span className="material-symbols-outlined text-lg">verified</span>
+                    <span>Multi-Tier Approvals</span>
                   </div>
-                  <span className="material-symbols-outlined text-[#e2d0f5] text-base">chevron_right</span>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#d97706]/15 border border-[#d97706]/30 flex items-center justify-center text-[#d97706] shrink-0">
-                      <span className="material-symbols-outlined text-sm animate-spin">sync</span>
-                    </div>
-                    <div>
-                      <p className="font-headline-sm text-xs font-bold text-[#110d1a]">RevOps Committee</p>
-                      <p className="font-body-sm text-[11px] text-[#d97706] font-semibold">In review (SLA 38m)</p>
-                    </div>
+                  <p className="text-[11px] text-slate-300 leading-normal">
+                    Blended risk scoring: Auto-approve (&lt;5%), Sales Manager (5-10%), Finance (&gt;10%) escalation chain.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 hover:border-emerald-500/50 transition-all space-y-1.5 backdrop-blur-sm">
+                  <div className="flex items-center space-x-2 text-emerald-400 font-bold text-xs">
+                    <span className="material-symbols-outlined text-lg">storefront</span>
+                    <span>Customer Self-Serve</span>
                   </div>
-                  <span className="material-symbols-outlined text-[#e2d0f5] text-base">chevron_right</span>
-                  <div className="flex items-center gap-3 opacity-60">
-                    <div className="w-8 h-8 rounded-full bg-[#faf2ff] border border-[#e2d0f5] flex items-center justify-center text-[#6b6278] shrink-0">
-                      <span className="material-symbols-outlined text-sm">hourglass_empty</span>
-                    </div>
-                    <div>
-                      <p className="font-headline-sm text-xs font-semibold text-[#110d1a]">CFO Clearance</p>
-                      <p className="font-body-sm text-[11px] text-[#6b6278]">Queued</p>
-                    </div>
-                  </div>
+                  <p className="text-[11px] text-slate-300 leading-normal">
+                    Browse admin product catalog, request proposals, negotiate line discounts &amp; E-sign.
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Executive Testimonial Quote */}
-            <div className="relative z-10 p-5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5]">
-              <div className="flex items-start gap-4">
-                <div className="w-13 h-13 rounded-full overflow-hidden shrink-0 border-2 border-[#702963]/30 shadow-sm">
-                  <img alt="Elena Vance VP of Revenue Operations" className="w-12 h-12 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WTn7TsRVan8HhHxzBsr-fNk_f6HyYmjTdARnUkknSei0-QRKqOLMlFRM-ZxlFfMytR3Ga-hMBDPyKBRb3c3CDgE8QMO_pt_7dMnLMGmfz9UOoxMMWuzF59wbUSojsD6k8066Iok2gSD7m1mkjorUsZ46DF4Di2sZLd9v43VCmS7kEMyHyylJCrypHKPaFlDkvVHnhrRsjgnxTz7bRjFMWgEhZ65IHodb97LOw8eGrq5xybqdTyDqX4L-Od"/>
-                </div>
-                <div className="space-y-1.5">
-                  <p className="font-body-md text-sm text-[#4b4356] italic leading-relaxed">
-                    "DealFlow360 turned our high-stakes discounting free-for-all into a deterministic mathematical engine. Deal cycle velocity went up 44% in 90 days."
-                  </p>
-                  <div className="flex items-center gap-2 pt-0.5">
-                    <span className="font-headline-sm text-xs text-[#110d1a] font-bold">Elena Vance</span>
-                    <span className="text-[#6b6278] text-xs">•</span>
-                    <span className="font-body-sm text-xs text-[#702963] font-semibold">VP of Revenue Operations, CloudScale Global</span>
-                  </div>
-                </div>
+            {/* Bottom Stats Footer */}
+            <div className="relative z-10 p-4 rounded-2xl bg-slate-800/90 border border-slate-700/80 flex flex-wrap items-center justify-between gap-4 text-xs">
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span className="text-slate-300 font-semibold">99.9% Margin Floor Safeguard</span>
+              </div>
+              <div className="flex items-center space-x-3 text-slate-400 font-mono text-[11px]">
+                <span className="text-purple-300 font-bold">⚡ 44% Faster Deals</span>
+                <span>•</span>
+                <span className="text-emerald-300 font-bold">🔒 SOC-2 Certified</span>
               </div>
             </div>
           </div>
+
 
           {/* Right Column: Authentication Suite */}
           <div className="lg:col-span-6 xl:col-span-5 flex flex-col justify-between p-7 md:p-10 rounded-2xl bg-white border border-[#e2d0f5] shadow-xl">
             <div>
               {/* Mode Switcher Tabs */}
-              <div className="flex items-center p-1 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] mb-7">
-                <button 
-                  className={`flex-1 py-2.5 rounded-lg font-headline-sm text-xs text-center transition-all ${!isSignup ? 'bg-[#702963] text-white font-bold shadow-md hover:bg-[#55104b]' : 'text-[#6b6278] hover:text-[#110d1a] font-semibold'}`}
-                  onClick={() => setIsSignup(false)} 
+              <div className="flex items-center p-1 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] mb-6">
+                <button
+                  className={`flex-1 py-2.5 rounded-lg font-headline-sm text-xs text-center transition-all ${!isSignup ? 'bg-[#702963] text-white font-bold shadow-md' : 'text-[#6b6278] hover:text-[#110d1a] font-semibold'}`}
+                  onClick={() => { setIsSignup(false); setError(''); }}
                   type="button"
                 >
                   Sign In
                 </button>
-                <button 
-                  className={`flex-1 py-2.5 rounded-lg font-headline-sm text-xs text-center transition-all ${isSignup ? 'bg-[#702963] text-white font-bold shadow-md hover:bg-[#55104b]' : 'text-[#6b6278] hover:text-[#110d1a] font-semibold'}`}
-                  onClick={() => setIsSignup(true)} 
+                <button
+                  className={`flex-1 py-2.5 rounded-lg font-headline-sm text-xs text-center transition-all ${isSignup ? 'bg-[#702963] text-white font-bold shadow-md' : 'text-[#6b6278] hover:text-[#110d1a] font-semibold'}`}
+                  onClick={() => { setIsSignup(true); setError(''); }}
                   type="button"
                 >
-                  Create Workspace
+                  Sign Up
                 </button>
               </div>
 
               {/* Header Titles */}
               <div className="mb-6">
-                <span className="font-label-sm text-xs font-bold text-[#702963] uppercase tracking-widest">Command Center Access</span>
-                <h1 className="font-headline-lg text-2xl md:text-3xl font-bold text-[#110d1a] mt-1.5 tracking-tight">
-                  {isSignup ? 'Launch New Workspace' : 'Access Your Terminal'}
+                <span className="font-label-sm text-xs font-bold text-[#702963] uppercase tracking-widest">
+                  {isSignup ? 'Create New Account' : 'Sign In to Your Workspace'}
+                </span>
+                <h1 className="font-headline-lg text-2xl md:text-3xl font-bold text-[#110d1a] mt-1 tracking-tight">
+                  {isSignup ? 'Get Started with DealFlow360' : 'Sign In to DealFlow360'}
                 </h1>
-                <p className="font-body-md text-sm text-[#6b6278] mt-1">
-                  {isSignup ? 'Provision a sovereign enterprise CPQ instance in under 3 minutes.' : 'Sovereign CPQ orchestration and deal structuring suite.'}
+                <p className="font-body-md text-xs text-[#6b6278] mt-1">
+                  {isSignup
+                    ? 'Select your account type below to set up your DealFlow360 access.'
+                    : 'Enter your credentials — your user role will be detected automatically.'}
                 </p>
               </div>
 
               {/* Error Message */}
               {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs font-medium">
-                  {error}
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs font-medium flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base">warning</span>
+                  <span>{error}</span>
                 </div>
               )}
 
-              {/* SSO Rapid Actions */}
-              <div className="grid grid-cols-3 gap-2.5 mb-6">
-                <button className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-[#faf2ff] hover:bg-[#f5e8ff] border border-[#e2d0f5] transition-all shadow-sm group hover:border-[#702963]/40" type="button">
-                  <span className="material-symbols-outlined text-[#006877] group-hover:scale-110 transition-transform">domain</span>
-                  <span className="font-label-sm text-xs font-semibold text-[#110d1a]">Okta SSO</span>
-                </button>
-                <button className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-[#faf2ff] hover:bg-[#f5e8ff] border border-[#e2d0f5] transition-all shadow-sm group hover:border-[#702963]/40" type="button">
-                  <span className="material-symbols-outlined text-[#702963] group-hover:scale-110 transition-transform">mail</span>
-                  <span className="font-label-sm text-xs font-semibold text-[#110d1a]">Google IdP</span>
-                </button>
-                <button className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-[#faf2ff] hover:bg-[#f5e8ff] border border-[#e2d0f5] transition-all shadow-sm group hover:border-[#702963]/40" type="button">
-                  <span className="material-symbols-outlined text-[#006877] group-hover:scale-110 transition-transform">shield</span>
-                  <span className="font-label-sm text-xs font-semibold text-[#110d1a]">SAML 2.0</span>
-                </button>
-              </div>
-
-              {/* Divider */}
-              <div className="relative flex items-center justify-center mb-6">
-                <div className="w-full h-px bg-[#e2d0f5]"></div>
-                <span className="absolute px-3 py-0.5 rounded-full bg-white border border-[#e2d0f5] font-label-sm text-[11px] text-[#6b6278] uppercase tracking-wider font-semibold">or business credentials</span>
-              </div>
-
               {/* Primary Form */}
               <form className="space-y-4" onSubmit={handleSubmit}>
+                {/* Account Type Selector (ONLY in Sign Up Mode) */}
                 {isSignup && (
-                  <div className="space-y-1.5">
-                    <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Full Name</label>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">person</span>
-                      <input className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-body-md text-sm placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963] focus:border-transparent" placeholder="Alex Rivera" type="text" value={name} onChange={(e) => setName(e.target.value)} required={isSignup}/>
+                  <div className="space-y-2">
+                    <label className="block font-label-md text-xs font-bold text-[#110d1a] uppercase tracking-wider">
+                      Select Account Type
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setAccountType('admin')}
+                        className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${accountType === 'admin'
+                            ? 'bg-[#702963]/10 border-[#702963] text-[#702963] ring-2 ring-[#702963]/30 font-bold'
+                            : 'bg-[#faf2ff] border-[#e2d0f5] text-[#6b6278] hover:border-[#702963]/50'
+                          }`}
+                      >
+                        <span className="material-symbols-outlined text-xl mb-1 text-[#702963]">domain</span>
+                        <div>
+                          <div className="font-bold text-xs text-[#110d1a]">Admin / Business</div>
+                          <div className="text-[10px] text-[#6b6278]">Organization management</div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setAccountType('customer')}
+                        className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${accountType === 'customer'
+                            ? 'bg-[#059669]/10 border-[#059669] text-[#059669] ring-2 ring-[#059669]/30 font-bold'
+                            : 'bg-[#faf2ff] border-[#e2d0f5] text-[#6b6278] hover:border-[#059669]/50'
+                          }`}
+                      >
+                        <span className="material-symbols-outlined text-xl mb-1 text-[#059669]">person</span>
+                        <div>
+                          <div className="font-bold text-xs text-[#110d1a]">Customer Account</div>
+                          <div className="text-[10px] text-[#6b6278]">Quotes & products</div>
+                        </div>
+                      </button>
                     </div>
                   </div>
                 )}
 
                 {isSignup && (
                   <div className="space-y-1.5">
-                    <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Account Type</label>
+                    <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Full Name</label>
                     <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">badge</span>
-                      <select className="w-full pl-10 pr-10 py-2.5 rounded-lg bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-body-md text-sm focus:outline-none focus:ring-2 focus:ring-[#702963] focus:border-transparent appearance-none cursor-pointer" value={accountType} onChange={(e) => setAccountType(e.target.value)}>
-                        <option value="internal">Internal Staff</option>
-                        <option value="admin">Company Admin</option>
-                        <option value="customer">Customer</option>
-                      </select>
-                      <span className="material-symbols-outlined absolute right-3 top-3 text-[#6b6278] pointer-events-none text-lg">expand_more</span>
+                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">person</span>
+                      <input
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-body-md text-xs placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963]"
+                        placeholder="e.g. Sarah Connor"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required={isSignup}
+                      />
                     </div>
                   </div>
                 )}
@@ -349,115 +341,104 @@ const Login = ({ defaultIsSignup = false }) => {
                     <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Company / Organization Name</label>
                     <div className="relative">
                       <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">corporate_fare</span>
-                      <input className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-body-md text-sm placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963] focus:border-transparent" placeholder="Acme Corp" type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required={isSignup && accountType === 'admin'}/>
-                    </div>
-                  </div>
-                )}
-
-                {/* Organization Picker (Only shown on Login for Enterprise visual effect) */}
-                {!isSignup && (
-                  <div className="space-y-1.5">
-                    <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Enterprise Realm</label>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">corporate_fare</span>
-                      <select className="w-full pl-10 pr-10 py-2.5 rounded-lg bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-body-md text-sm focus:outline-none focus:ring-2 focus:ring-[#702963] focus:border-transparent appearance-none cursor-pointer">
-                        <option>Acme Corp Enterprise (#ORG-0194)</option>
-                        <option>Global Logistics EMEA (#ORG-4491)</option>
-                        <option>Hyperion Biometrics (#ORG-8921)</option>
-                        <option value="custom">+ Create new organization workspace</option>
-                      </select>
-                      <span className="material-symbols-outlined absolute right-3 top-3 text-[#6b6278] pointer-events-none text-lg">expand_more</span>
+                      <input
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-body-md text-xs placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963]"
+                        placeholder="e.g. CyberCreatures Inc."
+                        type="text"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        required={isSignup && accountType === 'admin'}
+                      />
                     </div>
                   </div>
                 )}
 
                 {/* Email Field */}
                 <div className="space-y-1.5">
-                  <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Work Email</label>
+                  <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Email Address</label>
                   <div className="relative">
                     <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">alternate_email</span>
-                    <input className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-body-md text-sm placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963] focus:border-transparent" placeholder="alex.rivera@acmecorp.com" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required/>
+                    <input
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-body-md text-xs placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963]"
+                      placeholder="name@example.com"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
                   </div>
                 </div>
 
                 {/* Password Field */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Passcode</label>
-                    <a className="font-label-sm text-xs font-semibold text-[#702963] hover:text-[#55104b] transition-colors" href="#">Forgot password?</a>
+                    <label className="block font-label-md text-xs font-semibold text-[#110d1a]">Password</label>
                   </div>
                   <div className="relative">
                     <span className="material-symbols-outlined absolute left-3.5 top-3 text-[#6b6278] text-lg">lock</span>
-                    <input 
-                      className="w-full pl-10 pr-10 py-2.5 rounded-lg bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-data-tabular text-sm placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963] focus:border-transparent" 
-                      type={showPassword ? "text" : "password"} 
+                    <input
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] text-[#110d1a] font-data-tabular text-xs placeholder-[#6b6278]/60 focus:outline-none focus:ring-2 focus:ring-[#702963]"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
                     />
-                    <button 
-                      className="absolute right-3 top-2.5 text-[#6b6278] hover:text-[#110d1a] transition-colors" 
-                      onClick={() => setShowPassword(!showPassword)} 
+                    <button
+                      className="absolute right-3 top-2.5 text-[#6b6278] hover:text-[#110d1a] transition-colors"
+                      onClick={() => setShowPassword(!showPassword)}
                       type="button"
                     >
                       <span className="material-symbols-outlined text-lg">{showPassword ? 'visibility_off' : 'visibility'}</span>
                     </button>
                   </div>
-
-                  {/* Dynamic Strength Indicator */}
-                  <div className="pt-1.5">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-label-sm text-[11px] font-medium text-[#6b6278]">Entropy Validation</span>
-                      <span className={`font-label-sm text-[11px] font-bold ${strength.color}`}>{strength.text}</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-[#e2d0f5] rounded-full overflow-hidden flex gap-1 p-0.5">
-                      {[1, 2, 3, 4].map(i => (
-                        <div key={i} className={`h-full w-1/4 rounded-full transition-all duration-300 ${i <= strength.bars ? strength.barColor : 'bg-[#e2d0f5]'}`}></div>
-                      ))}
-                    </div>
-                  </div>
                 </div>
 
                 {/* Submit CTA Button */}
                 <div className="pt-2">
-                  <button disabled={loading} className="w-full py-3 px-4 rounded-xl bg-[#702963] hover:bg-[#55104b] text-white font-headline-sm text-sm font-bold tracking-wide text-center flex items-center justify-center gap-2 shadow-lg shadow-[#702963]/25 transition-all focus:outline-none focus:ring-2 focus:ring-[#702963] focus:ring-offset-2 active:scale-[0.99] disabled:opacity-70" type="submit">
+                  <button
+                    disabled={loading}
+                    className="w-full py-3 px-4 rounded-xl bg-[#702963] hover:bg-[#55104b] text-white font-headline-sm text-xs font-bold tracking-wide text-center flex items-center justify-center gap-2 shadow-lg shadow-[#702963]/25 transition-all focus:outline-none focus:ring-2 focus:ring-[#702963] active:scale-[0.99] disabled:opacity-70"
+                    type="submit"
+                  >
                     {loading ? (
                       <span className="material-symbols-outlined text-lg animate-spin">sync</span>
+                    ) : isSignup ? (
+                      `Create ${accountType === 'admin' ? 'Admin / Business' : 'Customer'} Account`
                     ) : (
-                      <>
-                        <span>{isSignup ? 'Deploy DealFlow360 Workspace' : 'Sign In to DealFlow360'}</span>
-                        <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                      </>
+                      'Sign In to DealFlow360'
                     )}
                   </button>
                 </div>
               </form>
+
+              {/* Toggle Sign In / Sign Up */}
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => { setIsSignup(!isSignup); setError(''); }}
+                  className="text-xs text-[#702963] hover:underline font-bold"
+                >
+                  {isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+                </button>
+              </div>
             </div>
 
-            {/* Footer Policy & Dynamic Router Hint */}
-            <div className="mt-8 pt-4 border-t border-[#e2d0f5] space-y-3">
-              <div className="p-3.5 rounded-xl bg-[#faf2ff] border border-[#e2d0f5] flex items-start gap-3">
-                <span className="material-symbols-outlined text-[#702963] text-lg shrink-0 mt-0.5">alt_route</span>
-                <p className="font-body-sm text-xs text-[#4b4356] leading-relaxed">
-                  <strong className="text-[#110d1a] font-bold">Routing Notice:</strong> Internal revenue ops and account executives route straight to the <span className="text-[#702963] font-bold">Sales Dashboard</span>. Client stakeholders enter the self-serve <span className="text-[#006877] font-bold">Negotiation Portal</span>.
-                </p>
+            {/* Quick Test Credential Filler Bar */}
+            <div className="mt-6 pt-4 border-t border-[#e2d0f5] space-y-2">
+              <div className="flex justify-between items-center text-[11px] font-bold text-[#702963]">
+                <span>⚡ Quick Test Credentials (1-Click Fill):</span>
+                <span className="text-[10px] text-[#6b6278] font-normal">Temporary Testing Helper</span>
               </div>
-              <div className="flex items-center justify-between font-label-sm text-xs text-[#6b6278]">
-                <span className="flex items-center gap-1.5 font-medium"><span className="w-2 h-2 rounded-full bg-[#059669]"></span> SOC-2 Type II Certified</span>
-                <div className="flex items-center gap-3">
-                  <a className="hover:text-[#110d1a] transition-colors" href="#">Privacy Shield</a>
-                  <span>•</span>
-                  <a className="hover:text-[#110d1a] transition-colors" href="#">Terms of Master Service</a>
-                </div>
+              <div className="flex flex-wrap gap-1.5 text-xs">
+                <button type="button" onClick={() => fillCredentials('superadmin@dealflow360.com', 'SuperAdmin123!')} className="px-2.5 py-1 bg-[#faf2ff] border border-[#e2d0f5] text-[#702963] rounded-lg hover:bg-[#f5e8ff] font-bold text-[11px]">👑 SuperAdmin</button>
+                <button type="button" onClick={() => fillCredentials('admin@cybercreatures.com', 'Admin123!')} className="px-2.5 py-1 bg-[#faf2ff] border border-[#e2d0f5] text-[#702963] rounded-lg hover:bg-[#f5e8ff] font-bold text-[11px]">🏢 Admin</button>
+                <button type="button" onClick={() => fillCredentials('manager@cybercreatures.com', 'Manager123!')} className="px-2.5 py-1 bg-[#faf2ff] border border-[#e2d0f5] text-[#702963] rounded-lg hover:bg-[#f5e8ff] font-bold text-[11px]">💼 Manager</button>
+                <button type="button" onClick={() => fillCredentials('sales@cybercreatures.com', 'Sales123!')} className="px-2.5 py-1 bg-[#faf2ff] border border-[#e2d0f5] text-[#702963] rounded-lg hover:bg-[#f5e8ff] font-bold text-[11px]">🎯 Sales Rep</button>
+                <button type="button" onClick={() => fillCredentials('customer@acme.com', 'Customer123!')} className="px-2.5 py-1 bg-[#faf2ff] border border-[#059669]/30 text-[#059669] rounded-lg hover:bg-[#059669]/10 font-bold text-[11px]">👤 Customer</button>
               </div>
             </div>
-            
-            {/* Quick Test Credential Filler (Optional/Debug) */}
-            <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              <button type="button" onClick={() => fillCredentials('superadmin@dealflow360.com', 'SuperAdmin123!')} className="px-2 py-1 bg-[#faf2ff] border border-[#e2d0f5] text-[#702963] rounded hover:bg-[#f5e8ff]">Fill SuperAdmin</button>
-              <button type="button" onClick={() => fillCredentials('admin@cybercreatures.com', 'Admin123!')} className="px-2 py-1 bg-[#faf2ff] border border-[#e2d0f5] text-[#702963] rounded hover:bg-[#f5e8ff]">Fill Admin</button>
-              <button type="button" onClick={() => fillCredentials('sales@cybercreatures.com', 'Sales123!')} className="px-2 py-1 bg-[#faf2ff] border border-[#e2d0f5] text-[#702963] rounded hover:bg-[#f5e8ff]">Fill Sales</button>
-            </div>
+
           </div>
         </div>
       </div>
