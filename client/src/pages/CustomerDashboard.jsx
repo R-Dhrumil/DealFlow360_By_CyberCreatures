@@ -217,19 +217,20 @@ export default function CustomerDashboard() {
                     setSelectedProductDetail(p);
                     setModalQuantity(1);
                   }}
-                  className="bg-white rounded-2xl border border-surface-soft shadow-sm hover:shadow-md hover:border-emerald-400 transition-all p-6 flex flex-col justify-between space-y-4 cursor-pointer group relative overflow-hidden"
+                  className="bg-white rounded-2xl border border-surface-soft shadow-sm hover:shadow-md hover:border-emerald-400 transition-all p-6 flex flex-col justify-between space-y-4 cursor-pointer group"
                 >
-                  {p.is_promoted && (
-                    <div className="bg-emerald-500 text-white text-[9px] font-extrabold uppercase tracking-widest px-8 py-1 absolute -right-7 top-3 rotate-45 shadow-sm text-center">
-                      Featured
-                    </div>
-                  )}
-
                   <div className="space-y-3">
-                    <div className="flex justify-between items-start pr-4">
-                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                        {p.category}
-                      </span>
+                    <div className="flex justify-between items-center flex-wrap gap-2">
+                      <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                          {p.category}
+                        </span>
+                        {p.is_promoted && (
+                          <span className="bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center">
+                            <i className="fa-solid fa-star mr-1 text-amber-500 text-[9px]"></i> Featured
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[11px] font-mono text-text-muted">{formatSKU(p.sku, p.id)}</span>
                     </div>
 
