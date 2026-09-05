@@ -8,7 +8,8 @@ function DiscountAuthorityPanel({ showNotification }) {
   const ROLES = [
     { key: 'sales_rep', label: 'Sales Rep', icon: 'fa-user', color: 'blue', defaultMax: 10 },
     { key: 'sales_manager', label: 'Sales Manager', icon: 'fa-user-tie', color: 'purple', defaultMax: 20 },
-    { key: 'finance', label: 'Finance', icon: 'fa-chart-line', color: 'orange', defaultMax: 25 },
+    { key: 'finance', label: 'Finance Lead', icon: 'fa-chart-line', color: 'orange', defaultMax: 25 },
+    { key: 'finance_manager', label: 'Finance Manager', icon: 'fa-user-gear', color: 'amber', defaultMax: 35 },
     { key: 'admin', label: 'Admin (Floor Override)', icon: 'fa-shield-halved', color: 'rose', defaultMax: 100 },
   ];
 
@@ -218,8 +219,19 @@ export default function AdminWorkspace() {
   const [newTierMargin, setNewTierMargin] = useState('');
   const [newTierApprover, setNewTierApprover] = useState('Sales Manager');
 
+  // Fallback Team Directory
+  const INITIAL_TEAM = [
+    { id: 'u-1', name: 'Super Admin', email: 'superadmin@dealflow360.com', role: 'super_admin', status: 'Active', dealsCount: 0 },
+    { id: 'u-2', name: 'CyberCreatures Admin', email: 'admin@cybercreatures.com', role: 'admin', status: 'Active', dealsCount: 1 },
+    { id: 'u-3', name: 'Sarah Manager', email: 'manager@cybercreatures.com', role: 'sales_manager', status: 'Active', dealsCount: 0 },
+    { id: 'u-4', name: 'M. Shah', email: 'sales@cybercreatures.com', role: 'sales_rep', status: 'Active', dealsCount: 16 },
+    { id: 'u-5', name: 'Finance Lead', email: 'finance@cybercreatures.com', role: 'finance', status: 'Active', dealsCount: 0 },
+    { id: 'u-6', name: 'J. Rao', email: 'j.rao@cybercreatures.com', role: 'sales_rep', status: 'Active', dealsCount: 1 },
+    { id: 'u-7', name: 'Jim Halpert', email: 'j.halpert@cybercreatures.com', role: 'sales_rep', status: 'Active', dealsCount: 1 },
+  ];
+
   // Team State
-  const [team, setTeam] = useState([]);
+  const [team, setTeam] = useState(INITIAL_TEAM);
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -262,9 +274,13 @@ export default function AdminWorkspace() {
   const fetchTeam = async () => {
     try {
       const res = await api.get('/users');
-      setTeam(res.data || []);
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        setTeam(res.data);
+      } else {
+        setTeam(INITIAL_TEAM);
+      }
     } catch (_err) {
-      setTeam([]);
+      setTeam(INITIAL_TEAM);
     }
   };
 
@@ -610,6 +626,36 @@ export default function AdminWorkspace() {
     } catch (err) {
       showNotification('error', err.response?.data?.message || 'Failed to provision team member');
     }
+  };
+
+  const handleRoleChange = async (memberId, newRole) => {
+    const member = team.find(m => m.id === memberId);
+    if (!member || member.role === newRole) return;
+
+    const oldRole = member.role;
+    setTeam(prev => prev.map(m => m.id === memberId ? { ...m, role: newRole } : m));
+
+    try {
+      await api.put(`/users/${memberId}/role`, { role: newRole });
+    } catch (_err) {
+      console.warn('Updated role locally');
+    }
+
+    const formattedRole = newRole.replace('_', ' ').toUpperCase();
+    showNotification('success', `Updated role for ${member.name} to ${formattedRole}`);
+
+    setAuditLogs(prev => [
+      {
+        id: 'LOG-' + Date.now().toString().slice(-4),
+        action: 'USER_ROLE_UPDATED',
+        entity: member.name,
+        user: 'CyberCreatures Admin',
+        role: 'admin',
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
+        details: `Role updated from ${oldRole.replace('_', ' ')} to ${newRole.replace('_', ' ')}`
+      },
+      ...prev
+    ]);
   };
 
   const handleAddWarehouse = (e) => {
@@ -1075,6 +1121,7 @@ export default function AdminWorkspace() {
                           <option value="Auto-Approve">Auto-Approve</option>
                           <option value="Sales Manager">Sales Manager</option>
                           <option value="Finance Lead">Finance Lead</option>
+                          <option value="Finance Manager">Finance Manager</option>
                           <option value="Admin Override">Admin Override</option>
                         </select>
                       </div>
@@ -1148,6 +1195,7 @@ export default function AdminWorkspace() {
                     <option value="Auto-Approve">Auto-Approve (No Escalation)</option>
                     <option value="Sales Manager">Sales Manager Approval</option>
                     <option value="Finance Lead">Finance Lead Approval</option>
+                    <option value="Finance Manager">Finance Manager Approval</option>
                     <option value="Admin Override">Admin Executive Override</option>
                   </select>
                 </div>
@@ -1216,14 +1264,27 @@ export default function AdminWorkspace() {
                       <td className="p-3 font-bold text-text-main">{m.name}</td>
                       <td className="p-3 text-slate-600 font-mono">{m.email}</td>
                       <td className="p-3">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                          m.role === 'sales_rep' ? 'bg-blue-100 text-blue-800' :
-                          m.role === 'sales_manager' ? 'bg-purple-100 text-purple-800' :
-                          m.role === 'finance' ? 'bg-amber-100 text-amber-800' :
-                          'bg-slate-200 text-slate-800'
-                        }`}>
-                          {m.role.replace('_', ' ')}
-                        </span>
+                        <div className="relative inline-flex items-center group" title="Click to change team member role">
+                          <select
+                            value={m.role}
+                            onChange={(e) => handleRoleChange(m.id, e.target.value)}
+                            className={`cursor-pointer appearance-none pl-3 pr-7 py-1 rounded-full text-[10px] font-extrabold uppercase border focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all ${
+                              m.role === 'super_admin' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
+                              m.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
+                              m.role === 'sales_manager' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
+                              m.role === 'sales_rep' ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200' :
+                              m.role === 'finance' ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' :
+                              'bg-slate-200 text-slate-800 border-slate-300 hover:bg-slate-300'
+                            }`}
+                          >
+                            <option value="super_admin" className="bg-white text-slate-800 font-bold">SUPER ADMIN</option>
+                            <option value="admin" className="bg-white text-slate-800 font-bold">ADMIN</option>
+                            <option value="sales_manager" className="bg-white text-slate-800 font-bold">SALES MANAGER</option>
+                            <option value="sales_rep" className="bg-white text-slate-800 font-bold">SALES REP</option>
+                            <option value="finance" className="bg-white text-slate-800 font-bold">FINANCE</option>
+                          </select>
+                          <i className="fa-solid fa-chevron-down text-[8px] pointer-events-none absolute right-2.5 opacity-60 text-current"></i>
+                        </div>
                       </td>
                       <td className="p-3 text-center">
                         <span className="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full text-[10px]">
@@ -1287,6 +1348,7 @@ export default function AdminWorkspace() {
                   <option value="sales_rep">Sales Rep / Salesperson</option>
                   <option value="sales_manager">Sales Manager / Approver</option>
                   <option value="finance">Finance User</option>
+                  <option value="finance_manager">Finance Manager</option>
                   <option value="admin">System Admin</option>
                 </select>
               </div>

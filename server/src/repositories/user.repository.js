@@ -43,6 +43,18 @@ class UserRepository {
     );
     return result.rows[0];
   }
+
+  async updateUserRole(id, role, companyId = null) {
+    let query = `UPDATE users SET role = $1 WHERE id = $2`;
+    let params = [role, id];
+    if (companyId) {
+      query += ` AND company_id = $3`;
+      params.push(companyId);
+    }
+    query += ` RETURNING id, company_id, name, email, role, created_at`;
+    const result = await db.query(query, params);
+    return result.rows[0] || null;
+  }
 }
 
 module.exports = new UserRepository();

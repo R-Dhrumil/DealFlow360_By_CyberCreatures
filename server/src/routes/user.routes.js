@@ -6,5 +6,7 @@ const authenticate = require('../middleware/authenticate');
 
 router.get('/', authenticate, asyncWrap((req, res) => userController.getCompanyUsers(req, res)));
 router.post('/', authenticate, asyncWrap((req, res) => userController.provisionUser(req, res)));
+router.put('/:id/role', authenticate, asyncWrap((req, res) => userController.updateUserRole(req, res)));
+router.patch('/:id/role', authenticate, asyncWrap((req, res) => userController.updateUserRole(req, res)));
 
 module.exports = router;

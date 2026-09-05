@@ -22,15 +22,15 @@ export default function Layout() {
   };
 
   const navItems = [
-    { name: 'Pipeline', path: '/app/pipeline', icon: 'fa-diagram-project', roles: ['sales_rep', 'sales_manager', 'finance', 'admin'] },
-    { name: 'Dashboard', path: '/app/dashboard', icon: 'fa-chart-pie', roles: ['sales_rep', 'sales_manager', 'admin'] },
-    { name: 'Quotation Builder', path: '/app/quote', icon: 'fa-file-invoice-dollar', roles: ['sales_rep', 'sales_manager', 'admin'] },
-    { name: 'Inquiries', path: '/app/inquiries', icon: 'fa-inbox', roles: ['sales_rep', 'sales_manager', 'admin'] },
-    { name: 'Approvals', path: '/app/approvals', icon: 'fa-check-double', roles: ['sales_manager', 'admin', 'finance', 'sales_rep'] },
+    { name: 'Pipeline', path: '/app/pipeline', icon: 'fa-diagram-project', roles: ['sales_rep', 'sales_manager', 'finance', 'finance_manager', 'admin'] },
+    { name: 'Dashboard', path: '/app/dashboard', icon: 'fa-chart-pie', roles: ['sales_rep', 'sales_manager', 'finance', 'finance_manager', 'admin'] },
+    { name: 'Quotation Builder', path: '/app/quote', icon: 'fa-file-invoice-dollar', roles: ['sales_rep', 'sales_manager', 'finance_manager', 'admin'] },
+    { name: 'Inquiries', path: '/app/inquiries', icon: 'fa-inbox', roles: ['sales_rep', 'sales_manager', 'finance_manager', 'admin'] },
+    { name: 'Approvals', path: '/app/approvals', icon: 'fa-check-double', roles: ['sales_manager', 'admin', 'finance', 'finance_manager', 'sales_rep'] },
     { name: 'Operations Hub', path: '/app/operations', icon: 'fa-boxes-packing', roles: ['operations', 'admin'] },
-    { name: 'Finance Hub', path: '/app/finance', icon: 'fa-coins', roles: ['finance', 'admin', 'sales_manager'] },
+    { name: 'Finance Hub', path: '/app/finance', icon: 'fa-coins', roles: ['finance', 'finance_manager', 'admin', 'sales_manager'] },
     { name: 'Admin Operations', path: '/app/admin', icon: 'fa-user-gear', roles: ['admin'] },
-    { name: 'Reporting', path: '/app/reporting', icon: 'fa-chart-bar', roles: ['sales_manager', 'admin'] },
+    { name: 'Reporting', path: '/app/reporting', icon: 'fa-chart-bar', roles: ['sales_manager', 'finance_manager', 'admin'] },
     { name: 'Global Tenants', path: '/app/superadmin', search: '?tab=tenants', icon: 'fa-globe', roles: ['super_admin'] },
     { name: 'Platform Settings', path: '/app/superadmin', search: '?tab=settings', icon: 'fa-gear', roles: ['super_admin'] },
     { name: 'Details of Users', path: '/app/superadmin', search: '?tab=users', icon: 'fa-users', roles: ['super_admin'] },

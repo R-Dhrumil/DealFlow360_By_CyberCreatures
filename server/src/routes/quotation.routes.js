@@ -26,16 +26,16 @@ router.post('/customer-request', asyncWrap((req, res) => quotationController.cre
 router.post('/validate-discount', asyncWrap((req, res) => quotationController.validateDiscount(req, res)));
 
 // Approval / rejection (sales_manager + admin can also approve pending_admin_approval)
-router.put('/:id/approve', checkRole('finance', 'admin', 'sales_manager', 'super_admin'),
+router.put('/:id/approve', checkRole('finance', 'finance_manager', 'admin', 'sales_manager', 'super_admin'),
   asyncWrap((req, res) => quotationController.approve(req, res)));
-router.put('/:id/reject', checkRole('finance', 'admin', 'sales_manager', 'super_admin'),
+router.put('/:id/reject', checkRole('finance', 'finance_manager', 'admin', 'sales_manager', 'super_admin'),
   asyncWrap((req, res) => quotationController.reject(req, res)));
 router.put('/:id/status', asyncWrap((req, res) => quotationController.updateStatus(req, res)));
 
-// Create + submit (sales rep and admin)
-router.post('/', checkRole('sales_rep', 'admin', 'super_admin'),
+// Create + submit (sales rep, finance manager, and admin)
+router.post('/', checkRole('sales_rep', 'sales_manager', 'finance_manager', 'admin', 'super_admin'),
   asyncWrap((req, res) => quotationController.create(req, res)));
-router.put('/:id/submit', checkRole('sales_rep', 'admin', 'super_admin'),
+router.put('/:id/submit', checkRole('sales_rep', 'sales_manager', 'finance_manager', 'admin', 'super_admin'),
   asyncWrap((req, res) => quotationController.submit(req, res)));
 
 module.exports = router;
