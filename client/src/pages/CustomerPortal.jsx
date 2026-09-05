@@ -4,6 +4,7 @@ import api from '../api/client';
 import { formatQuoteCode } from '../utils/formatters';
 import { useCurrency } from '../contexts/CurrencyContext';
 import CurrencyPicker from '../components/CurrencyPicker';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function CustomerPortal() {
   const { formatMoney, selected } = useCurrency();
@@ -384,9 +385,16 @@ export default function CustomerPortal() {
                         <span className="block font-bold text-slate-900">UPI Payment</span>
                         <span className="block text-xs text-slate-500 mt-1">Pay instantly via any UPI app.</span>
                         {selectedPayment === 'upi' && (
-                          <div className="mt-3 p-3 bg-white rounded-lg border border-emerald-100 text-sm">
-                            <span className="text-slate-500 block text-xs">Scan or transfer to:</span>
-                            <span className="font-mono font-bold text-slate-800">{paymentOptions.upi_id}</span>
+                          <div className="mt-4 flex flex-col items-center p-4 bg-white rounded-lg border border-emerald-100">
+                            <span className="text-slate-500 block text-xs mb-3 text-center">Scan QR code to pay instantly</span>
+                            <div className="p-2 bg-white border border-slate-100 rounded-xl shadow-sm mb-3">
+                              <QRCodeSVG 
+                                value={`upi://pay?pa=${paymentOptions.upi_id}&pn=${encodeURIComponent(quotation.company_name || 'DealFlow360')}&am=${grandTotal}&cu=INR`} 
+                                size={150} 
+                              />
+                            </div>
+                            <span className="text-slate-400 text-[10px] mb-1">or transfer to</span>
+                            <span className="font-mono font-bold text-slate-800 text-sm bg-slate-50 px-3 py-1 rounded-md">{paymentOptions.upi_id}</span>
                           </div>
                         )}
                       </div>
