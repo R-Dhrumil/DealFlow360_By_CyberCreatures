@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import api from '../api/client';
 import { formatQuoteCode } from '../utils/formatters';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useNotification } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useSocketEvent } from '../hooks/useSocket';
 
 const STAGES = [
   { name: 'Draft', color: 'border-slate-300 bg-slate-100 text-slate-700' },
@@ -15,17 +16,10 @@ const STAGES = [
   { name: 'Rejected', color: 'border-rose-400 bg-rose-50 text-rose-800' }
 ];
 
-const getSocketUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
-  }
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-  return `http://${hostname}:5001`;
-};
-
 export default function Pipeline() {
   const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
+  const { user } = useAuth();
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState('');
@@ -34,39 +28,7 @@ export default function Pipeline() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmData, setConfirmData] = useState({ show: false, deal: null, targetStage: null });
 
-  useEffect(() => {
-    fetchQuotations();
-
-    // Socket.IO Listener for real-time pipeline updates across connected clients
-    const socket = io(getSocketUrl(), {
-      transports: ['polling', 'websocket'],
-      withCredentials: true,
-      reconnectionAttempts: 10,
-    });
-
-    const userStr = localStorage.getItem('user');
-    const user = userStr ? JSON.parse(userStr) : null;
-
-    socket.on('connect', () => {
-      if (user) {
-        socket.emit('register_user', {
-          userId: user.id || user.userId,
-          role: user.role,
-          companyId: user.company_id || user.companyId || 'c1',
-        });
-      }
-    });
-
-    socket.on('pipeline_updated', () => {
-      fetchQuotations(false);
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
-
-  const fetchQuotations = async (showLoading = true) => {
+  const fetchQuotations = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
       const res = await api.get('/quotations');
@@ -96,7 +58,16 @@ export default function Pipeline() {
     } finally {
       if (showLoading) setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchQuotations();
+  }, [fetchQuotations]);
+
+  // Real-time pipeline updates via shared socket
+  useSocketEvent('pipeline_updated', useCallback(() => {
+    fetchQuotations(false);
+  }, [fetchQuotations]));
 
   const filteredDeals = deals.filter(d =>
     d.customer.toLowerCase().includes(filterText.toLowerCase()) ||

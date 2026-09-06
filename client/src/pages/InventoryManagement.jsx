@@ -1,18 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
 import { useAlert } from '../contexts/AlertContext';
-import { io } from 'socket.io-client';
-
-const getSocketUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
-  }
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-  return `http://${hostname}:5001`;
-};
+import { useAuth } from '../contexts/AuthContext';
+import { useSocketEvent } from '../hooks/useSocket';
 
 export default function InventoryManagement() {
   const { showAlert } = useAlert();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [stock, setStock] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -48,7 +42,7 @@ export default function InventoryManagement() {
     }
   }, [stock]);
 
-  const fetchData = async (showSpinner = true) => {
+  const fetchData = useCallback(async (showSpinner = true) => {
     try {
       if (showSpinner) setLoading(true);
       const [stockRes, txnRes] = await Promise.all([
@@ -63,47 +57,22 @@ export default function InventoryManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showAlert]);
 
   useEffect(() => {
     fetchData(true);
+  }, [fetchData]);
 
-    // Socket.IO real-time listener for customer purchases & stock adjustments
-    const socketUrl = getSocketUrl();
-    const socket = io(socketUrl, {
-      transports: ['polling', 'websocket'],
-      withCredentials: true,
-      reconnectionAttempts: 5,
-    });
+  // Real-time stock refresh via shared socket
+  useSocketEvent('inventory_updated', useCallback(() => {
+    fetchData(false);
+  }, [fetchData]));
 
-    const userStr = localStorage.getItem('user');
-    const user = userStr ? JSON.parse(userStr) : null;
-
-    socket.on('connect', () => {
-      if (user) {
-        socket.emit('register_user', {
-          userId: user.id || user.userId,
-          role: user.role,
-          companyId: user.company_id || user.companyId || 'c1',
-        });
-      }
-    });
-
-    // Real-time stock refresh on stock movement or deal confirmation
-    socket.on('inventory_updated', () => {
+  useSocketEvent('pipeline_updated', useCallback((data) => {
+    if (data?.newStatus === 'confirmed' || data?.newStatus === 'closed') {
       fetchData(false);
-    });
-
-    socket.on('pipeline_updated', (data) => {
-      if (data?.newStatus === 'confirmed' || data?.newStatus === 'closed') {
-        fetchData(false);
-      }
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
+    }
+  }, [fetchData]));
 
   const handleAdjustSubmit = async (e) => {
     e.preventDefault();

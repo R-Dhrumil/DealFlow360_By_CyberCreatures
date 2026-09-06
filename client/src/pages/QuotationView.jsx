@@ -5,6 +5,7 @@ import { formatQuoteCode } from '../utils/formatters';
 import { useNotification } from '../contexts/NotificationContext';
 import { copyTextToClipboard } from '../utils/clipboard';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useVisibleInterval } from '../hooks/useVisibleInterval';
 
 export default function QuotationView() {
   const { formatMoney } = useCurrency();
@@ -16,15 +17,6 @@ export default function QuotationView() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
-  useEffect(() => {
-    fetchQuotation();
-    fetchMessages();
-    const interval = setInterval(() => {
-      fetchMessages();
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [quotationId]);
-
   const fetchMessages = async () => {
     try {
       if (!quotationId) return;
@@ -34,6 +26,13 @@ export default function QuotationView() {
       console.error('Failed to fetch quotation messages:', err);
     }
   };
+
+  useEffect(() => {
+    fetchQuotation();
+    fetchMessages();
+  }, [quotationId]);
+
+  useVisibleInterval(fetchMessages, quotationId ? 3000 : null);
 
   const fetchQuotation = async () => {
     try {

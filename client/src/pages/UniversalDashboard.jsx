@@ -3,58 +3,13 @@ import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuoteCode } from '../utils/formatters';
 import { useCurrency } from '../contexts/CurrencyContext';
-
-const getStageBadge = (status) => {
-  switch (status?.toLowerCase()) {
-    case 'pending_approval':
-    case 'pending_finance_approval':
-      return {
-        label: 'Approval Gate',
-        bg: 'bg-amber-status/10',
-        text: 'text-amber-status',
-        border: 'border-amber-status/30',
-        dot: 'bg-amber-status'
-      };
-    case 'approved':
-      return {
-        label: 'Approved',
-        bg: 'bg-emerald-status/10',
-        text: 'text-emerald-status',
-        border: 'border-emerald-status/30',
-        dot: 'bg-emerald-status'
-      };
-    case 'confirmed':
-    case 'won':
-      return {
-        label: 'Confirmed',
-        bg: 'bg-secondary/10',
-        text: 'text-secondary',
-        border: 'border-secondary/30',
-        dot: 'bg-secondary'
-      };
-    case 'sent':
-      return {
-        label: 'Sent • Viewed',
-        bg: 'bg-amber-status/10',
-        text: 'text-amber-status',
-        border: 'border-amber-status/30',
-        dot: 'bg-amber-status'
-      };
-    case 'draft':
-    default:
-      return {
-        label: 'Draft',
-        bg: 'bg-surface-soft/40',
-        text: 'text-text-muted',
-        border: 'border-surface-soft',
-        dot: 'bg-text-muted'
-      };
-  }
-};
+import { useAuth } from '../contexts/AuthContext';
+import { useVisibleInterval } from '../hooks/useVisibleInterval';
 
 const UniversalDashboard = () => {
   const { formatMoney } = useCurrency();
   const formatCurrency = (val, compact = true) => formatMoney(val, { compact });
+  const { user } = useAuth();
   const [quotations, setQuotations] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,8 +18,6 @@ const UniversalDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const DEALS_PER_PAGE = 5;
 
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
   const role = user?.role || 'sales_rep';
 
   const roleConfig = {
@@ -142,21 +95,6 @@ const UniversalDashboard = () => {
 
   const currentRoleConfig = roleConfig[role] || roleConfig.sales_rep;
 
-  useEffect(() => {
-    fetchDashboardData();
-    const interval = setInterval(fetchDashboardDataSilent, 3500);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchDashboardDataSilent = async () => {
-    try {
-      const res = await api.get('/quotations');
-      setQuotations(res.data || []);
-    } catch {
-      // silent fail during background polling
-    }
-  };
-
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
@@ -175,6 +113,21 @@ const UniversalDashboard = () => {
       setLoading(false);
     }
   };
+
+  const fetchDashboardDataSilent = async () => {
+    try {
+      const res = await api.get('/quotations');
+      setQuotations(res.data || []);
+    } catch {
+      // silent fail during background polling
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  useVisibleInterval(fetchDashboardDataSilent, 3500);
 
   // Metrics calculation
   const pendingDeals = quotations.filter(q => q.status?.includes('pending'));
@@ -739,7 +692,6 @@ const UniversalDashboard = () => {
                       {PIPELINE_STEPS.map((step, idx) => {
                         const isDone = idx < currentStep;
                         const isActive = idx === currentStep;
-                        const isFuture = idx > currentStep;
                         return (
                           <React.Fragment key={step}>
                             <div className="flex flex-col items-center shrink-0">

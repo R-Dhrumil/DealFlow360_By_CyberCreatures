@@ -1,19 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useAuth } from '../contexts/AuthContext';
+import { disconnectSocket } from '../hooks/useSocket';
 
 import CurrencyPicker from './CurrencyPicker';
 
 export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
+    disconnectSocket();
+    logout(navigate);
   };
 
   const navItems = [

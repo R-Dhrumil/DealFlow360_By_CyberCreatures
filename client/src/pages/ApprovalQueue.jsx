@@ -3,6 +3,7 @@ import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAlert } from '../contexts/AlertContext';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useVisibleInterval } from '../hooks/useVisibleInterval';
 
 const APPROVAL_LEVEL_META = {
   pending_approval: { label: 'Manager Review', cls: 'bg-amber-100 text-amber-700 border-amber-200', icon: 'fa-user-tie' },
@@ -39,22 +40,25 @@ export default function ApprovalQueue() {
 
   useEffect(() => {
     fetchApprovals();
-    const interval = setInterval(() => fetchApprovals(true), 4000);
-    return () => clearInterval(interval);
   }, [fetchApprovals]);
 
-  useEffect(() => {
+  useVisibleInterval(() => fetchApprovals(true), 4000);
+
+  const fetchMsgs = useCallback(async () => {
     if (!expandedId) return;
-    const fetchMsgs = async () => {
-      try {
-        const msgRes = await api.get(`/quotations/${expandedId}/messages`);
-        if (msgRes.data) setMessagesMap(prev => ({ ...prev, [expandedId]: msgRes.data }));
-      } catch {}
-    };
-    fetchMsgs();
-    const interval = setInterval(fetchMsgs, 3000);
-    return () => clearInterval(interval);
+    try {
+      const msgRes = await api.get(`/quotations/${expandedId}/messages`);
+      if (msgRes.data) setMessagesMap(prev => ({ ...prev, [expandedId]: msgRes.data }));
+    } catch {}
   }, [expandedId]);
+
+  useEffect(() => {
+    if (expandedId) {
+      fetchMsgs();
+    }
+  }, [expandedId, fetchMsgs]);
+
+  useVisibleInterval(fetchMsgs, expandedId ? 3000 : null);
 
   const toggleExpand = async (id) => {
     if (expandedId === id) { setExpandedId(null); return; }

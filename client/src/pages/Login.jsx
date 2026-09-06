@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { formatCurrency } from '../utils/currency';
-
+import { useAuth } from '../contexts/AuthContext';
 const Login = ({ defaultIsSignup = false }) => {
+  const { login: authLogin } = useAuth();
   const [isSignup, setIsSignup] = useState(defaultIsSignup);
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState('');
@@ -49,8 +50,7 @@ const Login = ({ defaultIsSignup = false }) => {
         });
 
         if (res.data && res.data.token) {
-          localStorage.setItem('token', res.data.token);
-          localStorage.setItem('user', JSON.stringify(res.data.user));
+          authLogin(res.data.token, res.data.user);
 
           const role = res.data.user?.role;
           if (role === 'super_admin') navigate('/app/superadmin');
@@ -66,9 +66,8 @@ const Login = ({ defaultIsSignup = false }) => {
           password: (password || '').trim()
         });
         if (res.data && res.data.token) {
-          localStorage.setItem('token', res.data.token);
+          authLogin(res.data.token, res.data.user);
           const user = res.data.user;
-          localStorage.setItem('user', JSON.stringify(user));
 
           if (user.role === 'super_admin') {
             navigate('/app/superadmin');

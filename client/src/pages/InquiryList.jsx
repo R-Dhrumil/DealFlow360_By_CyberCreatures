@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useVisibleInterval } from '../hooks/useVisibleInterval';
 
 const statusColors = {
   open: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', dot: 'bg-blue-500', label: 'Open' },
@@ -40,9 +41,9 @@ export default function InquiryList() {
 
   useEffect(() => {
     fetchInquiries();
-    const interval = setInterval(() => fetchInquiries(true), 5000);
-    return () => clearInterval(interval);
   }, [fetchInquiries]);
+
+  useVisibleInterval(() => fetchInquiries(true), 5000);
 
   const toggleExpand = async (inquiryId) => {
     if (expandedId === inquiryId) {

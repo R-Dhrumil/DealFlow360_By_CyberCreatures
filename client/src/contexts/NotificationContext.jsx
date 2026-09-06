@@ -1,17 +1,9 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { io } from 'socket.io-client';
+import { useSocketEvent } from '../hooks/useSocket';
 
 const NotificationContext = createContext();
 
 export const useNotification = () => useContext(NotificationContext);
-
-const getSocketUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
-  }
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-  return `http://${hostname}:5001`;
-};
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
@@ -26,44 +18,18 @@ export const NotificationProvider = ({ children }) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   }, []);
 
-  // Connect Socket.IO for real-time toast notifications
-  useEffect(() => {
-    const socketUrl = getSocketUrl();
-    const socket = io(socketUrl, {
-      transports: ['polling', 'websocket'],
-      withCredentials: true,
-      reconnectionAttempts: 10,
-    });
-
-    const userStr = localStorage.getItem('user');
-    const user = userStr ? JSON.parse(userStr) : null;
-
-    socket.on('connect', () => {
-      if (user) {
-        socket.emit('register_user', {
-          userId: user.id || user.userId,
-          role: user.role,
-          companyId: user.company_id || user.companyId || 'c1',
-        });
-      }
-    });
-
-    socket.on('notification', (data) => {
-      if (data) {
-        showNotification(
-          data.type || 'info',
-          data.message,
-          data.duration || 5000,
-          data.title,
-          data.link
-        );
-      }
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [showNotification]);
+  // Real-time toast notifications via shared socket
+  useSocketEvent('notification', useCallback((data) => {
+    if (data) {
+      showNotification(
+        data.type || 'info',
+        data.message,
+        data.duration || 5000,
+        data.title,
+        data.link
+      );
+    }
+  }, [showNotification]));
 
   return (
     <NotificationContext.Provider value={{ showNotification, removeNotification }}>

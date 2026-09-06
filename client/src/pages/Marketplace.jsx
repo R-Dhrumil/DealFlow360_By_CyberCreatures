@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useNotification } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
 import { formatSKU } from '../utils/formatters';
 import {
   Store,
@@ -22,6 +23,7 @@ import {
 export default function Marketplace() {
   const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
+  const { user } = useAuth();
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,10 +65,6 @@ export default function Marketplace() {
   const handleRequestQuote = async (e) => {
     e.preventDefault();
     if (!selectedProduct) return;
-
-    const userStr = localStorage.getItem('user');
-    const user = userStr ? JSON.parse(userStr) : null;
-
     try {
       setSubmittingInquiry(true);
       await api.post('/inquiries', {

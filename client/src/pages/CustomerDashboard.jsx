@@ -3,6 +3,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuoteCode, formatSKU } from '../utils/formatters';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useAuth } from '../contexts/AuthContext';
+import { disconnectSocket } from '../hooks/useSocket';
 import CurrencyPicker from '../components/CurrencyPicker';
 
 const getQuoteStageInfo = (q) => {
@@ -121,10 +123,9 @@ const getQuoteStageInfo = (q) => {
 
 export default function CustomerDashboard() {
   const { formatMoney } = useCurrency();
+  const { user: loggedInUser, logout } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const userStr = localStorage.getItem('user');
-  const loggedInUser = userStr ? JSON.parse(userStr) : null;
   const customer = (loggedInUser && loggedInUser.role === 'customer') 
     ? loggedInUser 
     : {
@@ -181,9 +182,8 @@ export default function CustomerDashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
+    disconnectSocket();
+    logout(navigate);
   };
 
   const handleRequestQuoteForProduct = async (product, quantity = 1) => {
