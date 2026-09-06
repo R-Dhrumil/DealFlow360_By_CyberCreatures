@@ -32,4 +32,8 @@ router.get('/config/category-discounts', checkRole('admin', 'super_admin'),
 router.put('/config/category-discounts', checkRole('admin', 'super_admin'),
   asyncWrap((req, res) => approvalController.upsertCategoryDiscount(req, res)));
 
+// Audit logs endpoint (admin & super_admin)
+router.get('/audit-logs', checkRole('admin', 'super_admin'),
+  asyncWrap((req, res) => approvalController.getAuditLogs(req, res)));
+
 module.exports = router;

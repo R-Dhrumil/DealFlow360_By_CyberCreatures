@@ -16,14 +16,14 @@ class ProductRepository {
   }
 
   async create(companyId, productData) {
-    const { name, category, basePrice, unit, description, sku, minMargin } = productData;
+    const { name, category, basePrice, unit, description, sku, minMargin, stock, status } = productData;
     const productId = 'p_' + crypto.randomUUID();
     try {
       const result = await db.query(
-        `INSERT INTO products (id, company_id, name, category, base_price, unit, description)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO products (id, company_id, name, category, base_price, unit, description, sku, min_margin, stock, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          RETURNING *`,
-        [productId, companyId, name, category, basePrice, unit || 'unit', description || '']
+        [productId, companyId, name, category, basePrice, unit || 'unit', description || '', sku || null, minMargin || 25, stock !== undefined ? parseInt(stock, 10) : 100, status || 'Active']
       );
       return result.rows[0];
     } catch (err) {
@@ -35,7 +35,8 @@ class ProductRepository {
         base_price: parseFloat(basePrice),
         min_margin: parseFloat(minMargin || 25),
         unit: unit || 'unit',
-        stock: 100,
+        stock: stock !== undefined ? parseInt(stock, 10) : 100,
+        status: status || 'Active',
         description: description || ''
       };
       return newProd;
@@ -52,19 +53,17 @@ class ProductRepository {
              base_price = COALESCE($3, base_price),
              unit = COALESCE($4, unit),
              description = COALESCE($5, description),
-             floor_price = $6
-         WHERE id = $7 AND company_id = $8
+             floor_price = $6,
+             sku = COALESCE($7, sku),
+             min_margin = COALESCE($8, min_margin),
+             stock = COALESCE($9, stock),
+             status = COALESCE($10, status)
+         WHERE id = $11 AND company_id = $12
          RETURNING *`,
-        [name, category, basePrice, unit, description, floorPrice !== undefined ? floorPrice : null, productId, companyId]
+        [name, category, basePrice, unit, description, floorPrice !== undefined ? floorPrice : null, sku || null, minMargin !== undefined ? parseFloat(minMargin) : null, stock !== undefined ? parseInt(stock, 10) : null, status || null, productId, companyId]
       );
       if (result.rows.length > 0) {
-        return {
-          ...result.rows[0],
-          sku: sku || result.rows[0].sku,
-          min_margin: minMargin !== undefined ? parseFloat(minMargin) : result.rows[0].min_margin,
-          stock: stock !== undefined ? parseInt(stock, 10) : 100,
-          status: status || 'Active'
-        };
+        return result.rows[0];
       }
       return null;
     } catch (err) {
@@ -101,9 +100,20 @@ class ProductRepository {
   async updateStock(companyId, productId, { stock, delta }) {
     try {
       if (stock !== undefined) {
-        return { id: productId, stock: parseInt(stock, 10) };
+        const result = await db.query(
+          'UPDATE products SET stock = $1 WHERE id = $2 AND company_id = $3 RETURNING *',
+          [parseInt(stock, 10), productId, companyId]
+        );
+        return result.rows[0] || { id: productId, stock: parseInt(stock, 10) };
       }
-      return { id: productId, delta: delta || 0 };
+      if (delta !== undefined) {
+        const result = await db.query(
+          'UPDATE products SET stock = GREATEST(0, COALESCE(stock, 0) + $1) WHERE id = $2 AND company_id = $3 RETURNING *',
+          [parseInt(delta, 10), productId, companyId]
+        );
+        return result.rows[0] || { id: productId, delta };
+      }
+      return { id: productId };
     } catch (err) {
       console.warn('Fallback stock update:', err.message);
       return { id: productId, stock };
