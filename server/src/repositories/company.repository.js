@@ -35,6 +35,11 @@ class CompanyRepository {
     );
     return result.rows;
   }
+
+  async findById(companyId, client = db) {
+    const result = await client.query('SELECT id, name FROM companies WHERE id = $1', [companyId]);
+    return result.rows[0] || null;
+  }
 }
 
 module.exports = new CompanyRepository();

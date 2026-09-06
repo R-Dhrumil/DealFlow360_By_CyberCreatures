@@ -1,7 +1,9 @@
 const quotationService = require('../services/quotation.service');
 const quotationRepository = require('../repositories/quotation.repository');
+const productRepository = require('../repositories/product.repository');
+const customerRepository = require('../repositories/customer.repository');
+const userRepository = require('../repositories/user.repository');
 const inquiryService = require('../services/inquiry.service');
-const db = require('../config/db');
 const crypto = require('crypto');
 const { logAction } = require('../services/audit.service');
 const { emitCompanyRoleNotification, emitUserNotification, broadcastPipelineUpdate } = require('../services/socket.service');
@@ -33,12 +35,11 @@ class QuotationController {
     const { productId, quantity, customerEmail, customerName } = req.body;
     const qty = Math.max(1, Number(quantity) || 1);
 
-    // Fetch Product details
-    const prodRes = await db.query('SELECT * FROM products WHERE id = $1', [productId]);
-    if (prodRes.rows.length === 0) {
+    // Fetch Product details via repository
+    const product = await productRepository.findById(productId);
+    if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
-    const product = prodRes.rows[0];
     const companyId = product.company_id || 'c1';
 
     // 1. Determine customer identity safely
@@ -48,9 +49,9 @@ class QuotationController {
       customerId = req.user.customerId || req.user.id;
     } else if (req.user && req.body.customerId) {
       // Internal staff (sales rep / admin) creating request on behalf of a specific customer
-      const custCheck = await db.query('SELECT id FROM customers WHERE id = $1', [req.body.customerId]);
-      if (custCheck.rows.length > 0) {
-        customerId = custCheck.rows[0].id;
+      const custCheck = await customerRepository.findById(req.body.customerId);
+      if (custCheck) {
+        customerId = custCheck.id;
       }
     }
 
@@ -59,16 +60,12 @@ class QuotationController {
 
     // 2. If no authenticated customer ID, resolve or register guest via email
     if (!customerId && emailToUse) {
-      const emailCheck = await db.query('SELECT id FROM customers WHERE LOWER(email) = LOWER($1)', [emailToUse.trim()]);
-      if (emailCheck.rows.length > 0) {
-        customerId = emailCheck.rows[0].id;
+      const existingCust = await customerRepository.findByEmail(emailToUse);
+      if (existingCust) {
+        customerId = existingCust.id;
       } else {
-        const newCustId = 'cust_' + crypto.randomUUID().substring(0, 8);
-        await db.query(
-          'INSERT INTO customers (id, name, email, password_hash) VALUES ($1, $2, $3, $4)',
-          [newCustId, nameToUse, emailToUse.trim().toLowerCase(), 'guest']
-        );
-        customerId = newCustId;
+        const newCust = await customerRepository.create(nameToUse, emailToUse.trim().toLowerCase(), 'guest');
+        customerId = newCust.id;
       }
     }
 
@@ -82,17 +79,9 @@ class QuotationController {
     const inquiry = inquiryResult.inquiry;
 
     // 5. Select active sales rep for this company to assign the quotation to
-    const repRes = await db.query(
-      "SELECT id FROM users WHERE company_id = $1 AND role = 'sales_rep' ORDER BY created_at ASC LIMIT 1",
-      [companyId]
-    );
-    let salesRepId = repRes.rows[0]?.id;
+    let salesRepId = await userRepository.findSalesRepByCompany(companyId);
     if (!salesRepId) {
-      const anyUserRes = await db.query(
-        "SELECT id FROM users WHERE company_id = $1 LIMIT 1",
-        [companyId]
-      );
-      salesRepId = anyUserRes.rows[0]?.id || 'u4';
+      salesRepId = 'u4';
     }
 
     // 6. Create live Quotation in database with lineType as one_time
@@ -166,10 +155,10 @@ class QuotationController {
       let customerName = req.user.name || null;
       if ((!customerEmail || !customerName) && customerId) {
         try {
-          const cRes = await db.query('SELECT name, email FROM customers WHERE id = $1', [customerId]);
-          if (cRes.rows.length > 0) {
-            if (!customerEmail) customerEmail = cRes.rows[0].email;
-            if (!customerName) customerName = cRes.rows[0].name;
+          const cust = await customerRepository.findById(customerId);
+          if (cust) {
+            if (!customerEmail) customerEmail = cust.email;
+            if (!customerName) customerName = cust.name;
           }
         } catch (e) {
           // ignore error
@@ -215,13 +204,11 @@ class QuotationController {
     if (customerId) {
       let custEmail = req.user?.email || null;
       let custName = req.user?.name || null;
-      try {
-        const cRes = await db.query('SELECT name, email FROM customers WHERE id = $1', [customerId]);
-        if (cRes.rows.length > 0) {
-          if (!custEmail) custEmail = cRes.rows[0].email;
-          if (!custName) custName = cRes.rows[0].name;
-        }
-      } catch (e) {}
+      const cust = await customerRepository.findById(customerId);
+      if (cust) {
+        if (!custEmail) custEmail = cust.email;
+        if (!custName) custName = cust.name;
+      }
 
       const custQuotes = await quotationRepository.findByCustomer(customerId, custEmail, custName, 1, 0);
       if (custQuotes?.data?.length > 0) {
@@ -230,21 +217,16 @@ class QuotationController {
     }
 
     if (!targetQuoteId && companyId) {
-      const compRes = await db.query(
-        'SELECT id FROM quotations WHERE company_id = $1 ORDER BY created_at DESC LIMIT 1',
-        [companyId]
-      );
-      if (compRes.rows.length > 0) {
-        targetQuoteId = compRes.rows[0].id;
+      const compQuote = await quotationRepository.findLatestByCompany(companyId);
+      if (compQuote) {
+        targetQuoteId = compQuote.id;
       }
     }
 
     if (!targetQuoteId) {
-      const anyRes = await db.query(
-        'SELECT id FROM quotations ORDER BY created_at DESC LIMIT 1'
-      );
-      if (anyRes.rows.length > 0) {
-        targetQuoteId = anyRes.rows[0].id;
+      const anyQuote = await quotationRepository.findLatestGlobal();
+      if (anyQuote) {
+        targetQuoteId = anyQuote.id;
       }
     }
 
@@ -277,20 +259,15 @@ class QuotationController {
     if (quotationId === 'latest') {
       const customerId = req.user?.customerId || req.user?.id || req.query.customerId;
       if (customerId) {
-        const custRes = await db.query(
-          'SELECT id FROM quotations WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 1',
-          [customerId]
-        );
-        if (custRes.rows.length > 0) {
-          quotationId = custRes.rows[0].id;
+        const custQuote = await quotationRepository.findLatestByCustomer(customerId);
+        if (custQuote) {
+          quotationId = custQuote.id;
         }
       }
       if (!quotationId || quotationId === 'latest') {
-        const anyRes = await db.query(
-          'SELECT id FROM quotations ORDER BY created_at DESC LIMIT 1'
-        );
-        if (anyRes.rows.length > 0) {
-          quotationId = anyRes.rows[0].id;
+        const anyQuote = await quotationRepository.findLatestGlobal();
+        if (anyQuote) {
+          quotationId = anyQuote.id;
         }
       }
     }
@@ -418,23 +395,12 @@ class QuotationController {
   async counterOffer(req, res) {
     const quotationId = req.params.id;
     const { lines, status = 'pending_approval' } = req.body;
+
+    // PERF-01 FIX: Batch update via repository instead of N+1 sequential queries
     if (lines && Array.isArray(lines)) {
-      for (const l of lines) {
-        const discount = Math.min(100, Math.max(0, parseFloat(l.discountPercent) || 0));
-        const qty = Math.max(1, parseInt(l.quantity, 10) || 1);
-        if (l.quantity !== undefined) {
-          await db.query(
-            'UPDATE quotation_lines SET discount_percent = $1, quantity = $2 WHERE id = $3 AND quotation_id = $4',
-            [discount, qty, l.id, quotationId]
-          );
-        } else {
-          await db.query(
-            'UPDATE quotation_lines SET discount_percent = $1 WHERE id = $2 AND quotation_id = $3',
-            [discount, l.id, quotationId]
-          );
-        }
-      }
+      await quotationRepository.batchUpdateLineItems(quotationId, lines);
     }
+
     const quote = await quotationRepository.findDetailById(quotationId);
     const updated = await quotationRepository.updateQuotationStatusAndScore(quotationId, status, 15.00);
 

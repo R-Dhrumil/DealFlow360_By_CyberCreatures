@@ -408,6 +408,233 @@ class QuotationRepository {
     
     return updatedQuotation;
   }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  //  New semantic methods — Phase 5 backend layering
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Fetch quotation lines joined with product floor prices for floor-price validation.
+   */
+  async findLinesForFloorCheck(quotationId) {
+    const result = await db.query(
+      `SELECT ql.product_id, ql.unit_price, ql.quantity, ql.discount_percent,
+              p.name as product_name, p.floor_price,
+              (ql.unit_price * (1 - ql.discount_percent / 100)) as net_unit_price,
+              (ql.unit_price * ql.quantity * (1 - ql.discount_percent / 100)) as line_total
+       FROM quotation_lines ql
+       JOIN products p ON ql.product_id = p.id
+       WHERE ql.quotation_id = $1`,
+      [quotationId]
+    );
+    return result.rows;
+  }
+
+  /**
+   * Fetch line-level discount percents for authority checking.
+   */
+  async findLineDiscounts(quotationId) {
+    const result = await db.query(
+      'SELECT product_id, discount_percent FROM quotation_lines WHERE quotation_id = $1',
+      [quotationId]
+    );
+    return result.rows;
+  }
+
+  /**
+   * Fetch quotation lines with full product data (name, floor_price, net_unit_price).
+   * Used during approval checks.
+   */
+  async findLinesWithProducts(quotationId, client = db) {
+    const result = await client.query(
+      `SELECT ql.*, p.name as product_name, p.floor_price,
+              (ql.unit_price * (1 - ql.discount_percent / 100)) as net_unit_price
+       FROM quotation_lines ql
+       JOIN products p ON ql.product_id = p.id
+       WHERE ql.quotation_id = $1`,
+      [quotationId]
+    );
+    return result.rows;
+  }
+
+  /**
+   * PERF-01 FIX: Batch update line items using a single UNNEST-based SQL statement.
+   * Replaces the N+1 sequential UPDATE loop with 1 query regardless of line count.
+   *
+   * @param {string} quotationId
+   * @param {Array<{id: string, discountPercent?: number, quantity?: number}>} lines
+   * @param {object} client - DB client or pool (for transactional use)
+   */
+  async batchUpdateLineItems(quotationId, lines, client = db) {
+    if (!lines || lines.length === 0) return;
+
+    const ids = [];
+    const discounts = [];
+    const quantities = [];
+
+    for (const l of lines) {
+      ids.push(l.id);
+      discounts.push(Math.max(0, Math.min(100, parseFloat(l.discountPercent || l.discount_percent || 0))));
+      quantities.push(Math.max(1, parseInt(l.quantity, 10) || 1));
+    }
+
+    await client.query(
+      `UPDATE quotation_lines AS ql SET
+         discount_percent = batch.discount,
+         quantity = batch.qty
+       FROM (
+         SELECT UNNEST($1::varchar[]) AS id,
+                UNNEST($2::numeric[]) AS discount,
+                UNNEST($3::int[]) AS qty
+       ) AS batch
+       WHERE ql.id = batch.id AND ql.quotation_id = $4`,
+      [ids, discounts, quantities, quotationId]
+    );
+  }
+
+  /**
+   * Update quotation status, risk score, and approval level in one query.
+   */
+  async updateStatusAndApproval(quotationId, status, blendedRiskScore, approvalLevel, client = db) {
+    const result = await client.query(
+      `UPDATE quotations
+       SET status = $1, blended_risk_score = $2, approval_level = $3, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $4
+       RETURNING *`,
+      [status, blendedRiskScore, approvalLevel, quotationId]
+    );
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Find the most recent quotation for a given customer.
+   */
+  async findLatestByCustomer(customerId) {
+    const result = await db.query(
+      'SELECT id FROM quotations WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 1',
+      [customerId]
+    );
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Find the most recent quotation for a given company.
+   */
+  async findLatestByCompany(companyId) {
+    const result = await db.query(
+      'SELECT id FROM quotations WHERE company_id = $1 ORDER BY created_at DESC LIMIT 1',
+      [companyId]
+    );
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Find the most recent quotation across all companies.
+   */
+  async findLatestGlobal() {
+    const result = await db.query(
+      'SELECT id FROM quotations ORDER BY created_at DESC LIMIT 1'
+    );
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Create a quotation record with explicit fields (for transactional creation).
+   */
+  async createQuotationRecord({ id, companyId, customerId, salesRepId, status = 'draft', inquiryId = null, discountPercent = 0 }, client = db) {
+    const qId = id || ('q_' + Math.floor(1000 + Math.random() * 9000));
+    const result = await client.query(
+      `INSERT INTO quotations (id, company_id, customer_id, sales_rep_id, status, inquiry_id, discount_percent)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [qId, companyId, customerId, salesRepId, status, inquiryId || null, discountPercent]
+    );
+    return result.rows[0];
+  }
+
+  /**
+   * Create multiple quotation lines (for transactional creation).
+   */
+  async createQuotationLines(lines, client = db) {
+    if (!lines || lines.length === 0) return [];
+    const inserted = [];
+    for (const line of lines) {
+      const qlId = line.id || ('ql_' + crypto.randomUUID());
+      const result = await client.query(
+        `INSERT INTO quotation_lines (id, quotation_id, product_id, quantity, unit_price, discount_percent, line_type, customer_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *`,
+        [qlId, line.quotationId, line.productId, line.quantity || 1, line.unitPrice, line.discountPercent || 0, line.lineType || 'one_time', line.customerId]
+      );
+      inserted.push(result.rows[0]);
+    }
+    return inserted;
+  }
+
+  /**
+   * Update payment attempts and optionally status on a quotation.
+   */
+  async updatePaymentAttempts(quotationId, attempts, status = null, client = db) {
+    if (status) {
+      return await client.query(
+        'UPDATE quotations SET status = $1, payment_attempts = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
+        [status, attempts, quotationId]
+      );
+    }
+    return await client.query(
+      'UPDATE quotations SET payment_attempts = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [attempts, quotationId]
+    );
+  }
+
+  /**
+   * Ensure payments table exists.
+   */
+  async ensurePaymentTable(client = db) {
+    try {
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS payments (
+          id VARCHAR(100) PRIMARY KEY,
+          quotation_id VARCHAR(100),
+          company_id VARCHAR(100),
+          customer_id VARCHAR(100),
+          amount NUMERIC(15, 2) NOT NULL DEFAULT 0,
+          payment_type VARCHAR(50) DEFAULT 'one-time',
+          payment_method VARCHAR(50) DEFAULT 'cod',
+          status VARCHAR(50) DEFAULT 'pending',
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+    } catch (e) {
+      console.warn('Could not auto-ensure payments table:', e.message);
+    }
+  }
+
+  /**
+   * Insert a payment record with fallbacks.
+   */
+  async recordPayment({ id, quotationId, companyId, customerId, amount, paymentType, paymentMethod, status }, client = db) {
+    await this.ensurePaymentTable(client);
+    try {
+      await client.query(
+        `INSERT INTO payments (id, quotation_id, company_id, customer_id, amount, payment_type, payment_method, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [id, quotationId, companyId, customerId, amount, paymentType, paymentMethod, status]
+      );
+    } catch (insertErr) {
+      console.warn('Payment record insert notice:', insertErr.message);
+      try {
+        await client.query(
+          `INSERT INTO payments (id, quotation_id, amount, payment_method, status)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [id, quotationId, amount, paymentMethod, status]
+        );
+      } catch (fallbackErr) {
+        console.warn('Payment record fallback notice:', fallbackErr.message);
+      }
+    }
+  }
 }
 
 module.exports = new QuotationRepository();

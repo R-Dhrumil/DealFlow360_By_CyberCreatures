@@ -161,6 +161,30 @@ class ProductRepository {
       return [];
     }
   }
+
+  /**
+   * Find a single product by ID. Returns full product row or null.
+   */
+  async findById(productId) {
+    const result = await db.query(
+      'SELECT * FROM products WHERE id = $1',
+      [productId]
+    );
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Batch fetch id, base_price, floor_price for an array of product IDs.
+   * Returns rows array: [{ id, base_price, floor_price }, ...]
+   */
+  async findPricesByIds(productIds, client = db) {
+    if (!productIds || productIds.length === 0) return [];
+    const result = await client.query(
+      'SELECT id, base_price, floor_price FROM products WHERE id = ANY($1::varchar[])',
+      [productIds]
+    );
+    return result.rows;
+  }
 }
 
 module.exports = new ProductRepository();
