@@ -125,6 +125,9 @@ export default function Marketplace() {
       setSelectedProduct(prev => prev ? { ...prev, stock: remainingStock } : null);
       
       setPurchaseSuccessOrder(res.data);
+
+      // Re-fetch from server to ensure full sync
+      fetchProducts();
     } catch (err) {
       console.error('Purchase error:', err);
       showNotification('error', err.response?.data?.error || 'Failed to complete order. Please try again.');

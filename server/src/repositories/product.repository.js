@@ -5,7 +5,11 @@ class ProductRepository {
   async findByCompany(companyId) {
     try {
       const result = await db.query(
-        'SELECT * FROM products WHERE company_id = $1 ORDER BY name ASC',
+        `SELECT p.*, 
+          COALESCE((SELECT SUM(ws.quantity_available) FROM warehouse_stock ws WHERE ws.product_id = p.id), p.stock) as stock
+         FROM products p 
+         WHERE p.company_id = $1 
+         ORDER BY p.name ASC`,
         [companyId]
       );
       return result.rows;
@@ -125,7 +129,8 @@ class ProductRepository {
       let query = `
         SELECT 
           p.id, p.name, p.category, p.base_price, p.unit, p.tax_rate, p.description, p.is_promoted,
-          p.margin_percent, p.floor_price, p.stock, p.sku, p.company_id,
+          p.margin_percent, p.floor_price, p.sku, p.company_id,
+          COALESCE((SELECT SUM(ws.quantity_available) FROM warehouse_stock ws WHERE ws.product_id = p.id), p.stock) as stock,
           c.name as company_name, c.logo_url as company_logo
         FROM products p
         LEFT JOIN companies c ON p.company_id = c.id

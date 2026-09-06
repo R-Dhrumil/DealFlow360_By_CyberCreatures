@@ -225,6 +225,8 @@ export default function CustomerDashboard() {
       setProducts(prev => prev.map(p => p.id === product.id ? { ...p, stock: remainingStock } : p));
       if (selectedProductDetail) setSelectedProductDetail(null);
       await fetchQuotations();
+      // Re-fetch products from server to ensure stock is fully in sync
+      await fetchCatalogProducts();
       handleTabChange('quotations');
     } catch (err) {
       console.error('Purchase failed:', err);
