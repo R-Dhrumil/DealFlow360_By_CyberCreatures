@@ -33,8 +33,6 @@ const Login = ({ defaultIsSignup = false }) => {
           navigate('/app/superadmin');
         } else if (user.role === 'customer') {
           navigate('/customer/dashboard');
-        } else if (user.role === 'admin') {
-          navigate('/app/admin');
         } else if (user.role === 'finance' || user.role === 'finance_manager') {
           navigate('/app/finance');
         } else {
@@ -99,7 +97,6 @@ const Login = ({ defaultIsSignup = false }) => {
           const role = res.data.user?.role;
           if (role === 'super_admin') navigate('/app/superadmin');
           else if (role === 'customer') navigate('/customer/dashboard');
-          else if (role === 'admin') navigate('/app/admin');
           else navigate('/app/pipeline');
           return;
         }
