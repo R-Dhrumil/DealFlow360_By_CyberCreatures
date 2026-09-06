@@ -4,25 +4,38 @@ import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 
-// Keep the others hardcoded for now, or just leave as is.
-const RECURRING_BILLING_SCHEDULES = [
-  { id: 'BS-801', quoteId: 'Q-101', customer: 'Acme Corp', amount: 4250.00, cycle: 'Monthly', nextBillingDate: '2026-10-01', status: 'Active', prorationNotes: 'Standard 1st of month billing' },
-  { id: 'BS-802', quoteId: 'Q-105', customer: 'Echo Energy', amount: 12500.00, cycle: 'Quarterly', nextBillingDate: '2026-11-01', status: 'Active', prorationNotes: 'Prorated mid-cycle +10 users added' }
-];
 
-const CREDIT_NOTES_LOG = [
-  { id: 'CN-301', quoteId: 'Q-99', customer: 'Beta Industries', amount: 1200.00, reason: 'Mid-cycle plan downgrade adjustment', issuedDate: '2026-09-01' }
-];
 
 export default function FinanceOperations() {
   const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
   const [approvals, setApprovals] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [billingSchedules, setBillingSchedules] = useState([]);
+  const [creditNotes, setCreditNotes] = useState([]);
 
   useEffect(() => {
     fetchApprovals();
+    fetchBillingSchedules();
+    fetchCreditNotes();
   }, []);
+
+  const fetchBillingSchedules = async () => {
+    try {
+      const res = await api.get('/finance/billing-schedules');
+      setBillingSchedules(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch billing schedules:', err);
+    }
+  };
+
+  const fetchCreditNotes = async () => {
+    try {
+      const res = await api.get('/finance/credit-notes');
+      setCreditNotes(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch credit notes:', err);
+    }
+  };
 
   const fetchApprovals = async () => {
     try {
@@ -151,16 +164,27 @@ export default function FinanceOperations() {
                   <th className="p-2.5">Next Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {RECURRING_BILLING_SCHEDULES.map(s => (
-                  <tr key={s.id} className="hover:bg-slate-50">
-                    <td className="p-2.5 font-mono font-bold text-primary">{s.id}</td>
-                    <td className="p-2.5 font-bold text-text-main">{s.customer}</td>
-                    <td className="p-2.5 font-black text-text-main">{formatMoney(s.amount)}</td>
-                    <td className="p-2.5"><span className="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded text-[10px]">{s.cycle}</span></td>
-                    <td className="p-2.5 font-mono text-slate-600">{s.nextBillingDate}</td>
-                  </tr>
-                ))}
+              <tbody>
+                {billingSchedules.length === 0 ? (
+                  <tr><td colSpan="5" className="p-4 text-center text-xs text-text-muted">No pending billing schedules.</td></tr>
+                ) : (
+                  billingSchedules.map(bs => (
+                    <tr key={bs.id} className="border-b border-surface-soft hover:bg-slate-50 transition-colors">
+                      <td className="p-2.5 font-mono text-purple-600 font-bold">{bs.id}</td>
+                      <td className="p-2.5 font-semibold text-text-main">
+                        {bs.customer_name} 
+                        <div className="text-[10px] text-text-muted font-normal mt-0.5">Ref: {bs.quotation_id}</div>
+                      </td>
+                      <td className="p-2.5 font-black text-slate-800">{formatMoney(bs.amount)}</td>
+                      <td className="p-2.5 text-xs text-slate-600">{bs.billing_date ? new Date(bs.billing_date).toLocaleDateString() : 'N/A'}</td>
+                      <td className="p-2.5">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${bs.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}`}>
+                          {bs.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -184,16 +208,25 @@ export default function FinanceOperations() {
                   <th className="p-2.5">Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {CREDIT_NOTES_LOG.map(cn => (
-                  <tr key={cn.id} className="hover:bg-slate-50">
-                    <td className="p-2.5 font-mono font-bold text-emerald-600">{cn.id}</td>
-                    <td className="p-2.5 font-bold text-text-main">{cn.customer}</td>
-                    <td className="p-2.5 font-black text-emerald-700">{formatMoney(cn.amount)}</td>
-                    <td className="p-2.5 text-slate-600">{cn.reason}</td>
-                    <td className="p-2.5 font-mono text-text-muted">{cn.issuedDate}</td>
-                  </tr>
-                ))}
+              <tbody>
+                {creditNotes.length === 0 ? (
+                  <tr><td colSpan="4" className="p-4 text-center text-xs text-text-muted">No credit notes issued.</td></tr>
+                ) : (
+                  creditNotes.map(cn => (
+                    <tr key={cn.id} className="border-b border-surface-soft hover:bg-slate-50 transition-colors">
+                      <td className="p-2.5 font-mono text-rose-600 font-bold">{cn.id}</td>
+                      <td className="p-2.5 font-semibold text-text-main">
+                        {cn.customer_name} 
+                        <div className="text-[10px] text-text-muted font-normal mt-0.5">Ref: {cn.quotation_id}</div>
+                      </td>
+                      <td className="p-2.5 font-black text-rose-600">{formatMoney(cn.amount)}</td>
+                      <td className="p-2.5 text-[10px] text-slate-600">
+                        {new Date(cn.issued_date).toLocaleDateString()}
+                        <div className="mt-0.5 text-slate-500">{cn.reason}</div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

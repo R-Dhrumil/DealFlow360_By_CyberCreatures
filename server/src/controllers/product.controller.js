@@ -49,6 +49,34 @@ class ProductController {
     broadcastInventoryUpdate(req.companyId, { productId: id, type: 'stock_updated' });
     return res.json(result);
   }
+
+  // --- Variants ---
+  async getProductVariants(req, res) {
+    const { id } = req.params;
+    const variants = await productRepository.getProductVariants(id);
+    return res.json(variants);
+  }
+
+  async addProductVariant(req, res) {
+    const { id } = req.params;
+    const variantData = req.body;
+    const variant = await productRepository.addProductVariant(id, variantData);
+    if (!variant) return res.status(400).json({ error: 'Failed to add variant' });
+    return res.status(201).json(variant);
+  }
+
+  // --- Price Lists ---
+  async getPriceLists(req, res) {
+    const lists = await productRepository.getPriceLists(req.companyId);
+    return res.json(lists);
+  }
+
+  async createPriceList(req, res) {
+    const priceListData = req.body;
+    const list = await productRepository.createPriceList(req.companyId, priceListData);
+    if (!list) return res.status(400).json({ error: 'Failed to create price list' });
+    return res.status(201).json(list);
+  }
 }
 
 module.exports = new ProductController();

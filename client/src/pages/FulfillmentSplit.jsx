@@ -54,8 +54,8 @@ export default function FulfillmentSplit() {
       showNotification('success', 'Fulfillment split accepted! Warehouse shipment dispatches created.');
       navigate('/app/pipeline');
     } catch (error) {
-      showNotification('success', 'Fulfillment split accepted! Saved to logistics pipeline.');
-      navigate('/app/pipeline');
+      showNotification('error', 'Failed to save fulfillment split.');
+      // navigate('/app/pipeline'); // Optionally don't navigate on error
     } finally {
       setSaving(false);
     }

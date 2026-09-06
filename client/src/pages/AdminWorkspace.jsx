@@ -247,6 +247,7 @@ export default function AdminWorkspace() {
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdMargin, setNewProdMargin] = useState('25');
   const [newProdUnit, setNewProdUnit] = useState('unit');
+  const [newProdTax, setNewProdTax] = useState('0');
   const [newProdStock, setNewProdStock] = useState('100');
 
   // Edit Product Modal State
@@ -914,6 +915,28 @@ export default function AdminWorkspace() {
         </button>
 
         <button
+          onClick={() => setActiveTab('variants')}
+          className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${activeTab === 'variants'
+            ? 'bg-primary text-white shadow'
+            : 'text-slate-600 hover:bg-slate-100'
+            }`}
+        >
+          <i className="fa-solid fa-layer-group"></i>
+          <span>Variants</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('pricelists')}
+          className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${activeTab === 'pricelists'
+            ? 'bg-primary text-white shadow'
+            : 'text-slate-600 hover:bg-slate-100'
+            }`}
+        >
+          <i className="fa-solid fa-money-check"></i>
+          <span>Price Lists</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('team')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${activeTab === 'team'
             ? 'bg-primary text-white shadow'
@@ -1192,6 +1215,20 @@ export default function AdminWorkspace() {
                     <option value="month">Per Month</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Tax Rate (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={newProdTax}
+                    onChange={(e) => setNewProdTax(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Initial Stock Units</label>
                   <input
@@ -1913,6 +1950,40 @@ export default function AdminWorkspace() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: Variants Configuration */}
+      {activeTab === 'variants' && (
+        <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
+          <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="font-extrabold text-text-main text-base">Product Variants</h3>
+              <p className="text-xs text-text-muted">Manage attributes (e.g. Size, Pack) and exact extra prices</p>
+            </div>
+          </div>
+          <div className="p-8 text-center bg-slate-50 border border-dashed border-surface-soft rounded-xl">
+             <i className="fa-solid fa-layer-group text-primary text-3xl mb-2"></i>
+             <p className="text-slate-700 font-semibold text-sm">Select a product to configure variants.</p>
+             <p className="text-xs text-text-muted">Variants API integrated. UI integration pending next iteration.</p>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 6: Price Lists Configuration */}
+      {activeTab === 'pricelists' && (
+        <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 space-y-4">
+          <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="font-extrabold text-text-main text-base">Tier & Currency Price Lists</h3>
+              <p className="text-xs text-text-muted">Customer Tier Based pricing and currency specific rules</p>
+            </div>
+          </div>
+          <div className="p-8 text-center bg-slate-50 border border-dashed border-surface-soft rounded-xl">
+             <i className="fa-solid fa-money-check text-primary text-3xl mb-2"></i>
+             <p className="text-slate-700 font-semibold text-sm">No price lists configured.</p>
+             <p className="text-xs text-text-muted">Price lists API integrated. UI integration pending next iteration.</p>
           </div>
         </div>
       )}

@@ -174,6 +174,18 @@ const UniversalDashboard = () => {
   const handleStageChange = (stage) => { setSelectedStage(stage); setCurrentPage(1); };
 
   // Analytics data derived from quotations
+  const stalledQuotes = pendingDeals.filter(q => {
+    const updatedAt = new Date(q.updated_at || q.created_at);
+    const diffTime = Math.abs(new Date() - updatedAt);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 7;
+  });
+
+  const discountAnomalies = quotations.filter(q => parseFloat(q.blended_risk_score || 0) > 50);
+
+  const lowRiskDeals = quotations.filter(q => parseFloat(q.blended_risk_score || 0) <= 20);
+  const dealHealthPct = quotations.length > 0 ? Math.round((lowRiskDeals.length / quotations.length) * 100) : 100;
+
   const statusGroups = [
     { label: 'Draft',    color: '#94a3b8', count: quotations.filter(q => q.status === 'draft').length },
     { label: 'Pending',  color: '#f59e0b', count: quotations.filter(q => q.status?.includes('pending')).length },
@@ -493,6 +505,90 @@ const UniversalDashboard = () => {
             </div>
           </div>
 
+        </div>
+      </div>
+
+      {/* ━━━━━━━━━━━━━━━━━━━━ DEAL HEALTH & RISKS SECTION ━━━━━━━━━━━━━━━━━━━━ */}
+      <div className="pb-7">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="text-lg font-extrabold text-text-main tracking-tight">Deal Health & Risks</h2>
+            <p className="text-xs text-text-muted">Proactive monitoring of stalled quotes and discount anomalies</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Health Score */}
+          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-5 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="p-1.5 rounded-lg bg-emerald-100 text-emerald-600"><i className="fa-solid fa-heart-pulse"></i></span>
+                <h3 className="text-sm font-bold text-text-main">Overall Deal Health</h3>
+              </div>
+              <p className="text-xs text-text-muted">Percentage of pipeline classified as low risk.</p>
+            </div>
+            <div className="mt-4">
+              <div className="flex items-baseline gap-2 mb-2">
+                <span className="text-3xl font-extrabold text-emerald-600">{dealHealthPct}%</span>
+                <span className="text-xs font-bold text-emerald-700">Healthy</span>
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${dealHealthPct}%` }}></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Stalled Quotes */}
+          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-5 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-amber-100 text-amber-600"><i className="fa-solid fa-clock"></i></span>
+                  <h3 className="text-sm font-bold text-text-main">Stalled Quotes</h3>
+                </div>
+                <span className="text-xs font-extrabold text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full">{stalledQuotes.length}</span>
+              </div>
+              <p className="text-xs text-text-muted">Pending deals without updates in the last 7 days.</p>
+            </div>
+            <div className="mt-4 max-h-24 overflow-y-auto space-y-2 pr-1">
+              {stalledQuotes.length === 0 ? (
+                <div className="text-xs text-slate-400 font-medium">No stalled quotes. Great job!</div>
+              ) : (
+                stalledQuotes.slice(0, 3).map(q => (
+                  <div key={q.id} className="flex justify-between items-center text-[11px] bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <span className="font-bold text-slate-700 truncate w-3/5">{q.customer_name}</span>
+                    <span className="text-amber-600 font-semibold">{formatCurrency(q.total_amount)}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Discount Anomalies */}
+          <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-5 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-rose-100 text-rose-600"><i className="fa-solid fa-triangle-exclamation"></i></span>
+                  <h3 className="text-sm font-bold text-text-main">Discount Anomalies</h3>
+                </div>
+                <span className="text-xs font-extrabold text-rose-700 bg-rose-100 px-2.5 py-0.5 rounded-full">{discountAnomalies.length}</span>
+              </div>
+              <p className="text-xs text-text-muted">Deals flagged with HIGH or CRITICAL risk scores.</p>
+            </div>
+            <div className="mt-4 max-h-24 overflow-y-auto space-y-2 pr-1">
+              {discountAnomalies.length === 0 ? (
+                <div className="text-xs text-slate-400 font-medium">No discount anomalies detected.</div>
+              ) : (
+                discountAnomalies.slice(0, 3).map(q => (
+                  <div key={q.id} className="flex justify-between items-center text-[11px] bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <span className="font-bold text-slate-700 truncate w-3/5">{q.customer_name}</span>
+                    <span className="text-rose-600 font-semibold">Risk: {q.blended_risk_score}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

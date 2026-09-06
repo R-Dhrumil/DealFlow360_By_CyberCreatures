@@ -258,8 +258,70 @@ class ProductRepository {
       const result = await db.query(query, params);
       return result.rows;
     } catch (err) {
-      console.error('Error fetching marketplace products:', err.message);
+      console.error('Error in marketplace retrieval:', err.message);
       return [];
+    }
+  }
+
+  // --- Variants ---
+  async getProductVariants(productId) {
+    try {
+      const result = await db.query(
+        `SELECT * FROM product_variants WHERE product_id = $1 ORDER BY attribute_name ASC`,
+        [productId]
+      );
+      return result.rows;
+    } catch (err) {
+      console.error('Error fetching product variants:', err.message);
+      return [];
+    }
+  }
+
+  async addProductVariant(productId, variantData) {
+    const { attributeName, attributeValue, extraPrice } = variantData;
+    const variantId = 'pv_' + crypto.randomUUID();
+    try {
+      const result = await db.query(
+        `INSERT INTO product_variants (id, product_id, attribute_name, attribute_value, extra_price)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [variantId, productId, attributeName, attributeValue, parseFloat(extraPrice || 0)]
+      );
+      return result.rows[0];
+    } catch (err) {
+      console.error('Error adding product variant:', err.message);
+      return null;
+    }
+  }
+
+  // --- Price Lists ---
+  async getPriceLists(companyId) {
+    try {
+      const result = await db.query(
+        `SELECT * FROM price_lists WHERE company_id = $1 ORDER BY customer_tier ASC`,
+        [companyId]
+      );
+      return result.rows;
+    } catch (err) {
+      console.error('Error fetching price lists:', err.message);
+      return [];
+    }
+  }
+
+  async createPriceList(companyId, priceListData) {
+    const { name, customerTier, currency, rules } = priceListData;
+    const priceListId = 'pl_' + crypto.randomUUID();
+    try {
+      const result = await db.query(
+        `INSERT INTO price_lists (id, company_id, name, customer_tier, currency, rules)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [priceListId, companyId, name, customerTier, currency, rules]
+      );
+      return result.rows[0];
+    } catch (err) {
+      console.error('Error creating price list:', err.message);
+      return null;
     }
   }
 
