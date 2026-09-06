@@ -67,8 +67,8 @@ export default function FinanceOperations() {
           <p className="text-sm text-text-muted">2nd-Level High-Risk Approvals, Billing Schedules, Proration & Credit Notes Reconciliation</p>
         </div>
 
-        <span className="bg-emerald-status/20 text-emerald-100 px-3 py-1 rounded-lg text-xs font-bold font-mono">
-          <i className="fa-solid fa-coins mr-1"></i> Finance Authority Active
+        <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 px-3 py-1 rounded-lg text-xs font-bold font-mono">
+          <i className="fa-solid fa-coins mr-1 text-emerald-700"></i> Finance Authority Active
         </span>
       </header>
 

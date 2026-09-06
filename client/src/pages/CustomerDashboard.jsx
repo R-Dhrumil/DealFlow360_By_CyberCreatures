@@ -224,7 +224,7 @@ export default function CustomerDashboard() {
       <header className="bg-white text-text-main border-b border-surface-soft shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center font-black text-xl text-text-main shadow-md">
+            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center font-black text-xl text-white shadow-md">
               {customer.name ? customer.name.charAt(0) : 'C'}
             </div>
             <div>
@@ -277,7 +277,7 @@ export default function CustomerDashboard() {
             <button
               onClick={() => handleTabChange('products')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'products'
-                ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
+                ? 'bg-emerald-500 text-white shadow ring-2 ring-emerald-400/50'
                 : 'bg-surface-soft text-text-muted hover:bg-slate-700'
                 }`}
             >
@@ -286,7 +286,7 @@ export default function CustomerDashboard() {
             <button
               onClick={() => handleTabChange('quotations')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'quotations'
-                ? 'bg-emerald-500 text-text-main shadow ring-2 ring-emerald-400/50'
+                ? 'bg-emerald-500 text-white shadow ring-2 ring-emerald-400/50'
                 : 'bg-surface-soft text-text-muted hover:bg-slate-700'
                 }`}
             >
@@ -338,7 +338,7 @@ export default function CustomerDashboard() {
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${selectedCategory === cat
-                    ? 'bg-emerald-600 text-text-main shadow'
+                    ? 'bg-emerald-600 text-white shadow'
                     : 'bg-white text-slate-700 hover:bg-slate-100 border border-surface-soft'
                     }`}
                 >
@@ -559,7 +559,7 @@ export default function CustomerDashboard() {
         {activeTab === 'profile' && (
           <div className="bg-white rounded-2xl border border-surface-soft shadow-sm p-6 md:p-8 space-y-6 max-w-3xl mx-auto">
             <div className="flex items-center space-x-4 pb-6 border-b border-slate-100">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-text-main font-black text-2xl flex items-center justify-center shadow-md">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-white font-black text-2xl flex items-center justify-center shadow-md">
                 {customer.name ? customer.name.charAt(0) : 'C'}
               </div>
               <div>

@@ -41,19 +41,23 @@ class QuotationController {
     const product = prodRes.rows[0];
     const companyId = product.company_id || 'c1';
 
-    let customerId = req.body.customerId || req.user?.customerId || req.user?.id || null;
-    const emailToUse = customerEmail || req.user?.email || null;
-    const nameToUse = customerName || req.user?.name || (emailToUse ? emailToUse.split('@')[0] : 'Customer');
-
-    // 1. Check if customerId exists in customers table
-    if (customerId) {
-      const custCheck = await db.query('SELECT id FROM customers WHERE id = $1', [customerId]);
-      if (custCheck.rows.length === 0) {
-        customerId = null;
+    // 1. Determine customer identity safely
+    let customerId = null;
+    if (req.user && req.user.role === 'customer') {
+      // Authenticated customer: strictly bind to their own authenticated ID to prevent IDOR
+      customerId = req.user.customerId || req.user.id;
+    } else if (req.user && req.body.customerId) {
+      // Internal staff (sales rep / admin) creating request on behalf of a specific customer
+      const custCheck = await db.query('SELECT id FROM customers WHERE id = $1', [req.body.customerId]);
+      if (custCheck.rows.length > 0) {
+        customerId = custCheck.rows[0].id;
       }
     }
 
-    // 2. If no valid customerId, check by email
+    const emailToUse = customerEmail || req.user?.email || null;
+    const nameToUse = customerName || req.user?.name || (emailToUse ? emailToUse.split('@')[0] : 'Customer');
+
+    // 2. If no authenticated customer ID, resolve or register guest via email
     if (!customerId && emailToUse) {
       const emailCheck = await db.query('SELECT id FROM customers WHERE LOWER(email) = LOWER($1)', [emailToUse.trim()]);
       if (emailCheck.rows.length > 0) {
@@ -68,14 +72,9 @@ class QuotationController {
       }
     }
 
-    // 3. Fallback to first customer in DB
+    // 3. Reject if no valid customer identity or email is available (Never fall back to arbitrary DB customer)
     if (!customerId) {
-      const firstCust = await db.query('SELECT id FROM customers LIMIT 1');
-      customerId = firstCust.rows[0]?.id;
-    }
-
-    if (!customerId) {
-      return res.status(400).json({ error: 'No customer account available' });
+      return res.status(400).json({ error: 'A valid authenticated customer identity or contact email is required to submit an inquiry.' });
     }
 
     // 4. Create inquiry — notifies sales team
@@ -422,15 +421,17 @@ class QuotationController {
     const { lines, status = 'pending_approval' } = req.body;
     if (lines && Array.isArray(lines)) {
       for (const l of lines) {
+        const discount = Math.min(100, Math.max(0, parseFloat(l.discountPercent) || 0));
+        const qty = Math.max(1, parseInt(l.quantity, 10) || 1);
         if (l.quantity !== undefined) {
           await db.query(
             'UPDATE quotation_lines SET discount_percent = $1, quantity = $2 WHERE id = $3 AND quotation_id = $4',
-            [l.discountPercent, Math.max(1, Number(l.quantity) || 1), l.id, quotationId]
+            [discount, qty, l.id, quotationId]
           );
         } else {
           await db.query(
             'UPDATE quotation_lines SET discount_percent = $1 WHERE id = $2 AND quotation_id = $3',
-            [l.discountPercent, l.id, quotationId]
+            [discount, l.id, quotationId]
           );
         }
       }

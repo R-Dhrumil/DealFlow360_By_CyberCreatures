@@ -1493,7 +1493,7 @@ export default function AdminWorkspace() {
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 px-4 bg-primary text-white text-text-main font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2"
+                  className="w-full py-2.5 px-4 bg-primary text-white font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2"
                 >
                   <i className="fa-solid fa-plus"></i>
                   <span>Save Discount Tier Config</span>
@@ -1647,7 +1647,7 @@ export default function AdminWorkspace() {
                 </select>
               </div>
 
-              <button type="submit" className="w-full py-2.5 px-4 bg-primary  text-text-main text-white font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2">
+              <button type="submit" className="w-full py-2.5 px-4 bg-primary text-white font-bold rounded-xl transition-all shadow text-xs flex justify-center items-center space-x-2">
                 <i className="fa-solid fa-user-plus"></i>
                 <span>Provision Team Member</span>
               </button>

@@ -73,10 +73,10 @@ export default function OperationsDashboard() {
                   </td>
                   <td className="p-4 text-right">
                     <Link 
-                      to={`/app/quote/${q.id}`} 
-                      className="inline-flex items-center px-3 py-1.5 border border-surface-soft bg-border-soft text-primary text-sm font-medium rounded-lg hover:bg-surface-soft transition-colors"
+                      to={`/app/fulfillment/${q.id}`} 
+                      className="inline-flex items-center px-3 py-1.5 border border-primary/20 bg-primary/10 text-primary text-xs font-bold rounded-lg hover:bg-primary hover:text-white transition-all shadow-2xs"
                     >
-                      <i className="fa-solid fa-boxes-packing mr-2"></i> Allocate
+                      <i className="fa-solid fa-boxes-packing mr-1.5"></i> Allocate
                     </Link>
                   </td>
                 </tr>
