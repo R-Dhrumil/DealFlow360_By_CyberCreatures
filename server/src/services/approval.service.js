@@ -7,24 +7,26 @@ const { logAction } = require('./audit.service');
 
 class ApprovalService {
   /**
-   * Get pending approvals filtered by the caller's role:
-   * - sales_manager: pending_approval, pending_finance_approval
-   * - finance: pending_finance_approval
-   * - admin/super_admin: all pending statuses including pending_admin_approval
-   * - sales_rep: only their own quotations in any pending state
+   * Get pending approvals filtered strictly by the caller's authorized approval level:
+   * - sales_manager: pending_approval (manager review level)
+   * - finance/finance_manager: pending_finance_approval (finance level)
+   * - admin/super_admin: all pending tiers (pending_admin_approval, pending_finance_approval, pending_approval)
+   * - sales_rep: their own quotations awaiting approval
+   * Pass scope='all' to see all company pending approvals across tiers.
    */
-  async getPendingApprovals(companyId, role, userId = null) {
+  async getPendingApprovals(companyId, role, userId = null, scope = null) {
     let statusFilter;
 
-    if (role === 'sales_rep') {
-      statusFilter = ['pending_approval', 'pending_finance_approval', 'pending_admin_approval'];
+    if (scope === 'all' || ['admin', 'super_admin'].includes(role)) {
+      statusFilter = ['pending_admin_approval', 'pending_finance_approval', 'pending_approval'];
     } else if (role === 'sales_manager') {
-      statusFilter = ['pending_approval', 'pending_finance_approval'];
+      statusFilter = ['pending_approval'];
     } else if (['finance', 'finance_manager'].includes(role)) {
-      statusFilter = ['pending_finance_approval', 'pending_approval'];
+      statusFilter = ['pending_finance_approval'];
+    } else if (role === 'sales_rep') {
+      statusFilter = ['pending_approval', 'pending_finance_approval', 'pending_admin_approval'];
     } else {
-      // admin, super_admin
-      statusFilter = ['pending_approval', 'pending_finance_approval', 'pending_admin_approval', 'draft'];
+      statusFilter = ['pending_approval', 'pending_finance_approval', 'pending_admin_approval'];
     }
 
     const approvals = await approvalRepository.getPendingApprovalsByStatusFilter(

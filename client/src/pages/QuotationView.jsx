@@ -3,17 +3,20 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuoteCode } from '../utils/formatters';
 import { useNotification } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
 import { copyTextToClipboard } from '../utils/clipboard';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useVisibleInterval } from '../hooks/useVisibleInterval';
 
 export default function QuotationView() {
+  const { user } = useAuth();
   const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
   const { id: quotationId } = useParams();
   const [quotation, setQuotation] = useState(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
@@ -107,8 +110,8 @@ export default function QuotationView() {
   if (!quotation) return <div>Quotation not found</div>;
 
   // Split lines into one-time and recurring
-  const oneTimeLines = quotation.lines.filter(l => l.line_type === 'one_time');
-  const recurringLines = quotation.lines.filter(l => l.line_type === 'recurring');
+  const oneTimeLines = quotation.lines ? quotation.lines.filter(l => l.line_type === 'one_time') : [];
+  const recurringLines = quotation.lines ? quotation.lines.filter(l => l.line_type === 'recurring') : [];
 
   const calculateTotal = (lines) => {
     if (!lines || !Array.isArray(lines)) return 0;
@@ -124,15 +127,35 @@ export default function QuotationView() {
   const oneTimeTotal = calculateTotal(oneTimeLines);
   const recurringTotal = calculateTotal(recurringLines);
 
+  const isPendingApproval = ['pending_approval', 'pending_finance_approval', 'pending_admin_approval', 'draft'].includes(quotation.status);
+
+  // Determine if the currently logged in user is authorized to approve this quotation level
+  const canApprove = () => {
+    if (!user || !isPendingApproval) return false;
+    const role = user.role;
+    if (['admin', 'super_admin'].includes(role)) return true;
+    if (quotation.status === 'pending_admin_approval') return false; // Floor price override strictly requires Admin
+    if (quotation.status === 'pending_finance_approval') {
+      return ['finance_manager', 'finance'].includes(role);
+    }
+    if (quotation.status === 'pending_approval' || quotation.status === 'draft') {
+      return ['sales_manager', 'finance_manager', 'finance'].includes(role);
+    }
+    return false;
+  };
+
   const handleApprove = async () => {
     try {
-      await api.put(`/quotations/${quotationId}/approve`);
-      const res = await api.get(`/quotations/${quotationId}`);
-      if (res.data) setQuotation(res.data);
-      showNotification('success', 'Quotation approved successfully!');
+      setIsProcessing(true);
+      const res = await api.put(`/quotations/${quotationId}/approve`);
+      const updated = await api.get(`/quotations/${quotationId}`);
+      if (updated.data) setQuotation(updated.data);
+      showNotification('success', res.data?.message || 'Quotation approved successfully!', 5000, '✅ Proposal Approved');
     } catch (err) {
       console.error('Failed to approve quotation:', err);
-      showNotification('error', 'Failed to approve quotation.');
+      showNotification('error', err.response?.data?.error || 'Failed to approve quotation.', 6000, '❌ Approval Failed');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -140,13 +163,16 @@ export default function QuotationView() {
     const reason = prompt('Please enter a rejection reason:');
     if (reason === null) return;
     try {
-      await api.put(`/quotations/${quotationId}/reject`, { reason });
-      const res = await api.get(`/quotations/${quotationId}`);
-      if (res.data) setQuotation(res.data);
-      showNotification('success', 'Quotation rejected.');
+      setIsProcessing(true);
+      const res = await api.put(`/quotations/${quotationId}/reject`, { reason });
+      const updated = await api.get(`/quotations/${quotationId}`);
+      if (updated.data) setQuotation(updated.data);
+      showNotification('success', res.data?.message || 'Quotation rejected.', 5000, 'Rejection Recorded');
     } catch (err) {
       console.error('Failed to reject quotation:', err);
-      showNotification('error', 'Failed to reject quotation.');
+      showNotification('error', err.response?.data?.error || 'Failed to reject quotation.', 6000, '❌ Rejection Failed');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -155,17 +181,19 @@ export default function QuotationView() {
       <header className="mb-8 flex flex-wrap justify-between items-end gap-4">
         <div>
           <button
-            onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = '/app/pipeline'}
+            onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = '/app/approvals'}
             className="mb-3 px-3.5 py-1.5 rounded-xl bg-white border border-surface-soft text-slate-700 hover:bg-slate-50 transition-all font-bold text-xs flex items-center gap-1.5 shadow-2xs"
           >
             <i className="fa-solid fa-arrow-left text-xs"></i>
-            <span>Back to Workspace</span>
+            <span>Back to Approvals</span>
           </button>
           <div className="flex items-center space-x-3 mb-2 flex-wrap gap-y-1">
             <h1 className="text-2xl font-bold text-slate-800">Quotation #{formatQuoteCode(quotation.id)}</h1>
             <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider print:hidden ${
               quotation.status === 'approved' || quotation.status === 'accepted' || quotation.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' :
               quotation.status === 'rejected' ? 'bg-red-100 text-red-800' :
+              quotation.status === 'pending_admin_approval' ? 'bg-rose-100 text-rose-800' :
+              quotation.status === 'pending_finance_approval' ? 'bg-orange-100 text-orange-800' :
               'bg-amber-100 text-amber-800'
             }`}>
               {quotation.status?.replace(/_/g, ' ')}
@@ -173,14 +201,22 @@ export default function QuotationView() {
           </div>
           <p className="text-text-muted text-xs">Prepared for <span className="font-semibold text-slate-700">{quotation.customer_name || 'Customer'}</span> &bull; Account Rep: <span className="font-semibold text-slate-700">{quotation.sales_rep_name || 'Sales Rep'}</span></p>
         </div>
-        <div className="flex space-x-2 flex-wrap gap-y-2 print:hidden">
-          {(quotation.status === 'pending_approval' || quotation.status === 'draft') && (
+        <div className="flex space-x-2 flex-wrap gap-y-2 print:hidden items-center">
+          {isPendingApproval && canApprove() && (
             <>
-              <button onClick={handleApprove} className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center space-x-1.5">
+              <button
+                disabled={isProcessing}
+                onClick={handleApprove}
+                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center space-x-1.5"
+              >
                 <i className="fa-solid fa-circle-check"></i>
-                <span>Approve Proposal</span>
+                <span>{isProcessing ? 'Processing...' : 'Approve Proposal'}</span>
               </button>
-              <button onClick={handleReject} className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center space-x-1.5">
+              <button
+                disabled={isProcessing}
+                onClick={handleReject}
+                className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center space-x-1.5"
+              >
                 <i className="fa-solid fa-circle-xmark"></i>
                 <span>Reject</span>
               </button>
@@ -220,6 +256,75 @@ export default function QuotationView() {
           </Link>
         </div>
       </header>
+
+      {/* Executive Approval Decision Banner */}
+      {isPendingApproval && (
+        <div className={`p-4 md:p-5 rounded-2xl border flex flex-wrap items-center justify-between gap-4 shadow-xs ${
+          quotation.status === 'pending_admin_approval' ? 'bg-rose-50 border-rose-200 text-rose-900' :
+          quotation.status === 'pending_finance_approval' ? 'bg-orange-50 border-orange-200 text-orange-900' :
+          'bg-amber-50 border-amber-200 text-amber-900'
+        }`}>
+          <div className="flex items-start gap-3.5">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              quotation.status === 'pending_admin_approval' ? 'bg-rose-100 text-rose-700' :
+              quotation.status === 'pending_finance_approval' ? 'bg-orange-100 text-orange-700' :
+              'bg-amber-100 text-amber-700'
+            }`}>
+              <i className={`text-base ${
+                quotation.status === 'pending_admin_approval' ? 'fa-solid fa-shield-halved' :
+                quotation.status === 'pending_finance_approval' ? 'fa-solid fa-chart-line' :
+                'fa-solid fa-user-tie'
+              }`}></i>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-bold text-sm">
+                  {quotation.status === 'pending_admin_approval' && 'Executive Override Required — Below Product Floor Price'}
+                  {quotation.status === 'pending_finance_approval' && 'Finance Approval Required — High-Risk Discount Threshold'}
+                  {quotation.status === 'pending_approval' && 'Sales Manager Review Required'}
+                  {quotation.status === 'draft' && 'Draft Proposal Review'}
+                </h3>
+                <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
+                  canApprove() ? 'bg-emerald-200 text-emerald-900' : 'bg-slate-200 text-slate-700'
+                }`}>
+                  {canApprove() ? 'Action Required By You' : 'Awaiting Assigned Level'}
+                </span>
+              </div>
+              <p className="text-xs opacity-90 mt-1">
+                {canApprove()
+                  ? `You are signed in as an authorized approver (${user?.role?.replace(/_/g, ' ')}). You can approve or reject this proposal immediately.`
+                  : `This quotation requires sign-off from ${
+                      quotation.status === 'pending_admin_approval' ? 'a Company Admin (Floor Price Override)' :
+                      quotation.status === 'pending_finance_approval' ? 'Finance Manager or Admin' :
+                      'Sales Manager'
+                    }. Logged in as: ${user?.role?.replace(/_/g, ' ') || 'Guest'}.`
+                }
+              </p>
+            </div>
+          </div>
+
+          {canApprove() && (
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                disabled={isProcessing}
+                onClick={handleApprove}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+              >
+                <i className="fa-solid fa-circle-check"></i>
+                <span>{isProcessing ? 'Processing...' : 'Approve Proposal'}</span>
+              </button>
+              <button
+                disabled={isProcessing}
+                onClick={handleReject}
+                className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+              >
+                <i className="fa-solid fa-circle-xmark"></i>
+                <span>Reject</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
