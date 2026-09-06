@@ -10,7 +10,10 @@ export default function InventoryManagement() {
   const [activeTab, setActiveTab] = useState('overview');
   const [stock, setStock] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [rebalanceLogs, setRebalanceLogs] = useState([]);
+  const [lots, setLots] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [rebalancing, setRebalancing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -51,12 +54,16 @@ export default function InventoryManagement() {
   const fetchData = useCallback(async (showSpinner = true) => {
     try {
       if (showSpinner) setLoading(true);
-      const [stockRes, txnRes] = await Promise.all([
+      const [stockRes, txnRes, rebRes, lotsRes] = await Promise.all([
         api.get('/inventory'),
-        api.get('/inventory/transactions')
+        api.get('/inventory/transactions'),
+        api.get('/inventory/rebalance-logs').catch(() => ({ data: [] })),
+        api.get('/inventory/lots').catch(() => ({ data: [] }))
       ]);
       setStock(stockRes.data || []);
       setTransactions(txnRes.data || []);
+      setRebalanceLogs(rebRes.data || []);
+      setLots(lotsRes.data || []);
     } catch (err) {
       showAlert('Error', 'Failed to fetch inventory data', 'error');
       console.error(err);
@@ -111,6 +118,23 @@ export default function InventoryManagement() {
     }
   };
 
+  const handleTriggerRebalance = async () => {
+    try {
+      setRebalancing(true);
+      const res = await api.post('/inventory/rebalance');
+      if (res.data?.rebalancesExecuted > 0) {
+        showAlert('Auto-Rebalancing Complete', `Successfully rebalanced ${res.data.rebalancesExecuted} low-stock depot locations!`, 'success');
+      } else {
+        showAlert('Stock Balanced', 'All warehouse locations are currently balanced and within safety thresholds.', 'info');
+      }
+      fetchData(false);
+    } catch (err) {
+      showAlert('Error', 'Failed to trigger stock rebalancing', 'error');
+    } finally {
+      setRebalancing(false);
+    }
+  };
+
   // Filtered and Grouped Stock calculation
   const rawFiltered = stock.filter(item => {
     const matchesSearch = item.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -125,11 +149,20 @@ export default function InventoryManagement() {
       acc[item.product_id] = { 
         ...item, 
         quantity_available: 0,
-        warehouse_names: new Set()
+        warehouse_names: new Set(),
+        warehouses_breakdown: []
       };
     }
-    acc[item.product_id].quantity_available += parseInt(item.quantity_available || 0, 10);
-    if (parseInt(item.quantity_available || 0, 10) > 0) {
+    const qty = parseInt(item.quantity_available || 0, 10);
+    acc[item.product_id].quantity_available += qty;
+    acc[item.product_id].warehouses_breakdown.push({
+      id: item.warehouse_id,
+      name: item.warehouse_name,
+      qty,
+      reorder: item.reorder_threshold || 10,
+      safety: item.safety_stock || 5
+    });
+    if (qty > 0) {
       acc[item.product_id].warehouse_names.add(item.warehouse_name);
     }
     return acc;
@@ -163,20 +196,30 @@ export default function InventoryManagement() {
       <header className="bg-white border-b border-slate-200 px-8 py-5 shrink-0 flex items-center justify-between shadow-xs">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-slate-800">Inventory & Stock Control</h1>
+            <h1 className="text-2xl font-bold text-slate-800">Inventory, Warehouses & Stock Control</h1>
             <span className="bg-emerald-100 text-emerald-700 text-xs px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Live Sync
+              Auto-Rebalance Active
             </span>
           </div>
-          <p className="text-slate-500 text-sm mt-0.5">Automated stock calculations on customer purchases and admin stock entries</p>
+          <p className="text-slate-500 text-sm mt-0.5">3-Tier Warehouse Inventory System: Unit Lots, Depot Allocation & Automated Rebalancing</p>
         </div>
-        <button 
-          onClick={() => fetchData(true)}
-          className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-sm transition flex items-center gap-2"
-        >
-          <i className="fa-solid fa-arrows-rotate"></i> Refresh Data
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={handleTriggerRebalance}
+            disabled={rebalancing}
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-sm transition flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
+          >
+            <i className={`fa-solid ${rebalancing ? 'fa-spinner fa-spin' : 'fa-wand-magic-sparkles'}`}></i>
+            {rebalancing ? 'Rebalancing...' : 'Run Auto-Rebalance'}
+          </button>
+          <button 
+            onClick={() => fetchData(true)}
+            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-sm transition flex items-center gap-2 cursor-pointer"
+          >
+            <i className="fa-solid fa-arrows-rotate"></i> Refresh
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 overflow-auto p-8">
@@ -186,7 +229,7 @@ export default function InventoryManagement() {
             <div>
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Products</p>
               <h3 className="text-2xl font-extrabold text-slate-800 mt-1">{uniqueProducts.length}</h3>
-              <p className="text-xs text-slate-400 mt-1">Across all warehouses</p>
+              <p className="text-xs text-slate-400 mt-1">Across {uniqueWarehouses.length || 1} Depots</p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold">
               <i className="fa-solid fa-boxes-stacked"></i>
@@ -195,9 +238,9 @@ export default function InventoryManagement() {
 
           <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Quantity</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Stock Units</p>
               <h3 className="text-2xl font-extrabold text-emerald-600 mt-1">{totalStockItems.toLocaleString()}</h3>
-              <p className="text-xs text-slate-400 mt-1">Available units</p>
+              <p className="text-xs text-slate-400 mt-1">Allocated in warehouses</p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
               <i className="fa-solid fa-layer-group"></i>
@@ -206,46 +249,58 @@ export default function InventoryManagement() {
 
           <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Low Stock Alerts</p>
-              <h3 className="text-2xl font-extrabold text-amber-600 mt-1">{lowStockCount}</h3>
-              <p className="text-xs text-amber-600 font-medium mt-1">Require re-stocking</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Auto-Rebalance Events</p>
+              <h3 className="text-2xl font-extrabold text-purple-600 mt-1">{rebalanceLogs.length}</h3>
+              <p className="text-xs text-purple-600 font-medium mt-1">Depot transfers executed</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
-              <i className="fa-solid fa-triangle-exclamation"></i>
+            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl font-bold">
+              <i className="fa-solid fa-arrows-split-up-and-left"></i>
             </div>
           </div>
 
           <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Out of Stock</p>
-              <h3 className="text-2xl font-extrabold text-red-600 mt-1">{outOfStockCount}</h3>
-              <p className="text-xs text-red-500 font-medium mt-1">Needs immediate action</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Inventory Lots & Batches</p>
+              <h3 className="text-2xl font-extrabold text-indigo-600 mt-1">{lots.length}</h3>
+              <p className="text-xs text-slate-400 mt-1">Unit lot records</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-xl font-bold">
-              <i className="fa-solid fa-[#fa5252] fa-ban"></i>
+            <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl font-bold">
+              <i className="fa-solid fa-barcode"></i>
             </div>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex space-x-2 mb-6 border-b border-slate-200 pb-2">
+        <div className="flex space-x-2 mb-6 border-b border-slate-200 pb-2 overflow-x-auto">
           <button 
             onClick={() => setActiveTab('overview')}
-            className={`px-5 py-2.5 font-bold text-sm rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'overview' ? 'text-primary border-b-2 border-primary bg-primary/10' : 'text-slate-500 hover:bg-slate-100'}`}
+            className={`px-5 py-2.5 font-bold text-sm rounded-t-lg transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'overview' ? 'text-primary border-b-2 border-primary bg-primary/10' : 'text-slate-500 hover:bg-slate-100'}`}
           >
-            <i className="fa-solid fa-boxes-stacked"></i> Stock Overview ({stock.length})
+            <i className="fa-solid fa-boxes-stacked"></i> Stock Overview Matrix ({stock.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab('rebalance')}
+            className={`px-5 py-2.5 font-bold text-sm rounded-t-lg transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'rebalance' ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50' : 'text-slate-500 hover:bg-slate-100'}`}
+          >
+            <i className="fa-solid fa-wand-magic-sparkles"></i> Auto-Rebalancing System ({rebalanceLogs.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab('lots')}
+            className={`px-5 py-2.5 font-bold text-sm rounded-t-lg transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'lots' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50' : 'text-slate-500 hover:bg-slate-100'}`}
+          >
+            <i className="fa-solid fa-barcode"></i> Batches & Unit Lots ({lots.length})
           </button>
           <button 
             onClick={() => setActiveTab('adjust')}
-            className={`px-5 py-2.5 font-bold text-sm rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'adjust' ? 'text-primary border-b-2 border-primary bg-primary/10' : 'text-slate-500 hover:bg-slate-100'}`}
+            className={`px-5 py-2.5 font-bold text-sm rounded-t-lg transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'adjust' ? 'text-primary border-b-2 border-primary bg-primary/10' : 'text-slate-500 hover:bg-slate-100'}`}
           >
-            <i className="fa-solid fa-plus-minus"></i> Stock Adjustment (Admin Entry)
+            <i className="fa-solid fa-plus-minus"></i> Stock Adjustment
           </button>
           <button 
             onClick={() => setActiveTab('history')}
-            className={`px-5 py-2.5 font-bold text-sm rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'history' ? 'text-primary border-b-2 border-primary bg-primary/10' : 'text-slate-500 hover:bg-slate-100'}`}
+            className={`px-5 py-2.5 font-bold text-sm rounded-t-lg transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'history' ? 'text-primary border-b-2 border-primary bg-primary/10' : 'text-slate-500 hover:bg-slate-100'}`}
           >
-            <i className="fa-solid fa-clock-rotate-left"></i> Transaction History ({transactions.length})
+            <i className="fa-solid fa-clock-rotate-left"></i> Transaction Log ({transactions.length})
           </button>
         </div>
 
@@ -307,9 +362,9 @@ export default function InventoryManagement() {
                       <tr>
                         <th className="p-4">Product Details</th>
                         <th className="p-4">Category</th>
-                        <th className="p-4">Warehouse Location</th>
-                        <th className="p-4 text-right">Available Qty</th>
-                        <th className="p-4">Stock Status</th>
+                        <th className="p-4">Warehouse Breakdown</th>
+                        <th className="p-4 text-right">Total Available</th>
+                        <th className="p-4">Rebalance Status</th>
                         <th className="p-4 text-center">Quick Action</th>
                       </tr>
                     </thead>
@@ -334,8 +389,16 @@ export default function InventoryManagement() {
                               </span>
                             </td>
                             <td className="p-4 text-slate-700">
-                              <i className="fa-solid fa-warehouse mr-1.5 text-slate-400"></i>
-                              {item.warehouse_summary}
+                              <div className="flex flex-wrap gap-1.5 max-w-md">
+                                {item.warehouses_breakdown.map((wh, wIdx) => (
+                                  <span key={wIdx} className={`px-2 py-0.5 rounded text-xs font-medium border ${
+                                    wh.qty < wh.reorder ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-slate-50 text-slate-700 border-slate-200'
+                                  }`}>
+                                    <i className="fa-solid fa-warehouse text-slate-400 mr-1"></i>
+                                    {wh.name}: <strong className="font-bold">{wh.qty}</strong>
+                                  </span>
+                                ))}
+                              </div>
                             </td>
                             <td className="p-4 text-right font-extrabold text-slate-800 text-base">
                               {item.quantity_available}
@@ -347,11 +410,11 @@ export default function InventoryManagement() {
                                 </span>
                               ) : item.quantity_available < 10 ? (
                                 <span className="inline-flex items-center gap-1 text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full text-xs font-bold">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-600"></span> Low Stock
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-600"></span> Needs Rebalance
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full text-xs font-bold">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> In Stock
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Optimal Stock
                                 </span>
                               )}
                             </td>
@@ -371,6 +434,153 @@ export default function InventoryManagement() {
                               >
                                 + Add Stock
                               </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* AUTO-REBALANCING TAB */}
+            {activeTab === 'rebalance' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-2xl p-6 text-white shadow-md flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-extrabold flex items-center gap-2">
+                      <i className="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
+                      Automated Stock Rebalancing Engine
+                    </h2>
+                    <p className="text-purple-200 text-sm mt-1 max-w-2xl">
+                      When customer purchases or dispatches reduce a warehouse stock below its reorder threshold, 
+                      the system automatically calculates surplus across other depots and triggers inter-warehouse stock transfers.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleTriggerRebalance}
+                    disabled={rebalancing}
+                    className="px-5 py-3 bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold rounded-xl shadow-lg transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    <i className={`fa-solid ${rebalancing ? 'fa-spinner fa-spin' : 'fa-play'}`}></i>
+                    Force Full Rebalance Scan
+                  </button>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden">
+                  <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <h3 className="font-bold text-slate-800">Auto-Rebalancing Audit Log</h3>
+                    <span className="text-xs text-slate-500 font-medium">Real-time System Actions</span>
+                  </div>
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase text-xs">
+                      <tr>
+                        <th className="p-4">Timestamp</th>
+                        <th className="p-4">Product</th>
+                        <th className="p-4">Source Depot (From)</th>
+                        <th className="p-4">Deficit Depot (To)</th>
+                        <th className="p-4 text-right">Qty Transferred</th>
+                        <th className="p-4">System Reason</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {rebalanceLogs.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" className="p-12 text-center text-slate-500">
+                            <i className="fa-solid fa-shield-check text-3xl mb-2 text-emerald-400"></i>
+                            <p className="font-semibold text-slate-700">No rebalance events logged yet</p>
+                            <p className="text-xs text-slate-400">System automatically logs transfers when stock falls below thresholds</p>
+                          </td>
+                        </tr>
+                      ) : (
+                        rebalanceLogs.map(log => (
+                          <tr key={log.id} className="hover:bg-purple-50/50 transition-colors">
+                            <td className="p-4 font-mono text-xs text-slate-500">
+                              {new Date(log.timestamp).toLocaleString()}
+                            </td>
+                            <td className="p-4 font-bold text-slate-800">
+                              {log.product_name}
+                            </td>
+                            <td className="p-4">
+                              <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md text-xs font-semibold">
+                                <i className="fa-solid fa-warehouse mr-1 text-slate-400"></i>
+                                {log.from_warehouse_name}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              <span className="bg-purple-100 text-purple-800 px-2.5 py-1 rounded-md text-xs font-semibold">
+                                <i className="fa-solid fa-warehouse mr-1 text-purple-500"></i>
+                                {log.to_warehouse_name}
+                              </span>
+                            </td>
+                            <td className="p-4 text-right font-extrabold text-purple-700 text-base">
+                              +{log.quantity}
+                            </td>
+                            <td className="p-4 text-slate-600 text-xs">
+                              {log.reason}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* BATCHES & LOTS TAB */}
+            {activeTab === 'lots' && (
+              <div className="space-y-4">
+                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-slate-800">Batch & Unit Lot Traceability</h3>
+                    <p className="text-xs text-slate-500">Every product intake generates a unique batch code for precise unit cost and origin tracking.</p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase text-xs">
+                      <tr>
+                        <th className="p-4">Batch Code</th>
+                        <th className="p-4">Product Name</th>
+                        <th className="p-4">Warehouse Depot</th>
+                        <th className="p-4 text-right">Lot Quantity</th>
+                        <th className="p-4 text-right">Unit Cost</th>
+                        <th className="p-4">Creation Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {lots.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" className="p-12 text-center text-slate-500">
+                            <i className="fa-solid fa-barcode text-3xl mb-2 text-slate-300"></i>
+                            <p className="font-semibold">No lot records logged yet</p>
+                          </td>
+                        </tr>
+                      ) : (
+                        lots.map(lot => (
+                          <tr key={lot.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="p-4 font-mono font-bold text-indigo-700">
+                              <i className="fa-solid fa-barcode mr-1.5 text-slate-400"></i>
+                              {lot.batch_code}
+                            </td>
+                            <td className="p-4 font-bold text-slate-800">
+                              {lot.product_name}
+                            </td>
+                            <td className="p-4 text-slate-700">
+                              <i className="fa-solid fa-warehouse text-slate-400 mr-1"></i>
+                              {lot.warehouse_name}
+                            </td>
+                            <td className="p-4 text-right font-extrabold text-slate-800">
+                              {lot.quantity} {lot.unit || 'units'}
+                            </td>
+                            <td className="p-4 text-right font-mono text-slate-700">
+                              ${parseFloat(lot.unit_cost || 0).toFixed(2)}
+                            </td>
+                            <td className="p-4 text-slate-500 font-mono text-xs">
+                              {new Date(lot.created_at).toLocaleString()}
                             </td>
                           </tr>
                         ))

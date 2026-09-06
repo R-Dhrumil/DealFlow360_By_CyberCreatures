@@ -20,16 +20,63 @@ class ProductRepository {
   }
 
   async create(companyId, productData) {
-    const { name, category, basePrice, unit, description, sku, minMargin, stock, status } = productData;
+    const { name, category, basePrice, unit, description, sku, minMargin, stock, status, warehouseId } = productData;
     const productId = 'p_' + crypto.randomUUID();
+    const initStock = stock !== undefined ? parseInt(stock, 10) : 100;
     try {
       const result = await db.query(
         `INSERT INTO products (id, company_id, name, category, base_price, unit, description, sku, min_margin, stock, status)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          RETURNING *`,
-        [productId, companyId, name, category, basePrice, unit || 'unit', description || '', sku || null, minMargin || 25, stock !== undefined ? parseInt(stock, 10) : 100, status || 'Active']
+        [productId, companyId, name, category, basePrice, unit || 'unit', description || '', sku || null, minMargin || 25, initStock, status || 'Active']
       );
-      return result.rows[0];
+
+      const createdProduct = result.rows[0];
+
+      // Auto-allocate stock to warehouse(s) and record initial inventory lot
+      if (initStock > 0) {
+        try {
+          let targetWhId = warehouseId;
+          if (!targetWhId) {
+            const whRes = await db.query(
+              `SELECT id FROM warehouses WHERE company_id = $1 ORDER BY created_at ASC LIMIT 1`,
+              [companyId]
+            );
+            targetWhId = whRes.rows[0]?.id || 'w1';
+          }
+
+          // Upsert stock into target warehouse
+          await db.query(
+            `INSERT INTO warehouse_stock (id, warehouse_id, product_id, quantity_available, reorder_threshold, safety_stock)
+             VALUES ('ws_' || md5(random()::text), $1, $2, $3, 10, 5)
+             ON CONFLICT (warehouse_id, product_id)
+             DO UPDATE SET quantity_available = warehouse_stock.quantity_available + $3`,
+            [targetWhId, productId, initStock]
+          );
+
+          // Record batch/lot entry
+          const lotId = 'lot_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+          const batchCode = 'BATCH-' + Date.now().toString().slice(-6);
+          await db.query(
+            `INSERT INTO inventory_lots (id, company_id, warehouse_id, product_id, batch_code, quantity, unit_cost)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [lotId, companyId, targetWhId, productId, batchCode, initStock, basePrice || 0]
+          );
+
+          // Log initial transaction
+          const txnId = 'txn_' + Date.now() + Math.floor(Math.random() * 1000);
+          await db.query(
+            `INSERT INTO inventory_transactions 
+               (id, company_id, warehouse_id, product_id, type, quantity, reason, reference_id)
+             VALUES ($1, $2, $3, $4, 'in', $5, $6, $7)`,
+            [txnId, companyId, targetWhId, productId, initStock, `Initial Product Intake (${batchCode})`, lotId]
+          );
+        } catch (allocErr) {
+          console.warn('[Inventory] Failed to auto-allocate warehouse stock on product create:', allocErr.message);
+        }
+      }
+
+      return createdProduct;
     } catch (err) {
       const newProd = {
         id: 'prod-' + Date.now(),
@@ -39,7 +86,7 @@ class ProductRepository {
         base_price: parseFloat(basePrice),
         min_margin: parseFloat(minMargin || 25),
         unit: unit || 'unit',
-        stock: stock !== undefined ? parseInt(stock, 10) : 100,
+        stock: initStock,
         status: status || 'Active',
         description: description || ''
       };

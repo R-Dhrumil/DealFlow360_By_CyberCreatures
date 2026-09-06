@@ -11,7 +11,9 @@ class InventoryRepository {
          p.unit,
          w.id as warehouse_id,
          w.name as warehouse_name,
-         COALESCE(ws.quantity_available, 0) as quantity_available
+         COALESCE(ws.quantity_available, 0) as quantity_available,
+         COALESCE(ws.reorder_threshold, 10) as reorder_threshold,
+         COALESCE(ws.safety_stock, 5) as safety_stock
        FROM products p
        CROSS JOIN warehouses w
        LEFT JOIN warehouse_stock ws ON p.id = ws.product_id AND w.id = ws.warehouse_id
@@ -28,8 +30,8 @@ class InventoryRepository {
     if (type === 'out') qtyChange = -quantity;
 
     await client.query(
-      `INSERT INTO warehouse_stock (id, warehouse_id, product_id, quantity_available)
-       VALUES ('ws_' || md5(random()::text), $1, $2, GREATEST(0, $3))
+      `INSERT INTO warehouse_stock (id, warehouse_id, product_id, quantity_available, reorder_threshold, safety_stock)
+       VALUES ('ws_' || md5(random()::text), $1, $2, GREATEST(0, $3), 10, 5)
        ON CONFLICT (warehouse_id, product_id)
        DO UPDATE SET quantity_available = GREATEST(0, warehouse_stock.quantity_available + $3)`,
       [warehouseId, productId, qtyChange]
@@ -64,6 +66,107 @@ class InventoryRepository {
     );
     
     return txnId;
+  }
+
+  async checkAndAutoBalanceStock(client, companyId, productId) {
+    try {
+      const dbClient = client || pool;
+      const res = await dbClient.query(
+        `SELECT ws.warehouse_id, w.name as warehouse_name, ws.quantity_available, 
+                COALESCE(ws.reorder_threshold, 10) as reorder_threshold,
+                COALESCE(ws.safety_stock, 5) as safety_stock
+         FROM warehouse_stock ws
+         JOIN warehouses w ON ws.warehouse_id = w.id
+         WHERE w.company_id = $1 AND ws.product_id = $2`,
+        [companyId, productId]
+      );
+
+      const rows = res.rows;
+      if (rows.length < 2) return [];
+
+      const deficitNodes = [];
+      const surplusNodes = [];
+
+      for (const r of rows) {
+        const qty = parseInt(r.quantity_available, 10) || 0;
+        const reorder = parseInt(r.reorder_threshold, 10) || 10;
+        const safety = parseInt(r.safety_stock, 10) || 5;
+
+        if (qty < reorder) {
+          const targetQty = reorder + safety;
+          deficitNodes.push({
+            warehouseId: r.warehouse_id,
+            warehouseName: r.warehouse_name,
+            currentQty: qty,
+            needed: targetQty - qty
+          });
+        } else if (qty > safety * 2) {
+          surplusNodes.push({
+            warehouseId: r.warehouse_id,
+            warehouseName: r.warehouse_name,
+            currentQty: qty,
+            surplusAvailable: qty - safety * 2
+          });
+        }
+      }
+
+      if (deficitNodes.length === 0 || surplusNodes.length === 0) return [];
+
+      const executedRebalances = [];
+
+      for (const deficit of deficitNodes) {
+        let needed = deficit.needed;
+
+        for (const surplus of surplusNodes) {
+          if (needed <= 0) break;
+          if (surplus.surplusAvailable <= 0) continue;
+
+          const transferAmount = Math.min(needed, surplus.surplusAvailable);
+          if (transferAmount > 0) {
+            await this.transferStock(
+              dbClient,
+              companyId,
+              surplus.warehouseId,
+              deficit.warehouseId,
+              productId,
+              null,
+              transferAmount,
+              `Auto-Rebalance: Stock low at ${deficit.warehouseName} (< reorder threshold)`,
+              `AUTO-BAL-${Date.now()}`
+            );
+
+            const rebalanceLogId = 'reb_' + Date.now() + Math.floor(Math.random() * 1000);
+            await dbClient.query(
+              `INSERT INTO stock_rebalance_logs 
+                 (id, company_id, from_warehouse_id, to_warehouse_id, product_id, quantity, status, reason)
+               VALUES ($1, $2, $3, $4, $5, $6, 'completed', $7)`,
+              [
+                rebalanceLogId,
+                companyId,
+                surplus.warehouseId,
+                deficit.warehouseId,
+                productId,
+                transferAmount,
+                `System auto-rebalanced ${transferAmount} units from ${surplus.warehouseName} to ${deficit.warehouseName}`
+              ]
+            );
+
+            surplus.surplusAvailable -= transferAmount;
+            needed -= transferAmount;
+            executedRebalances.push({
+              fromWarehouseId: surplus.warehouseId,
+              toWarehouseId: deficit.warehouseId,
+              quantity: transferAmount
+            });
+          }
+        }
+      }
+
+      return executedRebalances;
+    } catch (err) {
+      console.warn('[System Auto-Rebalance Warning]:', err.message);
+      return [];
+    }
   }
 
   async deductProductStock(client, companyId, productId, quantity, userId, reason, referenceId, preferredWarehouseId = null) {
@@ -121,6 +224,9 @@ class InventoryRepository {
       const txnId = await this.adjustStock(client, companyId, fallbackWhId, productId, userId, 'out', remainingQty, reason, referenceId);
       executedTxns.push({ warehouseId: fallbackWhId, quantity: remainingQty, txnId });
     }
+
+    // 4. Trigger automated rebalancing check across warehouses
+    await this.checkAndAutoBalanceStock(client, companyId, productId);
 
     return executedTxns;
   }
@@ -191,6 +297,63 @@ class InventoryRepository {
       [companyId, limit, offset]
     );
     return result.rows;
+  }
+
+  async getRebalanceLogs(companyId, limit = 50) {
+    const result = await pool.query(
+      `SELECT 
+         l.id,
+         l.quantity,
+         l.status,
+         l.reason,
+         l.timestamp,
+         p.name as product_name,
+         fw.name as from_warehouse_name,
+         tw.name as to_warehouse_name
+       FROM stock_rebalance_logs l
+       JOIN products p ON l.product_id = p.id
+       JOIN warehouses fw ON l.from_warehouse_id = fw.id
+       JOIN warehouses tw ON l.to_warehouse_id = tw.id
+       WHERE l.company_id = $1
+       ORDER BY l.timestamp DESC
+       LIMIT $2`,
+      [companyId, limit]
+    );
+    return result.rows;
+  }
+
+  async getInventoryLots(companyId, limit = 100) {
+    const result = await pool.query(
+      `SELECT 
+         lot.id,
+         lot.batch_code,
+         lot.quantity,
+         lot.unit_cost,
+         lot.created_at,
+         p.name as product_name,
+         p.unit,
+         w.name as warehouse_name
+       FROM inventory_lots lot
+       JOIN products p ON lot.product_id = p.id
+       JOIN warehouses w ON lot.warehouse_id = w.id
+       WHERE lot.company_id = $1
+       ORDER BY lot.created_at DESC
+       LIMIT $2`,
+      [companyId, limit]
+    );
+    return result.rows;
+  }
+
+  async triggerFullRebalance(companyId) {
+    const prods = await pool.query(`SELECT id FROM products WHERE company_id = $1`, [companyId]);
+    const allRebalances = [];
+    for (const p of prods.rows) {
+      const res = await this.checkAndAutoBalanceStock(pool, companyId, p.id);
+      if (res.length > 0) {
+        allRebalances.push(...res);
+      }
+    }
+    return allRebalances;
   }
 }
 

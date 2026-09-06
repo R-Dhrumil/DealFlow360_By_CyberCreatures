@@ -88,6 +88,26 @@ class InventoryController {
     const history = await inventoryRepository.getTransactions(req.companyId, limit, offset);
     return res.json(history);
   }
+
+  async getRebalanceLogs(req, res) {
+    const limit = parseInt(req.query.limit, 10) || 50;
+    const logs = await inventoryRepository.getRebalanceLogs(req.companyId, limit);
+    return res.json(logs);
+  }
+
+  async getLots(req, res) {
+    const limit = parseInt(req.query.limit, 10) || 100;
+    const lots = await inventoryRepository.getInventoryLots(req.companyId, limit);
+    return res.json(lots);
+  }
+
+  async triggerRebalancing(req, res) {
+    const results = await inventoryRepository.triggerFullRebalance(req.companyId);
+    if (results.length > 0) {
+      broadcastInventoryUpdate(req.companyId, { type: 'rebalance', rebalanceCount: results.length });
+    }
+    return res.json({ success: true, rebalancesExecuted: results.length, details: results });
+  }
 }
 
 module.exports = new InventoryController();
