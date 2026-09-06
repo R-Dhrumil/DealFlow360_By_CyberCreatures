@@ -241,7 +241,7 @@ export default function CustomerPortal() {
               )}
               <span className="text-xl font-black text-emerald-700 font-mono">{formatMoney(grandTotal)}</span>
               <span className="block text-[10px] font-bold text-emerald-600 font-mono">
-                {totalDiscountSaved > 0 ? `Discount: -${formatMoney(totalDiscountSaved)}` : 'Discount: -₹0.00'}
+                {totalDiscountSaved > 0 ? `Discount: -${formatMoney(totalDiscountSaved)}` : `Discount: -${formatMoney(0)}`}
               </span>
             </div>
           </div>
@@ -265,7 +265,7 @@ export default function CustomerPortal() {
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Total Confirmed Amount</span>
               <span className="text-xl font-black text-emerald-700 font-mono">{formatMoney(grandTotal)}</span>
               <span className="block text-[10px] font-bold text-emerald-600 font-mono">
-                {totalDiscountSaved > 0 ? `Discount: -${formatMoney(totalDiscountSaved)}` : 'Discount: -₹0.00'}
+                {totalDiscountSaved > 0 ? `Discount: -${formatMoney(totalDiscountSaved)}` : `Discount: -${formatMoney(0)}`}
               </span>
             </div>
           </div>
