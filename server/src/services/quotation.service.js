@@ -215,7 +215,7 @@ class QuotationService {
         await client.query(
           `INSERT INTO quotation_lines (id, quotation_id, product_id, quantity, unit_price, discount_percent, line_type, customer_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-          [qlId, quotation.id, line.productId, line.quantity || 1, truePrice, safeDiscount, line.lineType || 'one_time', customerId]
+          [qlId, quotation.id, line.productId, line.quantity || 1, truePrice, safeDiscount, 'one_time', customerId]
         );
       }
 
