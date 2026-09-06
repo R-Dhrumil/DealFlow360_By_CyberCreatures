@@ -118,19 +118,9 @@ export default function Layout() {
             </span>
           </div>
 
-          {/* Right: Currency picker + user info */}
+          {/* Right: Currency picker */}
           <div className="flex items-center gap-3 shrink-0">
             <CurrencyPicker />
-            <div className="h-5 w-px bg-slate-200"></div>
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-primary/80 flex items-center justify-center text-white text-xs font-extrabold shrink-0">
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-              </div>
-              <div className="hidden sm:block">
-                <p className="text-xs font-bold text-slate-800 leading-none">{user?.name || 'User'}</p>
-                <p className="text-[10px] text-slate-400 capitalize leading-none mt-0.5">{user?.role?.replace('_', ' ') || 'Internal'}</p>
-              </div>
-            </div>
           </div>
         </header>
 
