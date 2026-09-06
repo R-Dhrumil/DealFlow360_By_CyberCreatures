@@ -248,9 +248,20 @@ export default function SuperAdminConsole({ defaultTab }) {
                 </p>
               </div>
             </div>
-            <span className="bg-purple-100 text-purple-800 text-xs font-extrabold px-3.5 py-1.5 rounded-full border border-purple-200">
-              {companies.length} Active Organizations
-            </span>
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={fetchData}
+                disabled={loading}
+                className="px-3 py-1.5 bg-slate-100 hover:bg-purple-100 text-purple-700 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 border border-slate-200"
+              >
+                <i className={`fa-solid fa-rotate ${loading ? 'fa-spin' : ''}`}></i>
+                <span>Refresh Data</span>
+              </button>
+              <span className="bg-purple-100 text-purple-800 text-xs font-extrabold px-3.5 py-1.5 rounded-full border border-purple-200">
+                {companies.length} Active Organizations
+              </span>
+            </div>
           </div>
 
           {/* Tenants KPI Bar */}
@@ -585,9 +596,20 @@ export default function SuperAdminConsole({ defaultTab }) {
                 </p>
               </div>
             </div>
-            <span className="bg-emerald-100 text-emerald-800 text-xs font-extrabold px-3.5 py-1.5 rounded-full border border-emerald-200">
-              {tenantUsers.length} Total Registered Users
-            </span>
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={fetchData}
+                disabled={loading}
+                className="px-3 py-1.5 bg-slate-100 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 border border-slate-200"
+              >
+                <i className={`fa-solid fa-rotate ${loading ? 'fa-spin' : ''}`}></i>
+                <span>Refresh Data</span>
+              </button>
+              <span className="bg-emerald-100 text-emerald-800 text-xs font-extrabold px-3.5 py-1.5 rounded-full border border-emerald-200">
+                {tenantUsers.length} Total Registered Users
+              </span>
+            </div>
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-5">
