@@ -16,6 +16,7 @@ const uploadRoutes = require('./upload.routes');
 const settingsRoutes = require('./settings.routes');
 const userRoutes = require('./user.routes');
 const companyRoutes = require('./company.routes');
+const reportRoutes = require('./report.routes');
 
 // Health check endpoint
 router.get('/health', async (req, res) => {
@@ -55,5 +56,6 @@ router.use('/upload', uploadRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/users', userRoutes);
 router.use('/companies', companyRoutes);
+router.use('/reporting', reportRoutes);
 
 module.exports = router;
