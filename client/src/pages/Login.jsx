@@ -16,11 +16,57 @@ const Login = ({ defaultIsSignup = false }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const fillCredentials = (userEmail, userPass) => {
+  const executeLogin = async (loginEmail, loginPassword) => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const res = await api.post('/auth/login', {
+        email: (loginEmail || '').trim().toLowerCase(),
+        password: (loginPassword || '').trim()
+      });
+      if (res.data && res.data.token) {
+        localStorage.setItem('token', res.data.token);
+        const user = res.data.user;
+        localStorage.setItem('user', JSON.stringify(user));
+
+        if (user.role === 'super_admin') {
+          navigate('/app/superadmin');
+        } else if (user.role === 'customer') {
+          navigate('/customer/dashboard');
+        } else if (user.role === 'admin') {
+          navigate('/app/admin');
+        } else if (user.role === 'finance' || user.role === 'finance_manager') {
+          navigate('/app/finance');
+        } else {
+          navigate('/app/pipeline');
+        }
+        return;
+      }
+    } catch (err) {
+      console.error('Authentication failed:', err);
+      let serverMsg = 'Invalid email or password. Please try again.';
+      if (!err.response) {
+        serverMsg = 'Cannot reach backend API server. Please verify the DealFlow360 backend is running.';
+      } else if (err.response.status === 429) {
+        serverMsg = 'Too many attempts. Please wait a moment and try again.';
+      } else if (err.response.status >= 500) {
+        serverMsg = err.response?.data?.error || err.response?.data?.details || 'Database or server initializing. Please try again in a few seconds.';
+      } else if (err.response?.data?.error || err.response?.data?.message) {
+        serverMsg = err.response.data.error || err.response.data.message;
+      }
+      setError(serverMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fillCredentials = async (userEmail, userPass) => {
     setEmail(userEmail);
     setPassword(userPass);
     setIsSignup(false);
     setError('');
+    await executeLogin(userEmail, userPass);
   };
 
   const getPasswordStrength = (val) => {
@@ -35,12 +81,11 @@ const Login = ({ defaultIsSignup = false }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    if (isSignup) {
+      setError('');
+      setLoading(true);
 
-    try {
-      if (isSignup) {
-        // Unified Sign Up
+      try {
         const res = await api.post('/auth/signup', {
           accountType,
           name,
@@ -81,341 +126,336 @@ const Login = ({ defaultIsSignup = false }) => {
             navigate('/app/pipeline');
           }
           return;
+        } catch (err) {
+          console.error('Authentication failed:', err);
+          let serverMsg = 'Signup failed. Please try again.';
+          if (err.response?.data?.error || err.response?.data?.message) {
+            serverMsg = err.response.data.error || err.response.data.message;
+          }
+          setError(serverMsg);
+        } finally {
+          setLoading(false);
         }
+      } else {
+        await executeLogin(email, password);
       }
-    } catch (err) {
-      console.error('Authentication failed:', err);
-      let serverMsg = 'Invalid email or password. Please try again.';
-      if (!err.response) {
-        serverMsg = 'Cannot reach backend API server. Please verify the DealFlow360 backend is running.';
-      } else if (err.response.status === 429) {
-        serverMsg = 'Too many attempts. Please wait a moment and try again.';
-      } else if (err.response.status >= 500) {
-        serverMsg = err.response?.data?.error || err.response?.data?.details || 'Database or server initializing. Please try again in a few seconds.';
-      } else if (err.response?.data?.error || err.response?.data?.message) {
-        serverMsg = err.response.data.error || err.response.data.message;
-      }
-      setError(serverMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  return (
-    <main className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 lg:p-10 bg-slate-100 font-sans text-text-body antialiased">
-      <div className="flex flex-col w-full max-w-7xl">
-        <div className="w-full min-h-[760px] grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+    return (
+      <main className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 lg:p-10 bg-slate-100 font-sans text-text-body antialiased">
+        <div className="flex flex-col w-full max-w-7xl">
+          <div className="w-full min-h-[760px] grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
 
-          {/* Left Column: Deep Purple Royal Ambient Showcase */}
-          <div className="lg:col-span-6 xl:col-span-7 relative flex flex-col justify-between p-7 md:p-10 lg:p-12 rounded-2xl bg-gradient-to-br from-primary-dark via-primary to-slate-900 text-white border border-primary/40 shadow-2xl overflow-hidden">
-            {/* Soft Ambient Purple Radial Glows */}
-            <div className="absolute -top-24 -left-20 w-96 h-96 rounded-full bg-primary/30 blur-3xl pointer-events-none"></div>
-            <div className="absolute -bottom-20 -right-16 w-96 h-96 rounded-full bg-secondary/20 blur-3xl pointer-events-none"></div>
+            {/* Left Column: Deep Purple Royal Ambient Showcase */}
+            <div className="lg:col-span-6 xl:col-span-7 relative flex flex-col justify-between p-7 md:p-10 lg:p-12 rounded-2xl bg-gradient-to-br from-primary-dark via-primary to-slate-900 text-white border border-primary/40 shadow-2xl overflow-hidden">
+              {/* Soft Ambient Purple Radial Glows */}
+              <div className="absolute -top-24 -left-20 w-96 h-96 rounded-full bg-primary/30 blur-3xl pointer-events-none"></div>
+              <div className="absolute -bottom-20 -right-16 w-96 h-96 rounded-full bg-secondary/20 blur-3xl pointer-events-none"></div>
 
-            {/* Top Branding & Metric Pill */}
-            <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 bg-gradient-to-tr from-primary-container to-primary-dark rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg border border-white/20">
-                  DF
+              {/* Top Branding & Metric Pill */}
+              <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 bg-gradient-to-tr from-primary-container to-primary-dark rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg border border-white/20">
+                    DF
+                  </div>
+                  <div>
+                    <span className="font-extrabold text-2xl text-white tracking-wide block leading-tight">DealFlow360</span>
+                    <span className="text-[11px] text-slate-100 font-mono">Enterprise Sales Operations Engine</span>
+                  </div>
                 </div>
+
+                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-dark/80 border border-primary/40 shadow-md backdrop-blur-md">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-status animate-pulse"></span>
+                  <span className="text-[10px] text-slate-100 font-bold uppercase tracking-wider font-mono">Live Operations</span>
+                  <span className="text-xs text-white font-extrabold font-mono pl-1">{formatCurrency(42800000, { compact: true })}+</span>
+                  <span className="text-[11px] text-surface-soft">Quotes Structured</span>
+                </div>
+              </div>
+
+              {/* Center Architecture Pillars */}
+              <div className="relative z-10 my-8 space-y-5">
                 <div>
-                  <span className="font-extrabold text-2xl text-white tracking-wide block leading-tight">DealFlow360</span>
-                  <span className="text-[11px] text-slate-100 font-mono">Enterprise Sales Operations Engine</span>
+                  <span className="text-[11px] font-bold text-amber-300 uppercase tracking-widest block mb-1">
+                    Architectural CPQ Guardrails
+                  </span>
+                  <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-snug">
+                    Unified Sales Governance &amp; CPQ Engine
+                  </h2>
+                  <p className="text-xs text-slate-100 mt-1 max-w-xl leading-relaxed">
+                    Role-separated workspaces, automated discount risk scoring, and real-time customer negotiations.
+                  </p>
+                </div>
+
+                {/* 4 Feature Cards Grid in Purple Theme */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="p-4 rounded-2xl bg-primary-dark/60 border border-primary/30 hover:border-white/40 transition-all space-y-1.5 backdrop-blur-sm shadow-sm">
+                    <div className="flex items-center space-x-2 text-amber-300 font-bold text-xs">
+                      <span className="material-symbols-outlined text-lg">crown</span>
+                      <span>Super Admin Console</span>
+                    </div>
+                    <p className="text-[11px] text-slate-100 leading-normal">
+                      Business card analytics, win/loss rate progress bars &amp; tenant user directory governance.
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-primary-dark/60 border border-primary/30 hover:border-white/40 transition-all space-y-1.5 backdrop-blur-sm shadow-sm">
+                    <div className="flex items-center space-x-2 text-purple-200 font-bold text-xs">
+                      <span className="material-symbols-outlined text-lg">admin_panel_settings</span>
+                      <span>Admin Operations</span>
+                    </div>
+                    <p className="text-[11px] text-slate-100 leading-normal">
+                      Product &amp; base price listings, discount tier ceilings, and warehouse inventory setup.
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-primary-dark/60 border border-primary/30 hover:border-white/40 transition-all space-y-1.5 backdrop-blur-sm shadow-sm">
+                    <div className="flex items-center space-x-2 text-amber-300 font-bold text-xs">
+                      <span className="material-symbols-outlined text-lg">verified</span>
+                      <span>Multi-Tier Approvals</span>
+                    </div>
+                    <p className="text-[11px] text-slate-100 leading-normal">
+                      Blended risk scoring: Auto-approve (&lt;5%), Sales Manager (5-10%), Finance Manager (&gt;10%) escalation chain.
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-primary-dark/60 border border-primary/30 hover:border-white/40 transition-all space-y-1.5 backdrop-blur-sm shadow-sm">
+                    <div className="flex items-center space-x-2 text-emerald-300 font-bold text-xs">
+                      <span className="material-symbols-outlined text-lg">storefront</span>
+                      <span>Customer Self-Serve</span>
+                    </div>
+                    <p className="text-[11px] text-slate-100 leading-normal">
+                      Browse admin product catalog, request proposals, negotiate line discounts &amp; E-sign.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-dark/80 border border-primary/40 shadow-md backdrop-blur-md">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-status animate-pulse"></span>
-                <span className="text-[10px] text-slate-100 font-bold uppercase tracking-wider font-mono">Live Operations</span>
-                <span className="text-xs text-white font-extrabold font-mono pl-1">{formatCurrency(42800000, { compact: true })}+</span>
-                <span className="text-[11px] text-surface-soft">Quotes Structured</span>
+              {/* Bottom Stats Footer */}
+              <div className="relative z-10 p-4 rounded-2xl bg-primary-dark/80 border border-primary/40 flex flex-wrap items-center justify-between gap-4 text-xs">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-status"></span>
+                  <span className="text-slate-100 font-semibold">99.9% Margin Floor Safeguard</span>
+                </div>
+                <div className="flex items-center space-x-3 text-surface-soft font-mono text-[11px]">
+                  <span className="text-amber-300 font-bold">⚡ 44% Faster Deals</span>
+                  <span>•</span>
+                  <span className="text-emerald-300 font-bold">🔒 SOC-2 Certified</span>
+                </div>
               </div>
             </div>
 
-            {/* Center Architecture Pillars */}
-            <div className="relative z-10 my-8 space-y-5">
+            {/* Right Column: Authentication Form in Purple Theme */}
+            <div className="lg:col-span-6 xl:col-span-5 flex flex-col justify-between p-7 md:p-10 rounded-2xl bg-white border border-surface-soft shadow-xl">
               <div>
-                <span className="text-[11px] font-bold text-amber-300 uppercase tracking-widest block mb-1">
-                  Architectural CPQ Guardrails
-                </span>
-                <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-snug">
-                  Unified Sales Governance &amp; CPQ Engine
-                </h2>
-                <p className="text-xs text-slate-100 mt-1 max-w-xl leading-relaxed">
-                  Role-separated workspaces, automated discount risk scoring, and real-time customer negotiations.
-                </p>
-              </div>
-
-              {/* 4 Feature Cards Grid in Purple Theme */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div className="p-4 rounded-2xl bg-primary-dark/60 border border-primary/30 hover:border-white/40 transition-all space-y-1.5 backdrop-blur-sm shadow-sm">
-                  <div className="flex items-center space-x-2 text-amber-300 font-bold text-xs">
-                    <span className="material-symbols-outlined text-lg">crown</span>
-                    <span>Super Admin Console</span>
-                  </div>
-                  <p className="text-[11px] text-slate-100 leading-normal">
-                    Business card analytics, win/loss rate progress bars &amp; tenant user directory governance.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-primary-dark/60 border border-primary/30 hover:border-white/40 transition-all space-y-1.5 backdrop-blur-sm shadow-sm">
-                  <div className="flex items-center space-x-2 text-purple-200 font-bold text-xs">
-                    <span className="material-symbols-outlined text-lg">admin_panel_settings</span>
-                    <span>Admin Operations</span>
-                  </div>
-                  <p className="text-[11px] text-slate-100 leading-normal">
-                    Product &amp; base price listings, discount tier ceilings, and warehouse inventory setup.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-primary-dark/60 border border-primary/30 hover:border-white/40 transition-all space-y-1.5 backdrop-blur-sm shadow-sm">
-                  <div className="flex items-center space-x-2 text-amber-300 font-bold text-xs">
-                    <span className="material-symbols-outlined text-lg">verified</span>
-                    <span>Multi-Tier Approvals</span>
-                  </div>
-                  <p className="text-[11px] text-slate-100 leading-normal">
-                    Blended risk scoring: Auto-approve (&lt;5%), Sales Manager (5-10%), Finance Manager (&gt;10%) escalation chain.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-primary-dark/60 border border-primary/30 hover:border-white/40 transition-all space-y-1.5 backdrop-blur-sm shadow-sm">
-                  <div className="flex items-center space-x-2 text-emerald-300 font-bold text-xs">
-                    <span className="material-symbols-outlined text-lg">storefront</span>
-                    <span>Customer Self-Serve</span>
-                  </div>
-                  <p className="text-[11px] text-slate-100 leading-normal">
-                    Browse admin product catalog, request proposals, negotiate line discounts &amp; E-sign.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Stats Footer */}
-            <div className="relative z-10 p-4 rounded-2xl bg-primary-dark/80 border border-primary/40 flex flex-wrap items-center justify-between gap-4 text-xs">
-              <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-status"></span>
-                <span className="text-slate-100 font-semibold">99.9% Margin Floor Safeguard</span>
-              </div>
-              <div className="flex items-center space-x-3 text-surface-soft font-mono text-[11px]">
-                <span className="text-amber-300 font-bold">⚡ 44% Faster Deals</span>
-                <span>•</span>
-                <span className="text-emerald-300 font-bold">🔒 SOC-2 Certified</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Authentication Form in Purple Theme */}
-          <div className="lg:col-span-6 xl:col-span-5 flex flex-col justify-between p-7 md:p-10 rounded-2xl bg-white border border-surface-soft shadow-xl">
-            <div>
-              {/* Mode Switcher Tabs */}
-              <div className="flex items-center p-1 rounded-xl bg-slate-50 border border-surface-soft mb-6">
-                <button
-                  className={`flex-1 py-2.5 rounded-lg text-xs font-bold text-center transition-all ${!isSignup ? 'bg-primary text-white shadow-md' : 'text-text-muted hover:text-text-main font-semibold'}`}
-                  onClick={() => { setIsSignup(false); setError(''); }}
-                  type="button"
-                >
-                  Sign In
-                </button>
-                <button
-                  className={`flex-1 py-2.5 rounded-lg text-xs font-bold text-center transition-all ${isSignup ? 'bg-primary text-white shadow-md' : 'text-text-muted hover:text-text-main font-semibold'}`}
-                  onClick={() => { setIsSignup(true); setError(''); }}
-                  type="button"
-                >
-                  Sign Up
-                </button>
-              </div>
-
-              {/* Header Titles */}
-              <div className="mb-6">
-                <span className="text-xs font-bold text-primary uppercase tracking-widest block">
-                  {isSignup ? 'Create New Account' : 'Sign In to Your Workspace'}
-                </span>
-                <h1 className="text-2xl md:text-3xl font-extrabold text-text-main mt-1 tracking-tight">
-                  {isSignup ? 'Get Started with DealFlow360' : 'Sign In to DealFlow360'}
-                </h1>
-                <p className="text-xs text-text-muted mt-1">
-                  {isSignup
-                    ? 'Select your account type below to set up your DealFlow360 access.'
-                    : 'Enter your credentials — your user role will be detected automatically.'}
-                </p>
-              </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs font-medium flex items-center gap-2">
-                  <span className="material-symbols-outlined text-base">warning</span>
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {/* Primary Form */}
-              <form className="space-y-4" onSubmit={handleSubmit}>
-                {/* Account Type Selector (ONLY in Sign Up Mode) */}
-                {isSignup && (
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold text-text-main uppercase tracking-wider">
-                      Select Account Type
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setAccountType('admin')}
-                        className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${accountType === 'admin'
-                            ? 'bg-primary/10 border-primary text-primary ring-2 ring-primary/30 font-bold'
-                            : 'bg-slate-50 border-surface-soft text-text-muted hover:border-primary/50'
-                          }`}
-                      >
-                        <span className="material-symbols-outlined text-xl mb-1 text-primary">domain</span>
-                        <div>
-                          <div className="font-bold text-xs text-text-main">Admin / Business</div>
-                          <div className="text-[10px] text-text-muted">Organization management</div>
-                        </div>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setAccountType('customer')}
-                        className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${accountType === 'customer'
-                            ? 'bg-emerald-status/10 border-emerald-status text-emerald-status ring-2 ring-emerald-status/30 font-bold'
-                            : 'bg-slate-50 border-surface-soft text-text-muted hover:border-emerald-status/50'
-                          }`}
-                      >
-                        <span className="material-symbols-outlined text-xl mb-1 text-emerald-status">person</span>
-                        <div>
-                          <div className="font-bold text-xs text-text-main">Customer Account</div>
-                          <div className="text-[10px] text-text-muted">Quotes & products</div>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {isSignup && (
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-text-main">Full Name</label>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">person</span>
-                      <input
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-surface-soft text-text-main text-xs placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="e.g. Sarah Connor"
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required={isSignup}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {isSignup && accountType === 'admin' && (
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-text-main">Company / Organization Name</label>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">corporate_fare</span>
-                      <input
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-surface-soft text-text-main text-xs placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="e.g. CyberCreatures Inc."
-                        type="text"
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
-                        required={isSignup && accountType === 'admin'}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Email Field */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-text-main">Email Address</label>
-                  <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">alternate_email</span>
-                    <input
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-surface-soft text-text-main text-xs placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
-                      placeholder="name@example.com"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Password Field */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-semibold text-text-main">Password</label>
-                  </div>
-                  <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">lock</span>
-                    <input
-                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 border border-surface-soft text-text-main text-xs placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                    <button
-                      className="absolute right-3 top-2.5 text-text-muted hover:text-text-main transition-colors"
-                      onClick={() => setShowPassword(!showPassword)}
-                      type="button"
-                    >
-                      <span className="material-symbols-outlined text-lg">{showPassword ? 'visibility_off' : 'visibility'}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Submit CTA Button */}
-                <div className="pt-2">
+                {/* Mode Switcher Tabs */}
+                <div className="flex items-center p-1 rounded-xl bg-slate-50 border border-surface-soft mb-6">
                   <button
-                    disabled={loading}
-                    className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-dark text-white text-xs font-bold tracking-wide text-center flex items-center justify-center gap-2 shadow-lg shadow-primary/25 transition-all focus:outline-none focus:ring-2 focus:ring-primary active:scale-[0.99] disabled:opacity-70"
-                    type="submit"
+                    className={`flex-1 py-2.5 rounded-lg text-xs font-bold text-center transition-all ${!isSignup ? 'bg-primary text-white shadow-md' : 'text-text-muted hover:text-text-main font-semibold'}`}
+                    onClick={() => { setIsSignup(false); setError(''); }}
+                    type="button"
                   >
-                    {loading ? (
-                      <span className="material-symbols-outlined text-lg animate-spin">sync</span>
-                    ) : isSignup ? (
-                      `Create ${accountType === 'admin' ? 'Admin / Business' : 'Customer'} Account`
-                    ) : (
-                      'Sign In to DealFlow360'
-                    )}
+                    Sign In
+                  </button>
+                  <button
+                    className={`flex-1 py-2.5 rounded-lg text-xs font-bold text-center transition-all ${isSignup ? 'bg-primary text-white shadow-md' : 'text-text-muted hover:text-text-main font-semibold'}`}
+                    onClick={() => { setIsSignup(true); setError(''); }}
+                    type="button"
+                  >
+                    Sign Up
                   </button>
                 </div>
-              </form>
 
-              {/* Toggle Sign In / Sign Up */}
-              <div className="mt-4 text-center">
-                <button
-                  type="button"
-                  onClick={() => { setIsSignup(!isSignup); setError(''); }}
-                  className="text-xs text-primary hover:underline font-bold"
-                >
-                  {isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
-                </button>
+                {/* Header Titles */}
+                <div className="mb-6">
+                  <span className="text-xs font-bold text-primary uppercase tracking-widest block">
+                    {isSignup ? 'Create New Account' : 'Sign In to Your Workspace'}
+                  </span>
+                  <h1 className="text-2xl md:text-3xl font-extrabold text-text-main mt-1 tracking-tight">
+                    {isSignup ? 'Get Started with DealFlow360' : 'Sign In to DealFlow360'}
+                  </h1>
+                  <p className="text-xs text-text-muted mt-1">
+                    {isSignup
+                      ? 'Select your account type below to set up your DealFlow360 access.'
+                      : 'Enter your credentials — your user role will be detected automatically.'}
+                  </p>
+                </div>
+
+                {/* Error Message */}
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs font-medium flex items-center gap-2">
+                    <span className="material-symbols-outlined text-base">warning</span>
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                {/* Primary Form */}
+                <form className="space-y-4" onSubmit={handleSubmit}>
+                  {/* Account Type Selector (ONLY in Sign Up Mode) */}
+                  {isSignup && (
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-text-main uppercase tracking-wider">
+                        Select Account Type
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setAccountType('admin')}
+                          className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${accountType === 'admin'
+                            ? 'bg-primary/10 border-primary text-primary ring-2 ring-primary/30 font-bold'
+                            : 'bg-slate-50 border-surface-soft text-text-muted hover:border-primary/50'
+                            }`}
+                        >
+                          <span className="material-symbols-outlined text-xl mb-1 text-primary">domain</span>
+                          <div>
+                            <div className="font-bold text-xs text-text-main">Admin / Business</div>
+                            <div className="text-[10px] text-text-muted">Organization management</div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setAccountType('customer')}
+                          className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${accountType === 'customer'
+                            ? 'bg-emerald-status/10 border-emerald-status text-emerald-status ring-2 ring-emerald-status/30 font-bold'
+                            : 'bg-slate-50 border-surface-soft text-text-muted hover:border-emerald-status/50'
+                            }`}
+                        >
+                          <span className="material-symbols-outlined text-xl mb-1 text-emerald-status">person</span>
+                          <div>
+                            <div className="font-bold text-xs text-text-main">Customer Account</div>
+                            <div className="text-[10px] text-text-muted">Quotes & products</div>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {isSignup && (
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-text-main">Full Name</label>
+                      <div className="relative">
+                        <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">person</span>
+                        <input
+                          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-surface-soft text-text-main text-xs placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                          placeholder="e.g. Sarah Connor"
+                          type="text"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          required={isSignup}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {isSignup && accountType === 'admin' && (
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-text-main">Company / Organization Name</label>
+                      <div className="relative">
+                        <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">corporate_fare</span>
+                        <input
+                          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-surface-soft text-text-main text-xs placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                          placeholder="e.g. CyberCreatures Inc."
+                          type="text"
+                          value={companyName}
+                          onChange={(e) => setCompanyName(e.target.value)}
+                          required={isSignup && accountType === 'admin'}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Email Field */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-text-main">Email Address</label>
+                    <div className="relative">
+                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">alternate_email</span>
+                      <input
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-surface-soft text-text-main text-xs placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="name@example.com"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password Field */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-semibold text-text-main">Password</label>
+                    </div>
+                    <div className="relative">
+                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">lock</span>
+                      <input
+                        className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 border border-surface-soft text-text-main text-xs placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        className="absolute right-3 top-2.5 text-text-muted hover:text-text-main transition-colors"
+                        onClick={() => setShowPassword(!showPassword)}
+                        type="button"
+                      >
+                        <span className="material-symbols-outlined text-lg">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Submit CTA Button */}
+                  <div className="pt-2">
+                    <button
+                      disabled={loading}
+                      className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-dark text-white text-xs font-bold tracking-wide text-center flex items-center justify-center gap-2 shadow-lg shadow-primary/25 transition-all focus:outline-none focus:ring-2 focus:ring-primary active:scale-[0.99] disabled:opacity-70"
+                      type="submit"
+                    >
+                      {loading ? (
+                        <span className="material-symbols-outlined text-lg animate-spin">sync</span>
+                      ) : isSignup ? (
+                        `Create ${accountType === 'admin' ? 'Admin / Business' : 'Customer'} Account`
+                      ) : (
+                        'Sign In to DealFlow360'
+                      )}
+                    </button>
+                  </div>
+                </form>
+
+                {/* Toggle Sign In / Sign Up */}
+                <div className="mt-4 text-center">
+                  <button
+                    type="button"
+                    onClick={() => { setIsSignup(!isSignup); setError(''); }}
+                    className="text-xs text-primary hover:underline font-bold"
+                  >
+                    {isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+                  </button>
+                </div>
               </div>
+
+              {/* Quick Test Credential Filler Bar */}
+              <div className="mt-6 pt-4 border-t border-surface-soft space-y-2">
+                <div className="flex justify-between items-center text-[11px] font-bold text-primary">
+                  <span>⚡ Quick Test Credentials (1-Click Fill):</span>
+                  <span className="text-[10px] text-text-muted font-normal">Temporary Testing Helper</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 text-xs">
+                  <button type="button" onClick={() => fillCredentials('superadmin@dealflow360.com', 'SuperAdmin123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">👑 SuperAdmin</button>
+                  <button type="button" onClick={() => fillCredentials('admin@cybercreatures.com', 'Admin123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">🏢 Admin</button>
+                  <button type="button" onClick={() => fillCredentials('manager@cybercreatures.com', 'Manager123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">💼 Sales Mgr</button>
+                  <button type="button" onClick={() => fillCredentials('financemanager@cybercreatures.com', 'Finance123!')} className="px-2.5 py-1 bg-border-soft border border-amber-400/40 text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 font-bold text-[11px]">📊 Finance Mgr</button>
+                  <button type="button" onClick={() => fillCredentials('sales@cybercreatures.com', 'Sales123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">🎯 Sales Rep</button>
+                  <button type="button" onClick={() => fillCredentials('customer@acme.com', 'Customer123!')} className="px-2.5 py-1 bg-border-soft border border-emerald-status/30 text-emerald-status rounded-lg hover:bg-emerald-status/10 font-bold text-[11px]">👤 Customer</button>
+                </div>
+              </div>
+
             </div>
-
-            {/* Quick Test Credential Filler Bar */}
-            <div className="mt-6 pt-4 border-t border-surface-soft space-y-2">
-              <div className="flex justify-between items-center text-[11px] font-bold text-primary">
-                <span>⚡ Quick Test Credentials (1-Click Fill):</span>
-                <span className="text-[10px] text-text-muted font-normal">Temporary Testing Helper</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5 text-xs">
-                <button type="button" onClick={() => fillCredentials('superadmin@dealflow360.com', 'SuperAdmin123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">👑 SuperAdmin</button>
-                <button type="button" onClick={() => fillCredentials('admin@cybercreatures.com', 'Admin123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">🏢 Admin</button>
-                <button type="button" onClick={() => fillCredentials('manager@cybercreatures.com', 'Manager123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">💼 Sales Mgr</button>
-                <button type="button" onClick={() => fillCredentials('financemanager@cybercreatures.com', 'Finance123!')} className="px-2.5 py-1 bg-border-soft border border-amber-400/40 text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 font-bold text-[11px]">📊 Finance Mgr</button>
-                <button type="button" onClick={() => fillCredentials('sales@cybercreatures.com', 'Sales123!')} className="px-2.5 py-1 bg-border-soft border border-surface-soft text-primary rounded-lg hover:bg-border-soft font-bold text-[11px]">🎯 Sales Rep</button>
-                <button type="button" onClick={() => fillCredentials('customer@acme.com', 'Customer123!')} className="px-2.5 py-1 bg-border-soft border border-emerald-status/30 text-emerald-status rounded-lg hover:bg-emerald-status/10 font-bold text-[11px]">👤 Customer</button>
-              </div>
-            </div>
-
           </div>
         </div>
-      </div>
-    </main>
-  );
-};
+      </main>
+    );
+  };
 
-export default Login;
+  export default Login;

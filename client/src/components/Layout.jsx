@@ -10,6 +10,20 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const userStr = localStorage.getItem('user');
+  let user = userStr ? JSON.parse(userStr) : null;
+
+  // Auto-heal super_admin session if user is Super Admin
+  if (user && (user.email === 'superadmin@dealflow360.com' || user.name === 'Super Admin') && user.role !== 'super_admin') {
+    user.role = 'super_admin';
+    localStorage.setItem('user', JSON.stringify(user));
+  }
+
+  useEffect(() => {
+    if (user?.role === 'super_admin' && location.pathname === '/app/admin') {
+      navigate('/app/superadmin?tab=tenants', { replace: true });
+    }
+  }, [user, location.pathname, navigate]);
 
   const handleLogout = () => {
     disconnectSocket();
@@ -61,8 +75,8 @@ export default function Layout() {
                 key={fullTarget}
                 to={fullTarget}
                 className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all ${isActive
-                    ? 'bg-primary text-on-primary shadow-md font-semibold'
-                    : 'text-text-muted hover:bg-surface-soft hover:text-text-main'
+                  ? 'bg-primary text-on-primary shadow-md font-semibold'
+                  : 'text-text-muted hover:bg-surface-soft hover:text-text-main'
                   }`}
               >
                 <i className={`fa-solid ${item.icon} w-5 text-center text-base`}></i>
@@ -106,19 +120,9 @@ export default function Layout() {
             </span>
           </div>
 
-          {/* Right: Currency picker + user info */}
+          {/* Right: Currency picker */}
           <div className="flex items-center gap-3 shrink-0">
             <CurrencyPicker />
-            <div className="h-5 w-px bg-slate-200"></div>
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-primary/80 flex items-center justify-center text-white text-xs font-extrabold shrink-0">
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-              </div>
-              <div className="hidden sm:block">
-                <p className="text-xs font-bold text-slate-800 leading-none">{user?.name || 'User'}</p>
-                <p className="text-[10px] text-slate-400 capitalize leading-none mt-0.5">{user?.role?.replace('_', ' ') || 'Internal'}</p>
-              </div>
-            </div>
           </div>
         </header>
 
