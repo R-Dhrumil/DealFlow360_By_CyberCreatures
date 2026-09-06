@@ -235,81 +235,7 @@ export default function AdminWorkspace() {
   const { showAlert } = useAlert();
   const [activeTab, setActiveTab] = useState('products'); // 'products' | 'tiers' | 'team' | 'warehouses' | 'audit'
 
-  // Initial Product Catalog Fallback (CyberCreatures Company Catalog)
-  const INITIAL_PRODUCTS = [
-    {
-      id: 'p1',
-      sku: 'HW-RTR-01',
-      name: 'Industrial Router Pro',
-      category: 'Hardware',
-      base_price: 1200.00,
-      min_margin: 40.00,
-      unit: 'unit',
-      stock: 85,
-      status: 'Active',
-      description: 'High-performance industrial grade router'
-    },
-    {
-      id: 'p2',
-      sku: 'HW-NODE-01',
-      name: 'Edge Compute Node X1',
-      category: 'Hardware',
-      base_price: 2500.00,
-      min_margin: 35.00,
-      unit: 'unit',
-      stock: 45,
-      status: 'Active',
-      description: 'Ruggedized edge computing server for low-latency nodes'
-    },
-    {
-      id: 'p3',
-      sku: 'HW-IOT-01',
-      name: 'IoT Sensor Hub',
-      category: 'Hardware',
-      base_price: 450.00,
-      min_margin: 50.00,
-      unit: 'unit',
-      stock: 120,
-      status: 'Active',
-      description: 'Central hub for telemetry and industrial IoT sensors'
-    },
-    {
-      id: 'p6',
-      sku: 'SEC-FW-01',
-      name: 'NextGen Enterprise Firewall',
-      category: 'Hardware',
-      base_price: 3800.00,
-      min_margin: 45.00,
-      unit: 'unit',
-      stock: 30,
-      status: 'Active',
-      description: 'Zero-Trust network security & deep packet inspection appliance'
-    },
-    {
-      id: 'p7',
-      sku: 'SW-CPQ-01',
-      name: 'CPQ Engine Enterprise Suite',
-      category: 'Software',
-      base_price: 350.00,
-      min_margin: 85.00,
-      unit: 'user/month',
-      stock: 999,
-      status: 'Active',
-      description: 'Multi-tier automated pricing, margin guardrails, and deal desk suite'
-    },
-    {
-      id: 'p4',
-      sku: 'SVC-SLA-01',
-      name: '24/7 Premium Support SLA',
-      category: 'Services',
-      base_price: 500.00,
-      min_margin: 80.00,
-      unit: 'month',
-      stock: 100,
-      status: 'Active',
-      description: 'Round-the-clock priority technical support & 99.99% uptime'
-    }
-  ];
+  // Products are loaded from the database via fetchProducts()
 
   // Products State
   const [products, setProducts] = useState([]);
@@ -327,36 +253,19 @@ export default function AdminWorkspace() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Governance Tiers State
-  const [tiers, setTiers] = useState([
-    { id: 'dt-1', tier: 'Bronze', maxDiscount: 5.0, minMargin: 35.0, approver: 'Sales Manager' },
-    { id: 'dt-2', tier: 'Silver', maxDiscount: 10.0, minMargin: 30.0, approver: 'Sales Manager' },
-    { id: 'dt-3', tier: 'Gold', maxDiscount: 15.0, minMargin: 25.0, approver: 'Finance Lead' },
-    { id: 'dt-4', tier: 'Platinum Enterprise', maxDiscount: 22.0, minMargin: 20.0, approver: 'Admin Override' }
-  ]);
+  const [tiers, setTiers] = useState([]);
   const [newTierName, setNewTierName] = useState('');
   const [newTierDiscount, setNewTierDiscount] = useState('');
   const [newTierMargin, setNewTierMargin] = useState('');
   const [newTierApprover, setNewTierApprover] = useState('Sales Manager');
 
   // Category-Level Discount Ceiling Rules
-  const [categoryRules, setCategoryRules] = useState([
-    { category: 'Hardware', maxDiscount: 12.0, defaultMargin: 35.0 },
-    { category: 'Software', maxDiscount: 18.0, defaultMargin: 80.0 },
-    { category: 'Services', maxDiscount: 10.0, defaultMargin: 60.0 },
-  ]);
+  const [categoryRules, setCategoryRules] = useState([]);
 
-  // Fallback Team Directory
-  const INITIAL_TEAM = [
-    { id: 'u-2', name: 'CyberCreatures Admin', email: 'admin@cybercreatures.com', role: 'admin', status: 'Active', dealsCount: 1 },
-    { id: 'u-3', name: 'Sarah Manager', email: 'manager@cybercreatures.com', role: 'sales_manager', status: 'Active', dealsCount: 0 },
-    { id: 'u-4', name: 'M. Shah', email: 'sales@cybercreatures.com', role: 'sales_rep', status: 'Active', dealsCount: 16 },
-    { id: 'u-5', name: 'Finance Lead', email: 'finance@cybercreatures.com', role: 'finance', status: 'Active', dealsCount: 0 },
-    { id: 'u-6', name: 'J. Rao', email: 'j.rao@cybercreatures.com', role: 'sales_rep', status: 'Active', dealsCount: 1 },
-    { id: 'u-7', name: 'Jim Halpert', email: 'j.halpert@cybercreatures.com', role: 'sales_rep', status: 'Active', dealsCount: 1 },
-  ];
+  // Team is loaded from the database via fetchTeam()
 
   // Team State
-  const [team, setTeam] = useState(INITIAL_TEAM);
+  const [team, setTeam] = useState([]);
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -375,12 +284,7 @@ export default function AdminWorkspace() {
   const [isEditWarehouseModalOpen, setIsEditWarehouseModalOpen] = useState(false);
 
   // Audit Logs State
-  const [auditLogs, setAuditLogs] = useState([
-    { id: 'LOG-9081', action: 'PRODUCT_CREATED', entity: 'NextGen Enterprise Firewall', user: 'CyberCreatures Admin', role: 'admin', timestamp: '2026-09-02 14:22', details: 'Added to catalog at $3,800 base price' },
-    { id: 'LOG-9082', action: 'TIER_CONFIG_UPDATED', entity: 'Platinum Enterprise', user: 'CyberCreatures Admin', role: 'admin', timestamp: '2026-09-03 09:15', details: 'Updated max discount ceiling to 22.0%' },
-    { id: 'LOG-9083', action: 'DISCOUNT_ESCALATED', entity: 'Quotation QT-44444444', user: 'M. Shah', role: 'sales_rep', timestamp: '2026-09-04 16:40', details: 'Escalated 22% discount on Delta Systems LLC deal' },
-    { id: 'LOG-9084', action: 'USER_PROVISIONED', entity: 'Jim Halpert', user: 'CyberCreatures Admin', role: 'admin', timestamp: '2026-09-05 10:05', details: 'Provisioned as Sales Representative' }
-  ]);
+  const [auditLogs, setAuditLogs] = useState([]);
 
   const fetchProducts = async () => {
     try {
@@ -396,7 +300,7 @@ export default function AdminWorkspace() {
       }
     } catch (err) {
       console.error('Failed to fetch products:', err);
-      setProducts(INITIAL_PRODUCTS);
+      setProducts([]);
     }
   };
 
@@ -405,12 +309,9 @@ export default function AdminWorkspace() {
       const res = await api.get('/users');
       if (res.data && Array.isArray(res.data) && res.data.length > 0) {
         setTeam(res.data);
-      } else {
-        setTeam(INITIAL_TEAM);
       }
     } catch (err) {
-      console.warn('Failed to fetch team from API, using fallback:', err);
-      setTeam(INITIAL_TEAM);
+      console.warn('Failed to fetch team from API:', err);
     }
   };
 
@@ -418,29 +319,13 @@ export default function AdminWorkspace() {
     try {
       const res = await api.get('/approvals/config/discount-tiers');
       if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-        setTiers(prev => {
-          const updated = [...prev];
-          res.data.forEach(dbTier => {
-            const idx = updated.findIndex(t => t.tier?.toLowerCase() === dbTier.tier_name?.toLowerCase());
-            if (idx !== -1) {
-              updated[idx] = {
-                ...updated[idx],
-                maxDiscount: parseFloat(dbTier.max_discount_percent),
-                minMargin: dbTier.min_margin_percent ? parseFloat(dbTier.min_margin_percent) : updated[idx].minMargin,
-                approver: dbTier.approver || updated[idx].approver
-              };
-            } else {
-              updated.push({
-                id: dbTier.id,
-                tier: dbTier.tier_name,
-                maxDiscount: parseFloat(dbTier.max_discount_percent),
-                minMargin: dbTier.min_margin_percent ? parseFloat(dbTier.min_margin_percent) : 20.0,
-                approver: dbTier.approver || 'Sales Manager'
-              });
-            }
-          });
-          return updated;
-        });
+        setTiers(res.data.map(dbTier => ({
+          id: dbTier.id,
+          tier: dbTier.tier_name,
+          maxDiscount: parseFloat(dbTier.max_discount_percent),
+          minMargin: dbTier.min_margin_percent ? parseFloat(dbTier.min_margin_percent) : 20.0,
+          approver: dbTier.approver || 'Sales Manager'
+        })));
       }
     } catch {
       console.warn('Could not fetch tiers from API');
@@ -537,7 +422,7 @@ export default function AdminWorkspace() {
         id: 'LOG-' + Date.now().toString().slice(-4),
         action: 'PRODUCT_CREATED',
         entity: newProd.name,
-        user: 'CyberCreatures Admin',
+        user: user?.name || 'Admin',
         role: 'admin',
         timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
         details: `Added to catalog at $${newProd.base_price} base price, initial stock ${newProd.stock}`
@@ -662,7 +547,7 @@ export default function AdminWorkspace() {
         id: 'LOG-' + Date.now().toString().slice(-4),
         action: 'PRODUCT_UPDATED',
         entity: updatedProd.name,
-        user: 'CyberCreatures Admin',
+        user: user?.name || 'Admin',
         role: 'admin',
         timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
         details: `Updated price to $${updatedProd.base_price}, stock to ${updatedProd.stock} units`
@@ -696,7 +581,7 @@ export default function AdminWorkspace() {
             id: 'LOG-' + Date.now().toString().slice(-4),
             action: 'PRODUCT_DELETED',
             entity: prod.name,
-            user: 'CyberCreatures Admin',
+            user: user?.name || 'Admin',
             role: 'admin',
             timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
             details: `Removed SKU ${prod.sku || prod.id} from catalog`
@@ -724,7 +609,7 @@ export default function AdminWorkspace() {
           id: 'LOG-' + Date.now().toString().slice(-4),
           action: 'TIER_CONFIG_UPDATED',
           entity: `${tierObj.tier} Tier`,
-          user: 'CyberCreatures Admin',
+          user: user?.name || 'Admin',
           role: 'admin',
           timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
           details: `Updated max discount to ${tierObj.maxDiscount}%, min margin to ${tierObj.minMargin}%, approver: ${tierObj.approver}`
@@ -789,7 +674,7 @@ export default function AdminWorkspace() {
           id: 'LOG-' + Date.now().toString().slice(-4),
           action: 'USER_PROVISIONED',
           entity: newMember.name,
-          user: 'CyberCreatures Admin',
+          user: user?.name || 'Admin',
           role: 'admin',
           timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
           details: `Provisioned as ${newMember.role.replace('_', ' ')}`
@@ -824,7 +709,7 @@ export default function AdminWorkspace() {
         id: 'LOG-' + Date.now().toString().slice(-4),
         action: 'USER_ROLE_UPDATED',
         entity: member.name,
-        user: 'CyberCreatures Admin',
+        user: user?.name || 'Admin',
         role: 'admin',
         timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
         details: `Role updated from ${oldRole.replace('_', ' ')} to ${newRole.replace('_', ' ')}`
@@ -872,7 +757,7 @@ export default function AdminWorkspace() {
         id: 'LOG-' + Date.now().toString().slice(-4),
         action: 'WAREHOUSE_CREATED',
         entity: createdWh.name,
-        user: 'CyberCreatures Admin',
+        user: user?.name || 'Admin',
         role: 'admin',
         timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
         details: `Configured depot in ${createdWh.location} (weight: ${createdWh.shippingCostWeight}x, stock: ${createdWh.stockCount})`
@@ -932,7 +817,7 @@ export default function AdminWorkspace() {
         id: 'LOG-' + Date.now().toString().slice(-4),
         action: 'WAREHOUSE_UPDATED',
         entity: updatedWh.name,
-        user: 'CyberCreatures Admin',
+        user: user?.name || 'Admin',
         role: 'admin',
         timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
         details: `Updated parameters: location "${updatedWh.location}", weight ${updatedWh.shippingCostWeight}x, stock ${updatedWh.stockCount}`
@@ -964,7 +849,7 @@ export default function AdminWorkspace() {
             id: 'LOG-' + Date.now().toString().slice(-4),
             action: 'WAREHOUSE_DELETED',
             entity: wh.name,
-            user: 'CyberCreatures Admin',
+            user: user?.name || 'Admin',
             role: 'admin',
             timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
             details: `Removed warehouse depot "${wh.name}" (${wh.id}) from catalog`
