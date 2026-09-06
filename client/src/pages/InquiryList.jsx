@@ -8,6 +8,7 @@ import { useVisibleInterval } from '../hooks/useVisibleInterval';
 const statusColors = {
   open: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', dot: 'bg-blue-500', label: 'Open' },
   in_progress: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', dot: 'bg-amber-500', label: 'In Progress' },
+  paid: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', dot: 'bg-emerald-500', label: 'Paid & Confirmed' },
   closed: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', dot: 'bg-emerald-500', label: 'Closed' },
   cancelled: { bg: 'bg-slate-50', text: 'text-slate-500', border: 'border-slate-200', dot: 'bg-slate-400', label: 'Cancelled' },
 };
@@ -97,6 +98,9 @@ export default function InquiryList() {
           <span className="px-3 py-1.5 bg-amber-100 text-amber-700 rounded-xl">
             {inquiries.filter(i => i.status === 'in_progress').length} In Progress
           </span>
+          <span className="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-xl">
+            {inquiries.filter(i => i.status === 'paid').length} Paid &amp; Confirmed
+          </span>
         </div>
       </header>
 
@@ -176,7 +180,7 @@ export default function InquiryList() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 shrink-0">
-                    {inquiry.status !== 'closed' && (
+                    {inquiry.status !== 'closed' && inquiry.status !== 'paid' && (
                       <button
                         onClick={() => handleCreateQuotation(inquiry)}
                         className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-dark transition-all shadow-sm flex items-center gap-2"
