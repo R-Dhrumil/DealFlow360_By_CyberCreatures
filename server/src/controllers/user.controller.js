@@ -89,9 +89,9 @@ class UserController {
     const { id } = req.params;
     const { role } = req.body;
 
-    const validRoles = ['sales_rep', 'sales_manager', 'finance_manager', 'admin', 'operations'];
+    const validRoles = ['sales_rep', 'sales_manager', 'finance_manager', 'admin', 'super_admin', 'operations'];
     if (!role || !validRoles.includes(role)) {
-      throw ApiError.badRequest(`Invalid role. Must be one of: ${validRoles.join(', ')} (super_admin cannot be assigned)`);
+      throw ApiError.badRequest(`Invalid role. Must be one of: ${validRoles.join(', ')}`);
     }
 
     const companyId = req.user?.role === 'super_admin' ? null : req.user?.companyId;

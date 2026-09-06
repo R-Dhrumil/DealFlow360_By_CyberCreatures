@@ -342,10 +342,11 @@ export default function AdminWorkspace() {
 
   // Fallback Team Directory
   const INITIAL_TEAM = [
+    { id: 'u-1', name: 'Super Admin', email: 'superadmin@dealflow360.com', role: 'super_admin', status: 'Active', dealsCount: 0 },
     { id: 'u-2', name: 'CyberCreatures Admin', email: 'admin@cybercreatures.com', role: 'admin', status: 'Active', dealsCount: 1 },
     { id: 'u-3', name: 'Sarah Manager', email: 'manager@cybercreatures.com', role: 'sales_manager', status: 'Active', dealsCount: 0 },
     { id: 'u-4', name: 'M. Shah', email: 'sales@cybercreatures.com', role: 'sales_rep', status: 'Active', dealsCount: 16 },
-    { id: 'u-5', name: 'Finance Lead', email: 'finance@cybercreatures.com', role: 'finance_manager', status: 'Active', dealsCount: 0 },
+    { id: 'u-5', name: 'Finance Lead', email: 'finance@cybercreatures.com', role: 'finance', status: 'Active', dealsCount: 0 },
     { id: 'u-6', name: 'J. Rao', email: 'j.rao@cybercreatures.com', role: 'sales_rep', status: 'Active', dealsCount: 1 },
     { id: 'u-7', name: 'Jim Halpert', email: 'j.halpert@cybercreatures.com', role: 'sales_rep', status: 'Active', dealsCount: 1 },
   ];
@@ -1555,31 +1556,27 @@ export default function AdminWorkspace() {
                       <td className="p-3 font-bold text-text-main">{m.name}</td>
                       <td className="p-3 text-slate-600 font-mono">{m.email}</td>
                       <td className="p-3">
-                        {m.role === 'super_admin' ? (
-                          <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase border bg-amber-100 text-amber-900 border-amber-300">
-                            SUPER ADMIN
-                          </span>
-                        ) : (
-                          <div className="relative inline-flex items-center group" title="Click to change team member role">
-                            <select
-                              value={m.role}
-                              onChange={(e) => handleRoleChange(m.id, e.target.value)}
-                              className={`cursor-pointer appearance-none pl-3 pr-7 py-1 rounded-full text-[10px] font-extrabold uppercase border focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all ${
-                                m.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
-                                  m.role === 'sales_manager' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
-                                    m.role === 'sales_rep' ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200' :
-                                      m.role === 'finance' || m.role === 'finance_manager' ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' :
-                                          'bg-slate-200 text-slate-800 border-slate-300 hover:bg-slate-300'
-                                }`}
-                            >
-                              <option value="admin" className="bg-white text-slate-800 font-bold">ADMIN</option>
-                              <option value="sales_manager" className="bg-white text-slate-800 font-bold">SALES MANAGER</option>
-                              <option value="sales_rep" className="bg-white text-slate-800 font-bold">SALES REP</option>
-                              <option value="finance_manager" className="bg-white text-slate-800 font-bold">FINANCE MANAGER</option>
-                            </select>
-                            <i className="fa-solid fa-chevron-down text-[8px] pointer-events-none absolute right-2.5 opacity-60 text-current"></i>
-                          </div>
-                        )}
+                        <div className="relative inline-flex items-center group" title="Click to change team member role">
+                          <select
+                            value={m.role}
+                            onChange={(e) => handleRoleChange(m.id, e.target.value)}
+                            className={`cursor-pointer appearance-none pl-3 pr-7 py-1 rounded-full text-[10px] font-extrabold uppercase border focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all ${m.role === 'super_admin' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
+                              m.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
+                                m.role === 'sales_manager' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
+                                  m.role === 'sales_rep' ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200' :
+                                    m.role === 'finance' ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' :
+                                      m.role === 'finance_manager' ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' :
+                                        'bg-slate-200 text-slate-800 border-slate-300 hover:bg-slate-300'
+                              }`}
+                          >
+                            <option value="super_admin" className="bg-white text-slate-800 font-bold">SUPER ADMIN</option>
+                            <option value="admin" className="bg-white text-slate-800 font-bold">ADMIN</option>
+                            <option value="sales_manager" className="bg-white text-slate-800 font-bold">SALES MANAGER</option>
+                            <option value="sales_rep" className="bg-white text-slate-800 font-bold">SALES REP</option>
+                            <option value="finance_manager" className="bg-white text-slate-800 font-bold">FINANCE MANAGER</option>
+                          </select>
+                          <i className="fa-solid fa-chevron-down text-[8px] pointer-events-none absolute right-2.5 opacity-60 text-current"></i>
+                        </div>
                       </td>
                       <td className="p-3 text-center">
                         <span className="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full text-[10px]">
