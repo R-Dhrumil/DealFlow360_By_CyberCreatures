@@ -5,7 +5,8 @@ class ApprovalController {
   /** GET /approvals/pending */
   async getPending(req, res) {
     const userId = req.user?.userId || req.user?.id;
-    const approvals = await approvalService.getPendingApprovals(req.companyId, req.user.role, userId);
+    const { scope } = req.query;
+    const approvals = await approvalService.getPendingApprovals(req.companyId, req.user.role, userId, scope || null);
     return res.json(approvals);
   }
 

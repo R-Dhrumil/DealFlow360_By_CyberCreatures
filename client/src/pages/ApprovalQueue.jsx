@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
+import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAlert } from '../contexts/AlertContext';
 import { useCurrency } from '../contexts/CurrencyContext';
@@ -13,6 +15,8 @@ const APPROVAL_LEVEL_META = {
 };
 
 export default function ApprovalQueue() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
   const { showAlert } = useAlert();
@@ -22,21 +26,41 @@ export default function ApprovalQueue() {
   const [reason, setReason] = useState('');
   const [messagesMap, setMessagesMap] = useState({});
   const [replyText, setReplyText] = useState({});
+  // Filter scope: 'my_level' (filtered to caller's role level) vs 'all' (company-wide)
+  const [filterScope, setFilterScope] = useState('my_level');
   // Inline modify state: { [quotationId]: { [lineId]: discount } }
   const [modifyMode, setModifyMode] = useState({});
   const [modifiedDiscounts, setModifiedDiscounts] = useState({});
 
+  const isElevatedRole = ['admin', 'super_admin', 'sales_manager', 'finance_manager', 'finance'].includes(user?.role);
+
+  // Check if current user is authorized to act on this quotation status
+  const canUserApprove = (status) => {
+    if (!user) return false;
+    const role = user.role;
+    if (['admin', 'super_admin'].includes(role)) return true;
+    if (status === 'pending_admin_approval') return false; // Strictly Admin floor override
+    if (status === 'pending_finance_approval') {
+      return ['finance_manager', 'finance'].includes(role);
+    }
+    if (status === 'pending_approval' || status === 'draft') {
+      return ['sales_manager', 'finance_manager', 'finance'].includes(role);
+    }
+    return false;
+  };
+
   const fetchApprovals = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const response = await api.get('/approvals/pending');
-      setApprovals(response.data);
+      const params = filterScope === 'all' ? { scope: 'all' } : {};
+      const response = await api.get('/approvals/pending', { params });
+      setApprovals(response.data || []);
     } catch (error) {
       if (!silent) console.error('Failed to fetch approvals', error);
     } finally {
       if (!silent) setLoading(false);
     }
-  }, []);
+  }, [filterScope]);
 
   useEffect(() => {
     fetchApprovals();
@@ -143,16 +167,69 @@ export default function ApprovalQueue() {
 
   return (
     <div className="p-6 md:p-12">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-800">Approval Queue</h1>
-        <p className="text-text-muted">Review quotations requiring discount authority or floor price approval.</p>
+      <header className="mb-8 flex flex-wrap justify-between items-start gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-slate-800">Approval Queue</h1>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+              {approvals.length} Pending
+            </span>
+          </div>
+          <p className="text-text-muted mt-1 text-xs">
+            Review quotations requiring discount authority or floor price approval. Click anywhere on a row to open the quote approval page.
+          </p>
+        </div>
+
+        {/* Scope Toggle Filter */}
+        {isElevatedRole && (
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setFilterScope('my_level')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                filterScope === 'my_level'
+                  ? 'bg-white text-slate-800 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <i className="fa-solid fa-user-check text-[11px]"></i>
+              <span>Awaiting My Action</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterScope('all')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                filterScope === 'all'
+                  ? 'bg-white text-slate-800 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <i className="fa-solid fa-layer-group text-[11px]"></i>
+              <span>All Approvals</span>
+            </button>
+          </div>
+        )}
       </header>
 
       {approvals.length === 0 ? (
         <div className="card p-12 text-center">
           <i className="fa-solid fa-check-circle text-green-500 text-5xl mb-4"></i>
           <h3 className="text-lg font-medium text-slate-800">All caught up!</h3>
-          <p className="text-text-muted mt-2">There are no quotations pending your approval right now.</p>
+          <p className="text-text-muted mt-2 text-xs">
+            {filterScope === 'my_level'
+              ? 'There are no quotations pending your level of approval right now.'
+              : 'There are no quotations pending approval across the organization.'}
+          </p>
+          {filterScope === 'my_level' && isElevatedRole && (
+            <button
+              type="button"
+              onClick={() => setFilterScope('all')}
+              className="mt-4 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all inline-flex items-center gap-1.5 shadow-2xs"
+            >
+              <i className="fa-solid fa-layer-group"></i>
+              <span>View All Company Pending Approvals</span>
+            </button>
+          )}
         </div>
       ) : (
         <div className="card overflow-hidden">
@@ -166,7 +243,7 @@ export default function ApprovalQueue() {
                   <th className="px-6 py-4">Amount</th>
                   <th className="px-6 py-4 text-center">Approval Level</th>
                   <th className="px-6 py-4 text-center">Risk Score</th>
-                  <th className="px-6 py-4"></th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -174,12 +251,22 @@ export default function ApprovalQueue() {
                   const meta = APPROVAL_LEVEL_META[approval.status] || APPROVAL_LEVEL_META['draft'];
                   const totalAmount = parseFloat(approval.total_amount || 0);
                   const maxDiscount = parseFloat(approval.max_discount_applied || 0);
+                  const hasActionAuthority = canUserApprove(approval.status);
 
                   return (
                     <React.Fragment key={approval.id}>
-                      <tr className="hover:bg-slate-50 transition-colors">
+                      <tr
+                        onClick={() => navigate(`/app/quote/${approval.id}`)}
+                        className="hover:bg-indigo-50/40 cursor-pointer transition-colors group"
+                        title="Click row to open quotation approval page"
+                      >
                         <td className="px-6 py-4">
-                          <span className="font-mono text-sm text-slate-700 font-bold">{approval.id}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-sm text-slate-700 font-bold group-hover:text-primary transition-colors">
+                              {approval.id}
+                            </span>
+                            <i className="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400 group-hover:text-primary transition-colors"></i>
+                          </div>
                           {approval.inquiry_id && (
                             <span className="block text-[10px] text-blue-500 font-semibold mt-0.5">
                               <i className="fa-solid fa-link mr-1"></i>Inquiry: {approval.inquiry_id}
@@ -196,7 +283,7 @@ export default function ApprovalQueue() {
                         </td>
                         <td className="px-6 py-4 text-slate-600 text-sm">
                           {approval.rep_name}
-                          <span className="block text-[10px] text-slate-400">{approval.rep_role?.replace('_', ' ')}</span>
+                          <span className="block text-[10px] text-slate-400 capitalize">{approval.rep_role?.replace('_', ' ')}</span>
                         </td>
                         <td className="px-6 py-4">
                           <span className="font-bold text-slate-800 text-sm">{fmt(totalAmount)}</span>
@@ -205,24 +292,54 @@ export default function ApprovalQueue() {
                           )}
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${meta.cls}`}>
-                            <i className={`fa-solid ${meta.icon} text-[10px]`}></i>
-                            {meta.label}
-                          </span>
+                          <div className="flex flex-col items-center gap-1">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${meta.cls}`}>
+                              <i className={`fa-solid ${meta.icon} text-[10px]`}></i>
+                              {meta.label}
+                            </span>
+                            {hasActionAuthority ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                <i className="fa-solid fa-bolt text-[9px]"></i>
+                                <span>Action Required</span>
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                                Awaiting Other Role
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-center">
                           <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
                             <i className="fa-solid fa-triangle-exclamation"></i>
-                            <span>{parseFloat(approval.blended_risk_score).toFixed(2)}%</span>
+                            <span>{parseFloat(approval.blended_risk_score || 0).toFixed(2)}%</span>
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          {/* <button
-                            onClick={() => toggleExpand(approval.id)}
-                            className="text-text-muted hover:text-primary px-3 py-1 font-semibold text-xs border border-surface-soft rounded-lg bg-white shadow-xs"
-                          >
-                            {expandedId === approval.id ? 'Hide' : 'Review & Decide'}
-                          </button> */}
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/app/quote/${approval.id}`);
+                              }}
+                              className="px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 whitespace-nowrap"
+                            >
+                              <span>Review &amp; Decide</span>
+                              <i className="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-0.5 transition-transform"></i>
+                            </button>
+                            <button
+                              type="button"
+                              title={expandedId === approval.id ? 'Hide preview' : 'Quick preview'}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleExpand(approval.id);
+                              }}
+                              className="p-1.5 rounded-xl border border-surface-soft bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all text-xs"
+                            >
+                              <i className={`fa-solid ${expandedId === approval.id ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                            </button>
+                          </div>
                         </td>
                       </tr>
 
@@ -382,7 +499,14 @@ export default function ApprovalQueue() {
                                   onChange={(e) => setReason(e.target.value)}
                                 />
                               </div>
-                              <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                              <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                                <button
+                                  type="button"
+                                  onClick={() => navigate(`/app/quote/${approval.id}`)}
+                                  className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold transition-all flex items-center shadow-2xs"
+                                >
+                                  <i className="fa-solid fa-arrow-up-right-from-square mr-1.5"></i>Open Approval Page
+                                </button>
                                 <button
                                   onClick={() => handleAction(approval.id, 'return')}
                                   className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-all flex items-center"
@@ -390,14 +514,18 @@ export default function ApprovalQueue() {
                                   <i className="fa-solid fa-rotate-left mr-1.5"></i>Return to Rep
                                 </button>
                                 <button
+                                  disabled={!canUserApprove(approval.status)}
+                                  title={!canUserApprove(approval.status) ? "Your role does not have authorization to reject this level" : ""}
                                   onClick={() => handleAction(approval.id, 'reject')}
-                                  className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all flex items-center"
+                                  className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold transition-all flex items-center"
                                 >
                                   <i className="fa-solid fa-xmark mr-1.5"></i>Reject
                                 </button>
                                 <button
+                                  disabled={!canUserApprove(approval.status)}
+                                  title={!canUserApprove(approval.status) ? "Your role does not have authorization to approve this level" : ""}
                                   onClick={() => handleAction(approval.id, modifyMode[approval.id] ? 'modify_and_approve' : 'approve')}
-                                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center shadow"
+                                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold transition-all flex items-center shadow"
                                 >
                                   <i className={`fa-solid ${modifyMode[approval.id] ? 'fa-pen-check' : 'fa-check'} mr-1.5`}></i>
                                   {modifyMode[approval.id] ? 'Modify & Approve' : 'Approve Quote'}

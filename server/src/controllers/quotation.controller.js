@@ -460,6 +460,39 @@ class QuotationController {
 
     return res.status(201).json(newMsg);
   }
+
+  /** PUT /quotations/:id/approve */
+  async approve(req, res) {
+    const quotationId = req.params.id;
+    const userId = req.user?.userId || req.user?.id;
+    const userRole = req.user?.role;
+    const { modifiedLines } = req.body || {};
+    const result = await quotationService.approveQuotation(
+      req.companyId,
+      quotationId,
+      userRole,
+      userId,
+      modifiedLines || null
+    );
+    return res.json({ success: true, message: 'Quotation approved successfully.', ...result });
+  }
+
+  /** PUT /quotations/:id/reject */
+  async reject(req, res) {
+    const quotationId = req.params.id;
+    const userId = req.user?.userId || req.user?.id;
+    const userRole = req.user?.role;
+    const { reason } = req.body || {};
+    const result = await quotationService.rejectQuotation(
+      req.companyId,
+      quotationId,
+      userRole,
+      userId,
+      reason || ''
+    );
+    return res.json({ success: true, message: 'Quotation rejected.', ...result });
+  }
 }
 
 module.exports = new QuotationController();
+
