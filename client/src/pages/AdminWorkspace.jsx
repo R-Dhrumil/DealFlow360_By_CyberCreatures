@@ -275,8 +275,7 @@ export default function AdminWorkspace() {
   const [warehouses, setWarehouses] = useState([]);
   const [newWhName, setNewWhName] = useState('');
   const [newWhLoc, setNewWhLoc] = useState('');
-  const [newWhCostWeight, setNewWhCostWeight] = useState('1.0');
-  const [newWhStock, setNewWhStock] = useState('100');
+  const [newWhMinInventory, setNewWhMinInventory] = useState('10');
   const [newWhStatus, setNewWhStatus] = useState('Active');
 
   // Edit Warehouse Modal State
@@ -725,8 +724,7 @@ export default function AdminWorkspace() {
     const payload = {
       name: newWhName.trim(),
       location: newWhLoc.trim() || 'Main Depot',
-      shippingCostWeight: parseFloat(newWhCostWeight) || 1.0,
-      stockCount: parseInt(newWhStock, 10) || 100,
+      minInventory: parseInt(newWhMinInventory, 10) || 10,
       status: newWhStatus || 'Active'
     };
 
@@ -741,8 +739,7 @@ export default function AdminWorkspace() {
         createdWh = {
           ...createdWh,
           ...res.data,
-          shippingCostWeight: parseFloat(res.data.shippingCostWeight || res.data.shipping_cost_weight) || payload.shippingCostWeight,
-          stockCount: parseInt(res.data.stockCount !== undefined ? res.data.stockCount : res.data.stock_count, 10) || payload.stockCount
+          minInventory: parseInt(res.data.minInventory || 10, 10)
         };
       }
     } catch (err) {
@@ -760,15 +757,14 @@ export default function AdminWorkspace() {
         user: user?.name || 'Admin',
         role: 'admin',
         timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
-        details: `Configured depot in ${createdWh.location} (weight: ${createdWh.shippingCostWeight}x, stock: ${createdWh.stockCount})`
+        details: `Configured depot in ${createdWh.location} (Minimum Inventory: ${createdWh.minInventory} units)`
       },
       ...prev
     ]);
 
     setNewWhName('');
     setNewWhLoc('');
-    setNewWhCostWeight('1.0');
-    setNewWhStock('100');
+    setNewWhMinInventory('10');
     setNewWhStatus('Active');
     showNotification('success', `Warehouse '${createdWh.name}' configured successfully!`);
   };
@@ -778,8 +774,7 @@ export default function AdminWorkspace() {
       id: wh.id,
       name: wh.name,
       location: wh.location || '',
-      shippingCostWeight: wh.shippingCostWeight !== undefined ? wh.shippingCostWeight : 1.0,
-      stockCount: wh.stockCount !== undefined ? wh.stockCount : 0,
+      minInventory: wh.minInventory !== undefined ? wh.minInventory : 10,
       status: wh.status || 'Active'
     });
     setIsEditWarehouseModalOpen(true);
@@ -793,8 +788,7 @@ export default function AdminWorkspace() {
       ...editingWarehouse,
       name: editingWarehouse.name.trim(),
       location: editingWarehouse.location?.trim() || 'Main Depot',
-      shippingCostWeight: parseFloat(editingWarehouse.shippingCostWeight) || 1.0,
-      stockCount: parseInt(editingWarehouse.stockCount, 10) || 0,
+      minInventory: parseInt(editingWarehouse.minInventory, 10) || 10,
       status: editingWarehouse.status || 'Active'
     };
 
@@ -802,8 +796,7 @@ export default function AdminWorkspace() {
       await api.put(`/warehouses/${editingWarehouse.id}`, {
         name: updatedWh.name,
         location: updatedWh.location,
-        shippingCostWeight: updatedWh.shippingCostWeight,
-        stockCount: updatedWh.stockCount,
+        minInventory: updatedWh.minInventory,
         status: updatedWh.status
       });
     } catch (err) {
@@ -820,7 +813,7 @@ export default function AdminWorkspace() {
         user: user?.name || 'Admin',
         role: 'admin',
         timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
-        details: `Updated parameters: location "${updatedWh.location}", weight ${updatedWh.shippingCostWeight}x, stock ${updatedWh.stockCount}`
+        details: `Updated parameters: location "${updatedWh.location}", Minimum Inventory ${updatedWh.minInventory} units`
       },
       ...prev
     ]);
@@ -1625,10 +1618,10 @@ export default function AdminWorkspace() {
                         </span>
                       </div>
                       <div className="bg-white/80 rounded-xl p-2.5 border border-slate-200/60 shadow-2xs">
-                        <span className="text-[10px] text-text-muted block font-semibold">Logistics Weight</span>
+                        <span className="text-[10px] text-text-muted block font-semibold">Minimum Inventory</span>
                         <span className="font-bold text-slate-800 flex items-center gap-1.5 mt-0.5">
-                          <i className="fa-solid fa-truck-fast text-[11px] text-blue-600"></i>
-                          <span>{w.shippingCostWeight}x rate</span>
+                          <i className="fa-solid fa-triangle-exclamation text-[11px] text-amber-600"></i>
+                          <span>{w.minInventory !== undefined ? w.minInventory : 10} units min threshold</span>
                         </span>
                       </div>
                     </div>
@@ -1668,33 +1661,17 @@ export default function AdminWorkspace() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Shipping Cost Weight</label>
-                  <input
-                    type="number"
-                    step="0.05"
-                    min="0.1"
-                    placeholder="1.0"
-                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
-                    value={newWhCostWeight}
-                    onChange={(e) => setNewWhCostWeight(e.target.value)}
-                  />
-                  <p className="text-[10px] text-slate-400 mt-0.5">1.0 = standard</p>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Initial Stock Units</label>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="100"
-                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
-                    value={newWhStock}
-                    onChange={(e) => setNewWhStock(e.target.value)}
-                  />
-                  <p className="text-[10px] text-slate-400 mt-0.5">Depot inventory</p>
-                </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Minimum Inventory Level</label>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="10"
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={newWhMinInventory}
+                  onChange={(e) => setNewWhMinInventory(e.target.value)}
+                />
+                <p className="text-[10px] text-slate-400 mt-0.5">Threshold level for auto-rebalancing alerts & stock transfers</p>
               </div>
 
               <div>
@@ -1984,31 +1961,17 @@ export default function AdminWorkspace() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Shipping Cost Multiplier</label>
-                  <input
-                    type="number"
-                    step="0.05"
-                    min="0.1"
-                    required
-                    value={editingWarehouse.shippingCostWeight}
-                    onChange={(e) => setEditingWarehouse({ ...editingWarehouse, shippingCostWeight: e.target.value })}
-                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  <p className="text-[10px] text-slate-400 mt-0.5">1.0 = baseline freight cost</p>
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Stock Units Available</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={editingWarehouse.stockCount}
-                    onChange={(e) => setEditingWarehouse({ ...editingWarehouse, stockCount: Math.max(0, parseInt(e.target.value, 10) || 0) })}
-                    className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  <p className="text-[10px] text-slate-400 mt-0.5">Capacity across product SKUs</p>
-                </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Minimum Inventory Level</label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={editingWarehouse.minInventory !== undefined ? editingWarehouse.minInventory : 10}
+                  onChange={(e) => setEditingWarehouse({ ...editingWarehouse, minInventory: Math.max(1, parseInt(e.target.value, 10) || 10) })}
+                  className="w-full bg-slate-50 border border-surface-soft rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <p className="text-[10px] text-slate-400 mt-0.5">Safety threshold limit before auto-rebalancing triggers</p>
               </div>
 
               <div>

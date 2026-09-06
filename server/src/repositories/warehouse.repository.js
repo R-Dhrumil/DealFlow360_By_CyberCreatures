@@ -21,6 +21,7 @@ class WarehouseRepository {
       location: row.location || '',
       shippingCostWeight: parseFloat(row.shipping_cost_weight) || 1.0,
       stockCount: parseInt(row.stock_count, 10) || 0,
+      minInventory: 10,
       status: 'Active'
     }));
   }
@@ -31,6 +32,7 @@ class WarehouseRepository {
     const location = data.location || 'Main Depot';
     const shippingCostWeight = parseFloat(data.shippingCostWeight) || 1.0;
     const stockCount = parseInt(data.stockCount, 10) || 0;
+    const minInventory = parseInt(data.minInventory, 10) || 10;
 
     const result = await db.query(
       `INSERT INTO warehouses (id, company_id, name, location, shipping_cost_weight)
@@ -47,6 +49,7 @@ class WarehouseRepository {
       location: row.location,
       shippingCostWeight: parseFloat(row.shipping_cost_weight) || 1.0,
       stockCount,
+      minInventory,
       status: 'Active'
     };
   }

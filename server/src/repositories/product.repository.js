@@ -114,7 +114,15 @@ class ProductRepository {
         [name, category, basePrice, unit, description, floorPrice !== undefined ? floorPrice : null, sku || null, minMargin !== undefined ? parseFloat(minMargin) : null, stock !== undefined ? parseInt(stock, 10) : null, status || null, productId, companyId]
       );
       if (result.rows.length > 0) {
-        return result.rows[0];
+        const updatedRow = result.rows[0];
+        if (stock !== undefined) {
+          try {
+            await this.updateStock(companyId, productId, { stock: parseInt(stock, 10) });
+          } catch (syncErr) {
+            console.warn('[Product Update] Warehouse stock sync warning:', syncErr.message);
+          }
+        }
+        return updatedRow;
       }
       return null;
     } catch (err) {
@@ -150,21 +158,67 @@ class ProductRepository {
 
   async updateStock(companyId, productId, { stock, delta }) {
     try {
-      if (stock !== undefined) {
+      let updatedProd;
+      const targetStock = stock !== undefined ? parseInt(stock, 10) : null;
+      const targetDelta = delta !== undefined ? parseInt(delta, 10) : null;
+
+      if (targetStock !== null) {
         const result = await db.query(
           'UPDATE products SET stock = $1 WHERE id = $2 AND company_id = $3 RETURNING *',
-          [parseInt(stock, 10), productId, companyId]
+          [targetStock, productId, companyId]
         );
-        return result.rows[0] || { id: productId, stock: parseInt(stock, 10) };
-      }
-      if (delta !== undefined) {
+        updatedProd = result.rows[0] || { id: productId, stock: targetStock };
+      } else if (targetDelta !== null) {
         const result = await db.query(
           'UPDATE products SET stock = GREATEST(0, COALESCE(stock, 0) + $1) WHERE id = $2 AND company_id = $3 RETURNING *',
-          [parseInt(delta, 10), productId, companyId]
+          [targetDelta, productId, companyId]
         );
-        return result.rows[0] || { id: productId, delta };
+        updatedProd = result.rows[0] || { id: productId, delta: targetDelta };
       }
-      return { id: productId };
+
+      // Sync warehouse_stock and log inventory transaction
+      try {
+        const whRes = await db.query('SELECT id FROM warehouses WHERE company_id = $1 ORDER BY created_at ASC LIMIT 1', [companyId]);
+        const whId = whRes.rows[0]?.id || 'w1';
+
+        if (targetStock !== null) {
+          await db.query(
+            `INSERT INTO warehouse_stock (id, warehouse_id, product_id, quantity_available, reorder_threshold, safety_stock)
+             VALUES ('ws_' || md5(random()::text), $1, $2, $3, 10, 5)
+             ON CONFLICT (warehouse_id, product_id)
+             DO UPDATE SET quantity_available = $3`,
+            [whId, productId, targetStock]
+          );
+
+          const txnId = 'txn_' + Date.now() + Math.floor(Math.random() * 1000);
+          await db.query(
+            `INSERT INTO inventory_transactions (id, company_id, warehouse_id, product_id, type, quantity, reason)
+             VALUES ($1, $2, $3, $4, 'adjustment', $5, 'Admin Stock Sync Update')`,
+            [txnId, companyId, whId, productId, targetStock]
+          );
+        } else if (targetDelta !== null) {
+          const type = targetDelta >= 0 ? 'in' : 'out';
+          const absQty = Math.abs(targetDelta);
+          await db.query(
+            `INSERT INTO warehouse_stock (id, warehouse_id, product_id, quantity_available, reorder_threshold, safety_stock)
+             VALUES ('ws_' || md5(random()::text), $1, $2, GREATEST(0, $3), 10, 5)
+             ON CONFLICT (warehouse_id, product_id)
+             DO UPDATE SET quantity_available = GREATEST(0, warehouse_stock.quantity_available + $3)`,
+            [whId, productId, targetDelta]
+          );
+
+          const txnId = 'txn_' + Date.now() + Math.floor(Math.random() * 1000);
+          await db.query(
+            `INSERT INTO inventory_transactions (id, company_id, warehouse_id, product_id, type, quantity, reason)
+             VALUES ($1, $2, $3, $4, $5, $6, 'Admin Stock Delta Update')`,
+            [txnId, companyId, whId, productId, type, absQty]
+          );
+        }
+      } catch (syncErr) {
+        console.warn('[Inventory Sync Warning]:', syncErr.message);
+      }
+
+      return updatedProd;
     } catch (err) {
       console.warn('Fallback stock update:', err.message);
       return { id: productId, stock };
