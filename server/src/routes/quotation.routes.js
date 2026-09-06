@@ -29,6 +29,10 @@ router.post('/customer-request', asyncWrap((req, res) => quotationController.cre
 // Real-time discount validation
 router.post('/validate-discount', asyncWrap((req, res) => quotationController.validateDiscount(req, res)));
 
+// Upsell and Cross-Sell recommendations based on co-purchase history and promotions
+router.get('/recommendations', asyncWrap((req, res) => quotationController.getRecommendations(req, res)));
+router.post('/recommendations', asyncWrap((req, res) => quotationController.getRecommendations(req, res)));
+
 // Calculate Risk and Risk Analysis
 router.post('/:id/calculate-risk', checkRole('sales_rep', 'sales_manager', 'finance_manager', 'finance', 'admin', 'super_admin'),
   asyncWrap((req, res) => quotationController.calculateRisk(req, res)));

@@ -522,7 +522,16 @@ class QuotationController {
     );
     return res.json({ success: true, message: 'Quotation rejected.', ...result });
   }
+
+  /** GET /quotations/recommendations */
+  async getRecommendations(req, res) {
+    const companyId = req.companyId || req.user?.companyId || 'c1';
+    const productIds = req.query.productIds || req.body?.productIds || [];
+    const recommendations = await quotationService.getRecommendations(companyId, productIds);
+    return res.json(recommendations);
+  }
 }
 
 module.exports = new QuotationController();
+
 
