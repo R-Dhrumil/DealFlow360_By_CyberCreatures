@@ -12,7 +12,7 @@ export default function Reporting() {
   return (
     <div className="p-6 md:p-12">
       <header className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-800">Sales Reporting</h1>
+        <h1 className="text-2xl font-bold text-text-main">Sales Reporting</h1>
         <p className="text-text-muted">Performance by sales representative.</p>
       </header>
 
@@ -27,21 +27,21 @@ export default function Reporting() {
                 <th className="px-6 py-4 font-medium text-right">Avg Margin</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-surface-soft">
               {reports.map((report) => (
-                <tr key={report.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 font-medium text-slate-800">
+                <tr key={report.id} className="hover:bg-slate-50/60 transition-colors">
+                  <td className="px-6 py-4 font-medium text-text-main">
                     <div className="flex items-center">
-                      <div className="w-8 h-8 rounded-full bg-indigo-100 text-primary flex items-center justify-center font-bold mr-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold mr-3 border border-primary/20">
                         {report.repName.charAt(0)}
                       </div>
                       {report.repName}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-slate-600 text-right">{report.dealsWon}</td>
-                  <td className="px-6 py-4 text-slate-800 font-bold text-right">{formatMoney(report.totalRevenue)}</td>
-                  <td className="px-6 py-4 text-center text-right">
-                    <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${report.avgMargin > 20 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                  <td className="px-6 py-4 text-text-muted text-right">{report.dealsWon}</td>
+                  <td className="px-6 py-4 text-text-main font-bold text-right">{formatMoney(report.totalRevenue)}</td>
+                  <td className="px-6 py-4 text-right">
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${report.avgMargin > 20 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
                       {report.avgMargin}%
                     </span>
                   </td>

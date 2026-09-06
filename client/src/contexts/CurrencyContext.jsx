@@ -1,21 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-
-// ─── Default currencies with rates relative to INR ─────────────────────────
-const DEFAULT_CURRENCIES = [
-  { code: 'INR', symbol: '₹', name: 'Indian Rupee',    flag: '🇮🇳', rateFromINR: 1 },
-  { code: 'USD', symbol: '$', name: 'US Dollar',        flag: '🇺🇸', rateFromINR: 0.012 },
-  { code: 'EUR', symbol: '€', name: 'Euro',             flag: '🇪🇺', rateFromINR: 0.011 },
-  { code: 'GBP', symbol: '£', name: 'British Pound',    flag: '🇬🇧', rateFromINR: 0.0095 },
-  { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham',    flag: '🇦🇪', rateFromINR: 0.044 },
-  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar',flag: '🇸🇬', rateFromINR: 0.016 },
-  { code: 'JPY', symbol: '¥',  name: 'Japanese Yen',   flag: '🇯🇵', rateFromINR: 1.80 },
-  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar', flag: '🇨🇦', rateFromINR: 0.016 },
-  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar',flag: '🇦🇺', rateFromINR: 0.018 },
-  { code: 'CHF', symbol: 'Fr', name: 'Swiss Franc',    flag: '🇨🇭', rateFromINR: 0.011 },
-];
-
-const STORAGE_KEY_CURRENCY   = 'df360_selected_currency';
-const STORAGE_KEY_RATES      = 'df360_currency_rates';
+import { 
+  DEFAULT_CURRENCIES, 
+  STORAGE_KEY_CURRENCY, 
+  STORAGE_KEY_RATES,
+  formatCurrency as formatCurrencyUtil 
+} from '../utils/currency';
 
 const CurrencyContext = createContext(null);
 
