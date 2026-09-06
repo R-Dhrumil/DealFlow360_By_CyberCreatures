@@ -10,6 +10,7 @@ export default function FinanceOperations() {
   const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
   const [approvals, setApprovals] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [billingSchedules, setBillingSchedules] = useState([]);
   const [creditNotes, setCreditNotes] = useState([]);
 
