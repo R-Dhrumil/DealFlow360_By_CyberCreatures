@@ -5,7 +5,7 @@ import { useNotification } from '../contexts/NotificationContext';
 
 export default function SuperAdminConsole({ defaultTab }) {
   const { showNotification } = useNotification();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || defaultTab || 'tenants';
   const [companies, setCompanies] = useState([]);
   const [tenantUsers, setTenantUsers] = useState([]);
@@ -141,7 +141,6 @@ export default function SuperAdminConsole({ defaultTab }) {
   };
 
   const switchTab = (tab) => {
-    setActiveTab(tab);
     setSearchParams({ tab });
   };
 
@@ -191,6 +190,45 @@ export default function SuperAdminConsole({ defaultTab }) {
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
+      {/* Super Admin Top Tab Navigation */}
+      <div className="flex items-center space-x-2 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs w-fit">
+        <button
+          type="button"
+          onClick={() => switchTab('tenants')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-bold text-xs transition-all ${
+            activeTab === 'tenants'
+              ? 'bg-purple-600 text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          }`}
+        >
+          <i className="fa-solid fa-globe"></i>
+          <span>Global Tenants</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => switchTab('settings')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-bold text-xs transition-all ${
+            activeTab === 'settings'
+              ? 'bg-purple-600 text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          }`}
+        >
+          <i className="fa-solid fa-gear"></i>
+          <span>Platform Settings</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => switchTab('users')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-bold text-xs transition-all ${
+            activeTab === 'users'
+              ? 'bg-purple-600 text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          }`}
+        >
+          <i className="fa-solid fa-users"></i>
+          <span>Details of Users</span>
+        </button>
+      </div>
 
       {/* SECTION 1: GLOBAL TENANTS */}
       {activeTab === 'tenants' && (

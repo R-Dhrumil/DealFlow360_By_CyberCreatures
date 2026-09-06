@@ -1560,7 +1560,7 @@ export default function AdminWorkspace() {
                           <select
                             value={m.role}
                             onChange={(e) => handleRoleChange(m.id, e.target.value)}
-                            className={`cursor-pointer appearance-none pl-3 pr-7 py-1 rounded-full text-[10px] font-extrabold uppercase border focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all ${m.role === 'super_admin' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
+                            className={`cursor-pointer appearance-none pl-3 pr-7 py-1 rounded-full text-[10px] font-extrabold uppercase border focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all ${
                               m.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
                                 m.role === 'sales_manager' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
                                   m.role === 'sales_rep' ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200' :
@@ -1569,7 +1569,6 @@ export default function AdminWorkspace() {
                                         'bg-slate-200 text-slate-800 border-slate-300 hover:bg-slate-300'
                               }`}
                           >
-                            <option value="super_admin" className="bg-white text-slate-800 font-bold">SUPER ADMIN</option>
                             <option value="admin" className="bg-white text-slate-800 font-bold">ADMIN</option>
                             <option value="sales_manager" className="bg-white text-slate-800 font-bold">SALES MANAGER</option>
                             <option value="sales_rep" className="bg-white text-slate-800 font-bold">SALES REP</option>
