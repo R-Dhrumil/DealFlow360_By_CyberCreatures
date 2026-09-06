@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAlert } from '../contexts/AlertContext';
@@ -227,6 +227,7 @@ function DiscountAuthorityPanel({ showNotification }) {
 }
 
 export default function AdminWorkspace() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isSuperAdmin = user?.role === 'super_admin' || user?.email === 'superadmin@dealflow360.com' || user?.name === 'Super Admin';
 
@@ -433,7 +434,8 @@ export default function AdminWorkspace() {
     setNewProdSku('');
     setNewProdPrice('');
     setNewProdStock('100');
-    showNotification('success', `Product '${newProd.name}' successfully added to catalog at $${newProd.base_price}!`);
+    showNotification('success', `Product '${newProd.name}' successfully added to catalog! Redirecting to Inventory Management...`);
+    navigate('/app/inventory');
   };
 
   // Stock Increment / Decrement Handlers

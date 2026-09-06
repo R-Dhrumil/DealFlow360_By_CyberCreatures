@@ -1,4 +1,5 @@
 const productRepository = require('../repositories/product.repository');
+const { broadcastInventoryUpdate } = require('../services/socket.service');
 
 class ProductController {
   async getCompanyProducts(req, res) {
@@ -11,11 +12,12 @@ class ProductController {
   }
 
   async createProduct(req, res) {
-    const { name, category, basePrice, unit, description, sku, minMargin } = req.body;
+    const { name, category, basePrice, unit, description, sku, minMargin, stock } = req.body;
     if (!name || !basePrice) {
       return res.status(400).json({ error: 'Product name and base price are required' });
     }
-    const newProduct = await productRepository.create(req.companyId, { name, category, basePrice, unit, description, sku, minMargin });
+    const newProduct = await productRepository.create(req.companyId, { name, category, basePrice, unit, description, sku, minMargin, stock });
+    broadcastInventoryUpdate(req.companyId, { productId: newProduct.id, type: 'product_created' });
     return res.status(201).json(newProduct);
   }
 
@@ -26,6 +28,7 @@ class ProductController {
     if (!updated) {
       return res.status(404).json({ error: 'Product not found or access denied' });
     }
+    broadcastInventoryUpdate(req.companyId, { productId: id, type: 'product_updated' });
     return res.json(updated);
   }
 
@@ -35,6 +38,7 @@ class ProductController {
     if (!deleted) {
       return res.status(404).json({ error: 'Product not found or access denied' });
     }
+    broadcastInventoryUpdate(req.companyId, { productId: id, type: 'product_deleted' });
     return res.json({ success: true, message: 'Product deleted successfully', id });
   }
 
@@ -42,6 +46,7 @@ class ProductController {
     const { id } = req.params;
     const { stock, delta } = req.body;
     const result = await productRepository.updateStock(req.companyId, id, { stock, delta });
+    broadcastInventoryUpdate(req.companyId, { productId: id, type: 'stock_updated' });
     return res.json(result);
   }
 }
