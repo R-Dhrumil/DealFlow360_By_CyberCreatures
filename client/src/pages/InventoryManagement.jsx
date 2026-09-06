@@ -108,14 +108,34 @@ export default function InventoryManagement() {
     }
   };
 
-  // Filtered Stock calculation
-  const filteredStock = stock.filter(item => {
+  // Filtered and Grouped Stock calculation
+  const rawFiltered = stock.filter(item => {
     const matchesSearch = item.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
                           (item.warehouse_name && item.warehouse_name.toLowerCase().includes(searchQuery.toLowerCase()));
-    
     if (!matchesSearch) return false;
+    return true;
+  });
 
+  const groupedStock = Object.values(rawFiltered.reduce((acc, item) => {
+    if (!acc[item.product_id]) {
+      acc[item.product_id] = { 
+        ...item, 
+        quantity_available: 0,
+        warehouse_names: new Set()
+      };
+    }
+    acc[item.product_id].quantity_available += parseInt(item.quantity_available || 0, 10);
+    if (parseInt(item.quantity_available || 0, 10) > 0) {
+      acc[item.product_id].warehouse_names.add(item.warehouse_name);
+    }
+    return acc;
+  }, {})).map(group => ({
+    ...group,
+    warehouse_summary: group.warehouse_names.size > 1 
+      ? `${group.warehouse_names.size} Locations` 
+      : (Array.from(group.warehouse_names)[0] || 'All Locations (0 Stock)')
+  })).filter(item => {
     if (statusFilter === 'out') return item.quantity_available <= 0;
     if (statusFilter === 'low') return item.quantity_available > 0 && item.quantity_available < 10;
     if (statusFilter === 'in') return item.quantity_available >= 10;
@@ -123,9 +143,15 @@ export default function InventoryManagement() {
   });
 
   // Calculate Metrics
-  const totalStockItems = stock.reduce((sum, item) => sum + parseInt(item.quantity_available || 0, 10), 0);
-  const lowStockCount = stock.filter(item => item.quantity_available > 0 && item.quantity_available < 10).length;
-  const outOfStockCount = stock.filter(item => item.quantity_available <= 0).length;
+  const fullGroupedStock = Object.values(stock.reduce((acc, item) => {
+    if (!acc[item.product_id]) acc[item.product_id] = 0;
+    acc[item.product_id] += parseInt(item.quantity_available || 0, 10);
+    return acc;
+  }, {}));
+
+  const totalStockItems = fullGroupedStock.reduce((sum, qty) => sum + qty, 0);
+  const lowStockCount = fullGroupedStock.filter(qty => qty > 0 && qty < 10).length;
+  const outOfStockCount = fullGroupedStock.filter(qty => qty <= 0).length;
   const selectedProductStock = stock.find(s => s.product_id === adjustForm.productId && s.warehouse_id === adjustForm.warehouseId);
 
   return (
@@ -285,7 +311,7 @@ export default function InventoryManagement() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {filteredStock.length === 0 ? (
+                      {groupedStock.length === 0 ? (
                         <tr>
                           <td colSpan="6" className="p-12 text-center text-slate-500">
                             <i className="fa-solid fa-box-open text-3xl mb-2 text-slate-300"></i>
@@ -293,7 +319,7 @@ export default function InventoryManagement() {
                           </td>
                         </tr>
                       ) : (
-                        filteredStock.map((item, idx) => (
+                        groupedStock.map((item, idx) => (
                           <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
                             <td className="p-4 font-bold text-slate-800">
                               {item.product_name}
@@ -306,7 +332,7 @@ export default function InventoryManagement() {
                             </td>
                             <td className="p-4 text-slate-700">
                               <i className="fa-solid fa-warehouse mr-1.5 text-slate-400"></i>
-                              {item.warehouse_name}
+                              {item.warehouse_summary}
                             </td>
                             <td className="p-4 text-right font-extrabold text-slate-800 text-base">
                               {item.quantity_available}
