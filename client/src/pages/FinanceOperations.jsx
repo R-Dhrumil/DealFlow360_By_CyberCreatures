@@ -10,7 +10,6 @@ export default function FinanceOperations() {
   const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
   const [approvals, setApprovals] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [billingSchedules, setBillingSchedules] = useState([]);
   const [creditNotes, setCreditNotes] = useState([]);
 
@@ -173,7 +172,7 @@ export default function FinanceOperations() {
                     <tr key={bs.id} className="border-b border-surface-soft hover:bg-slate-50 transition-colors">
                       <td className="p-2.5 font-mono text-purple-600 font-bold">{bs.id}</td>
                       <td className="p-2.5 font-semibold text-text-main">
-                        {bs.customer_name} 
+                        {bs.customer_name}
                         <div className="text-[10px] text-text-muted font-normal mt-0.5">Ref: {bs.quotation_id}</div>
                       </td>
                       <td className="p-2.5 font-black text-slate-800">{formatMoney(bs.amount)}</td>
@@ -217,7 +216,7 @@ export default function FinanceOperations() {
                     <tr key={cn.id} className="border-b border-surface-soft hover:bg-slate-50 transition-colors">
                       <td className="p-2.5 font-mono text-rose-600 font-bold">{cn.id}</td>
                       <td className="p-2.5 font-semibold text-text-main">
-                        {cn.customer_name} 
+                        {cn.customer_name}
                         <div className="text-[10px] text-text-muted font-normal mt-0.5">Ref: {cn.quotation_id}</div>
                       </td>
                       <td className="p-2.5 font-black text-rose-600">{formatMoney(cn.amount)}</td>
