@@ -56,6 +56,49 @@ class UserRepository {
     const result = await db.query(query, params);
     return result.rows[0] || null;
   }
+
+  /**
+   * Fetch a user's role and per-user discount authority.
+   * Returns { role, max_discount_percent } or null if not found.
+   */
+  async findDiscountAuthority(userId, companyId) {
+    const result = await db.query(
+      'SELECT role, max_discount_percent FROM users WHERE id = $1 AND (company_id = $2 OR company_id IS NULL)',
+      [userId, companyId]
+    );
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Fetch the role-level discount ceiling from the discount_tiers table.
+   * Returns { max_discount_percent } or null.
+   */
+  async findDiscountTierByRole(companyId, roleName) {
+    const result = await db.query(
+      'SELECT max_discount_percent FROM discount_tiers WHERE company_id = $1 AND LOWER(tier_name) = LOWER($2)',
+      [companyId, roleName]
+    );
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Find the first active sales rep for a company.
+   * Falls back to any user in the company if no sales_rep exists.
+   * Returns user id string or null.
+   */
+  async findSalesRepByCompany(companyId) {
+    const repRes = await db.query(
+      "SELECT id FROM users WHERE company_id = $1 AND role = 'sales_rep' ORDER BY created_at ASC LIMIT 1",
+      [companyId]
+    );
+    if (repRes.rows.length > 0) return repRes.rows[0].id;
+
+    const anyRes = await db.query(
+      "SELECT id FROM users WHERE company_id = $1 LIMIT 1",
+      [companyId]
+    );
+    return anyRes.rows[0]?.id || null;
+  }
 }
 
 module.exports = new UserRepository();

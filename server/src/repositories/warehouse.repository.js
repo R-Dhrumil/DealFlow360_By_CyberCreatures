@@ -163,6 +163,21 @@ class WarehouseRepository {
       client.release();
     }
   }
+
+  /**
+   * Find first available warehouse for a company, or global fallback.
+   */
+  async findFirstWarehouse(companyId, client = db) {
+    if (companyId) {
+      const whRes = await client.query(
+        'SELECT id FROM warehouses WHERE company_id = $1 ORDER BY created_at ASC LIMIT 1',
+        [companyId]
+      );
+      if (whRes.rows.length > 0) return whRes.rows[0].id;
+    }
+    const anyWh = await client.query('SELECT id FROM warehouses LIMIT 1');
+    return anyWh.rows[0]?.id || 'w1';
+  }
 }
 
 module.exports = new WarehouseRepository();
