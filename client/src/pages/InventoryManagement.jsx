@@ -67,6 +67,9 @@ export default function InventoryManagement() {
 
   useEffect(() => {
     fetchData(true);
+    // Poll every 10 seconds to keep stock data fresh
+    const interval = setInterval(() => fetchData(false), 10000);
+    return () => clearInterval(interval);
   }, [fetchData]);
 
   // Real-time stock refresh via shared socket

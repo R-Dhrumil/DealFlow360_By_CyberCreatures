@@ -5,10 +5,7 @@ const { broadcastInventoryUpdate } = require('../services/socket.service');
 
 class InventoryController {
   async getOverview(req, res) {
-    const limit = parseInt(req.query.limit, 10) || 100;
-    const offset = parseInt(req.query.offset, 10) || 0;
-    
-    const stock = await inventoryRepository.getStockOverview(req.companyId, limit, offset);
+    const stock = await inventoryRepository.getStockOverview(req.companyId);
     return res.json(stock);
   }
 

@@ -1,7 +1,7 @@
 const { pool } = require('../config/db');
 
 class InventoryRepository {
-  async getStockOverview(companyId, limit = 50, offset = 0) {
+  async getStockOverview(companyId) {
     const result = await pool.query(
       `SELECT 
          p.id as product_id,
@@ -16,9 +16,8 @@ class InventoryRepository {
        CROSS JOIN warehouses w
        LEFT JOIN warehouse_stock ws ON p.id = ws.product_id AND w.id = ws.warehouse_id
        WHERE p.company_id = $1 AND w.company_id = $1
-       ORDER BY p.name ASC, w.name ASC
-       LIMIT $2 OFFSET $3`,
-      [companyId, limit, offset]
+       ORDER BY p.name ASC, w.name ASC`,
+      [companyId]
     );
     return result.rows;
   }
