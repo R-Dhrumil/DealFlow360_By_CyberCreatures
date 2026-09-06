@@ -1190,6 +1190,10 @@ export default function AdminWorkspace() {
                     <option value="package">Package / Fixed</option>
                     <option value="device/month">Per Device / Month</option>
                     <option value="month">Per Month</option>
+                    <option value="quarter">Per Quarter</option>
+                    <option value="year">Per Year</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="yearly">Yearly</option>
                   </select>
                 </div>
                 <div>
@@ -1850,6 +1854,10 @@ export default function AdminWorkspace() {
                     <option value="package">Package / Fixed</option>
                     <option value="device/month">Per Device / Month</option>
                     <option value="month">Per Month</option>
+                    <option value="quarter">Per Quarter</option>
+                    <option value="year">Per Year</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="yearly">Yearly</option>
                   </select>
                 </div>
 
