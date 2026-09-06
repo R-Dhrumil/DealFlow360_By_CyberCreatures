@@ -769,22 +769,24 @@ export default function CustomerDashboard() {
                   <div className="flex items-center space-x-3 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700">
                     <span className="text-xs font-semibold text-slate-300">Qty:</span>
                     <button
+                      type="button"
                       onClick={() => setModalQuantity(prev => Math.max(1, prev - 1))}
-                      className="w-7 h-7 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center text-xs transition-colors"
+                      className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center text-xs transition-colors cursor-pointer"
                     >
                       -
                     </button>
                     <input
                       type="number"
                       min="1"
-                      max={selectedProductDetail.stock || 9999}
-                      value={modalQuantity}
-                      onChange={(e) => setModalQuantity(Math.max(1, Math.min(selectedProductDetail.stock || 9999, parseInt(e.target.value) || 1)))}
-                      className="w-12 text-center bg-slate-900 border border-slate-700 rounded-lg text-xs font-bold text-emerald-400 py-1 focus:outline-none"
+                      max={selectedProductDetail.stock ?? 9999}
+                      value={modalQuantity > (selectedProductDetail.stock ?? 9999) ? (selectedProductDetail.stock ?? 9999) : modalQuantity}
+                      onChange={(e) => setModalQuantity(Math.max(1, Math.min(selectedProductDetail.stock ?? 9999, parseInt(e.target.value) || 1)))}
+                      className="w-12 text-center bg-transparent border-0 text-xs font-bold text-emerald-400 py-1 focus:outline-none"
                     />
                     <button
-                      onClick={() => setModalQuantity(prev => Math.min(selectedProductDetail.stock || 9999, prev + 1))}
-                      className="w-7 h-7 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center text-xs transition-colors"
+                      type="button"
+                      onClick={() => setModalQuantity(prev => Math.min(selectedProductDetail.stock ?? 9999, prev + 1))}
+                      className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center text-xs transition-colors cursor-pointer"
                     >
                       +
                     </button>

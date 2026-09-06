@@ -600,14 +600,14 @@ export default function Marketplace() {
                           <input
                             type="number"
                             min="1"
-                            max={selectedProduct.stock || 9999}
-                            value={modalQuantity}
-                            onChange={(e) => setModalQuantity(Math.max(1, Math.min(selectedProduct.stock || 9999, parseInt(e.target.value) || 1)))}
+                            max={selectedProduct.stock ?? 9999}
+                            value={modalQuantity > (selectedProduct.stock ?? 9999) ? (selectedProduct.stock ?? 9999) : modalQuantity}
+                            onChange={(e) => setModalQuantity(Math.max(1, Math.min(selectedProduct.stock ?? 9999, parseInt(e.target.value) || 1)))}
                             className="w-12 text-center bg-transparent border-0 text-xs font-bold text-emerald-400 py-1 focus:outline-none"
                           />
                           <button
                             type="button"
-                            onClick={() => setModalQuantity(prev => Math.min(selectedProduct.stock || 9999, prev + 1))}
+                            onClick={() => setModalQuantity(prev => Math.min(selectedProduct.stock ?? 9999, prev + 1))}
                             className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center text-xs transition-colors cursor-pointer"
                           >
                             +
