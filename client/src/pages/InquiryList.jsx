@@ -62,7 +62,9 @@ export default function InquiryList() {
   };
 
   const handleCreateQuotation = (inquiry) => {
-    navigate(`/app/quote?inquiryId=${inquiry.id}&productId=${inquiry.product_id}&customerId=${inquiry.customer_id}&quantity=${inquiry.quantity}`);
+    const nameParam = inquiry.customer_name ? `&customerName=${encodeURIComponent(inquiry.customer_name)}` : '';
+    const emailParam = inquiry.customer_email ? `&customerEmail=${encodeURIComponent(inquiry.customer_email)}` : '';
+    navigate(`/app/quote?inquiryId=${inquiry.id}&productId=${inquiry.product_id}&customerId=${inquiry.customer_id}&quantity=${inquiry.quantity}${nameParam}${emailParam}`);
   };
 
   if (loading) {

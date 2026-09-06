@@ -37,12 +37,29 @@ export default function QuotationBuilder() {
     fetchProducts();
   }, []);
 
-  // Pre-fill from inquiry deep-link (?inquiryId=...&productId=...&customerId=...&quantity=...)
+  // Pre-fill from inquiry deep-link (?inquiryId=...&productId=...&customerId=...&quantity=...&customerName=...&customerEmail=...)
   useEffect(() => {
     const iid = searchParams.get('inquiryId');
     const pid = searchParams.get('productId');
     const qty = parseInt(searchParams.get('quantity') || '1');
+    const cName = searchParams.get('customerName');
+    const cEmail = searchParams.get('customerEmail');
+
     if (iid) setInquiryId(iid);
+    if (cName) setCustomerName(decodeURIComponent(cName));
+    if (cEmail) setCustomerEmail(decodeURIComponent(cEmail));
+
+    // If inquiryId is provided but customer details are missing, fetch inquiry to auto-fill customer info
+    if (iid && (!cName || !cEmail)) {
+      api.get(`/inquiries/${iid}`)
+        .then(res => {
+          if (res.data) {
+            if (res.data.customer_name && !cName) setCustomerName(res.data.customer_name);
+            if (res.data.customer_email && !cEmail) setCustomerEmail(res.data.customer_email);
+          }
+        })
+        .catch(() => {});
+    }
 
     if (pid && products.length > 0) {
       const product = products.find(p => p.id === pid);
