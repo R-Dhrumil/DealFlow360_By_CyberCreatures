@@ -111,7 +111,8 @@ class QuotationRepository {
                OR LOWER($3::text) ILIKE '%' || LOWER(c.name) || '%'
             ))
             OR ($4::text IS NOT NULL AND LOWER(c.email) ILIKE '%@' || $4::text))
-            AND NOT EXISTS (SELECT 1 FROM quotations q WHERE q.inquiry_id = i.id)
+            AND (i.status IS NULL OR i.status NOT IN ('in_progress', 'converted', 'closed', 'completed'))
+            AND NOT EXISTS (SELECT 1 FROM quotations q WHERE q.inquiry_id = i.id OR q.customer_id = i.customer_id)
         ) as total`,
       [customerId || null, cleanEmail, cleanName, emailDomain]
     );
@@ -184,7 +185,8 @@ class QuotationRepository {
                OR LOWER($3::text) ILIKE '%' || LOWER(c.name) || '%'
             ))
             OR ($4::text IS NOT NULL AND LOWER(c.email) ILIKE '%@' || $4::text))
-           AND NOT EXISTS (SELECT 1 FROM quotations q WHERE q.inquiry_id = i.id)
+            AND (i.status IS NULL OR i.status NOT IN ('in_progress', 'converted', 'closed', 'completed'))
+           AND NOT EXISTS (SELECT 1 FROM quotations q WHERE q.inquiry_id = i.id OR q.customer_id = i.customer_id)
        ) as combined
        ORDER BY 
          COALESCE(updated_at, created_at) DESC,

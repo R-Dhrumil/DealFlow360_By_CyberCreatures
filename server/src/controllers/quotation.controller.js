@@ -95,10 +95,8 @@ class QuotationController {
       salesRepId = anyUserRes.rows[0]?.id || 'u4';
     }
 
-    // 6. Create live Quotation in database
-    const lineType = (product.category?.toLowerCase() === 'services' || (product.unit && product.unit.toLowerCase().includes('month')))
-      ? 'recurring'
-      : 'one_time';
+    // 6. Create live Quotation in database with lineType as one_time
+    const lineType = 'one_time';
 
     const quoteResult = await quotationService.createQuotation(
       companyId,
@@ -125,9 +123,7 @@ class QuotationController {
     });
   }
 
-  async createQuotation(req, res) {
-    
-  }
+
   /** POST /quotations/validate-discount — Real-time discount validation for QuotationBuilder UI */
   async validateDiscount(req, res) {
     const companyId = req.companyId;
@@ -324,7 +320,7 @@ class QuotationController {
         productId: line.product_id,
         productName: line.product_name,
         category: line.category,
-        lineType: line.line_type,
+        lineType: 'one_time',
         quantity,
         unitPrice: parseFloat(unitPrice.toFixed(2)),
         discountPercent: parseFloat(discountPercent.toFixed(2)),
