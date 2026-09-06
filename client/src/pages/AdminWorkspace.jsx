@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAlert } from '../contexts/AlertContext';
@@ -225,8 +226,13 @@ function DiscountAuthorityPanel({ showNotification }) {
 }
 
 export default function AdminWorkspace() {
-  const { formatMoney, selected } = useCurrency();
-  const currSymbol = selected?.symbol || '₹';
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  if (user?.role === 'super_admin' || user?.email === 'superadmin@dealflow360.com' || user?.name === 'Super Admin') {
+    return <Navigate to="/app/superadmin?tab=tenants" replace />;
+  }
+
+  const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
   const { showAlert } = useAlert();
   const [activeTab, setActiveTab] = useState('products'); // 'products' | 'tiers' | 'team' | 'warehouses' | 'audit'
@@ -1087,7 +1093,7 @@ export default function AdminWorkspace() {
                     <th className="p-3">SKU</th>
                     <th className="p-3">Product Name</th>
                     <th className="p-3">Category</th>
-                    <th className="p-3 text-right">Base Price ({currSymbol})</th>
+                    <th className="p-3 text-right">Base Price ($)</th>
                     <th className="p-3 text-center">Floor Margin</th>
                     <th className="p-3 text-center">Stock Units</th>
                     <th className="p-3 text-center">Status</th>
@@ -1132,7 +1138,7 @@ export default function AdminWorkspace() {
                               <button
                                 type="button"
                                 onClick={() => handleAdjustPrice(p.id, 10)}
-                                title={`Quick increment price (+${currSymbol}10)`}
+                                title="Quick increment price (+$10)"
                                 className="w-5 h-4 flex items-center justify-center text-[9px] text-slate-500 hover:text-primary hover:bg-purple-100 rounded transition-colors"
                               >
                                 <i className="fa-solid fa-chevron-up"></i>
@@ -1140,7 +1146,7 @@ export default function AdminWorkspace() {
                               <button
                                 type="button"
                                 onClick={() => handleAdjustPrice(p.id, -10)}
-                                title={`Quick decrement price (-${currSymbol}10)`}
+                                title="Quick decrement price (-$10)"
                                 className="w-5 h-4 flex items-center justify-center text-[9px] text-slate-500 hover:text-primary hover:bg-purple-100 rounded transition-colors"
                               >
                                 <i className="fa-solid fa-chevron-down"></i>
@@ -1268,7 +1274,7 @@ export default function AdminWorkspace() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Base Price ({currSymbol})</label>
+                  <label className="block font-bold text-slate-700 mb-1">Base Price ($)</label>
                   <input
                     type="number"
                     required
@@ -1926,7 +1932,7 @@ export default function AdminWorkspace() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Base Price ({currSymbol})</label>
+                  <label className="block font-bold text-slate-700 mb-1">Base Price ($)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -1952,7 +1958,7 @@ export default function AdminWorkspace() {
               <div className="mt-2">
                 <label className="block font-bold text-slate-700 mb-1 flex items-center gap-2">
                   <i className="fa-solid fa-shield-halved text-rose-500 text-xs"></i>
-                  Floor Price ({currSymbol})
+                  Floor Price (₹)
                   <span className="text-[10px] font-normal text-slate-400 ml-1">— Optional. Discount cannot bring net price below this value without Admin approval.</span>
                 </label>
                 <input

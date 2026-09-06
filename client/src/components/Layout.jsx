@@ -8,7 +8,19 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
+  let user = userStr ? JSON.parse(userStr) : null;
+
+  // Auto-heal super_admin session if user is Super Admin
+  if (user && (user.email === 'superadmin@dealflow360.com' || user.name === 'Super Admin') && user.role !== 'super_admin') {
+    user.role = 'super_admin';
+    localStorage.setItem('user', JSON.stringify(user));
+  }
+
+  useEffect(() => {
+    if (user?.role === 'super_admin' && location.pathname === '/app/admin') {
+      navigate('/app/superadmin?tab=tenants', { replace: true });
+    }
+  }, [user, location.pathname, navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');

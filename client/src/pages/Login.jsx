@@ -15,11 +15,57 @@ const Login = ({ defaultIsSignup = false }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const fillCredentials = (userEmail, userPass) => {
+  const executeLogin = async (loginEmail, loginPassword) => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const res = await api.post('/auth/login', {
+        email: (loginEmail || '').trim().toLowerCase(),
+        password: (loginPassword || '').trim()
+      });
+      if (res.data && res.data.token) {
+        localStorage.setItem('token', res.data.token);
+        const user = res.data.user;
+        localStorage.setItem('user', JSON.stringify(user));
+
+        if (user.role === 'super_admin') {
+          navigate('/app/superadmin');
+        } else if (user.role === 'customer') {
+          navigate('/customer/dashboard');
+        } else if (user.role === 'admin') {
+          navigate('/app/admin');
+        } else if (user.role === 'finance' || user.role === 'finance_manager') {
+          navigate('/app/finance');
+        } else {
+          navigate('/app/pipeline');
+        }
+        return;
+      }
+    } catch (err) {
+      console.error('Authentication failed:', err);
+      let serverMsg = 'Invalid email or password. Please try again.';
+      if (!err.response) {
+        serverMsg = 'Cannot reach backend API server. Please verify the DealFlow360 backend is running.';
+      } else if (err.response.status === 429) {
+        serverMsg = 'Too many attempts. Please wait a moment and try again.';
+      } else if (err.response.status >= 500) {
+        serverMsg = err.response?.data?.error || err.response?.data?.details || 'Database or server initializing. Please try again in a few seconds.';
+      } else if (err.response?.data?.error || err.response?.data?.message) {
+        serverMsg = err.response.data.error || err.response.data.message;
+      }
+      setError(serverMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fillCredentials = async (userEmail, userPass) => {
     setEmail(userEmail);
     setPassword(userPass);
     setIsSignup(false);
     setError('');
+    await executeLogin(userEmail, userPass);
   };
 
   const getPasswordStrength = (val) => {
@@ -34,12 +80,11 @@ const Login = ({ defaultIsSignup = false }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    if (isSignup) {
+      setError('');
+      setLoading(true);
 
-    try {
-      if (isSignup) {
-        // Unified Sign Up
+      try {
         const res = await api.post('/auth/signup', {
           accountType,
           name,
@@ -59,46 +104,18 @@ const Login = ({ defaultIsSignup = false }) => {
           else navigate('/app/pipeline');
           return;
         }
-      } else {
-        // Unified Login
-        const res = await api.post('/auth/login', {
-          email: (email || '').trim().toLowerCase(),
-          password: (password || '').trim()
-        });
-        if (res.data && res.data.token) {
-          localStorage.setItem('token', res.data.token);
-          const user = res.data.user;
-          localStorage.setItem('user', JSON.stringify(user));
-
-          if (user.role === 'super_admin') {
-            navigate('/app/superadmin');
-          } else if (user.role === 'customer') {
-            navigate('/customer/dashboard');
-          } else if (user.role === 'admin') {
-            navigate('/app/admin');
-          } else if (user.role === 'finance' || user.role === 'finance_manager') {
-            navigate('/app/finance');
-          } else {
-            navigate('/app/pipeline');
-          }
-          return;
+      } catch (err) {
+        console.error('Authentication failed:', err);
+        let serverMsg = 'Signup failed. Please try again.';
+        if (err.response?.data?.error || err.response?.data?.message) {
+          serverMsg = err.response.data.error || err.response.data.message;
         }
+        setError(serverMsg);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Authentication failed:', err);
-      let serverMsg = 'Invalid email or password. Please try again.';
-      if (!err.response) {
-        serverMsg = 'Cannot reach backend API server. Please verify the DealFlow360 backend is running.';
-      } else if (err.response.status === 429) {
-        serverMsg = 'Too many attempts. Please wait a moment and try again.';
-      } else if (err.response.status >= 500) {
-        serverMsg = err.response?.data?.error || err.response?.data?.details || 'Database or server initializing. Please try again in a few seconds.';
-      } else if (err.response?.data?.error || err.response?.data?.message) {
-        serverMsg = err.response.data.error || err.response.data.message;
-      }
-      setError(serverMsg);
-    } finally {
-      setLoading(false);
+    } else {
+      await executeLogin(email, password);
     }
   };
 
