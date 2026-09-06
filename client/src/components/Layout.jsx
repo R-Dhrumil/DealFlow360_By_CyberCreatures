@@ -9,21 +9,24 @@ import CurrencyPicker from './CurrencyPicker';
 export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
-  const userStr = localStorage.getItem('user');
-  let user = userStr ? JSON.parse(userStr) : null;
+  const { user: authUser, logout } = useAuth();
 
   // Auto-heal super_admin session if user is Super Admin
-  if (user && (user.email === 'superadmin@dealflow360.com' || user.name === 'Super Admin') && user.role !== 'super_admin') {
-    user.role = 'super_admin';
-    localStorage.setItem('user', JSON.stringify(user));
-  }
+  const isSuperAdmin = authUser && (authUser.email === 'superadmin@dealflow360.com' || authUser.name === 'Super Admin');
+  const user = (isSuperAdmin && authUser.role !== 'super_admin')
+    ? { ...authUser, role: 'super_admin' }
+    : authUser;
 
   useEffect(() => {
+    if (isSuperAdmin && authUser?.role !== 'super_admin') {
+      try {
+        localStorage.setItem('user', JSON.stringify({ ...authUser, role: 'super_admin' }));
+      } catch (_) {}
+    }
     if (user?.role === 'super_admin' && location.pathname === '/app/admin') {
       navigate('/app/superadmin?tab=tenants', { replace: true });
     }
-  }, [user, location.pathname, navigate]);
+  }, [authUser, isSuperAdmin, user?.role, location.pathname, navigate]);
 
   const handleLogout = () => {
     disconnectSocket();

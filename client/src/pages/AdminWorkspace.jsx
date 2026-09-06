@@ -4,6 +4,7 @@ import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAlert } from '../contexts/AlertContext';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useAuth } from '../contexts/AuthContext';
 
 // ── Role-Level Discount Authority Configuration Panel ──────────────────────────
 function DiscountAuthorityPanel({ showNotification }) {
@@ -226,11 +227,8 @@ function DiscountAuthorityPanel({ showNotification }) {
 }
 
 export default function AdminWorkspace() {
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
-  if (user?.role === 'super_admin' || user?.email === 'superadmin@dealflow360.com' || user?.name === 'Super Admin') {
-    return <Navigate to="/app/superadmin?tab=tenants" replace />;
-  }
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'super_admin' || user?.email === 'superadmin@dealflow360.com' || user?.name === 'Super Admin';
 
   const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
@@ -985,6 +983,10 @@ export default function AdminWorkspace() {
     p.category?.toLowerCase().includes(prodSearch.toLowerCase()) ||
     p.sku?.toLowerCase().includes(prodSearch.toLowerCase())
   );
+
+  if (isSuperAdmin) {
+    return <Navigate to="/app/superadmin?tab=tenants" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-8 space-y-6">

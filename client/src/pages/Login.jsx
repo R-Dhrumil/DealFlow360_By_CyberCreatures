@@ -26,9 +26,8 @@ const Login = ({ defaultIsSignup = false }) => {
         password: (loginPassword || '').trim()
       });
       if (res.data && res.data.token) {
-        localStorage.setItem('token', res.data.token);
+        authLogin(res.data.token, res.data.user);
         const user = res.data.user;
-        localStorage.setItem('user', JSON.stringify(user));
 
         if (user.role === 'super_admin') {
           navigate('/app/superadmin');
@@ -104,42 +103,20 @@ const Login = ({ defaultIsSignup = false }) => {
           else navigate('/app/pipeline');
           return;
         }
-      } else {
-        // Unified Login
-        const res = await api.post('/auth/login', {
-          email: (email || '').trim().toLowerCase(),
-          password: (password || '').trim()
-        });
-        if (res.data && res.data.token) {
-          authLogin(res.data.token, res.data.user);
-          const user = res.data.user;
-
-          if (user.role === 'super_admin') {
-            navigate('/app/superadmin');
-          } else if (user.role === 'customer') {
-            navigate('/customer/dashboard');
-          } else if (user.role === 'admin') {
-            navigate('/app/admin');
-          } else if (user.role === 'finance' || user.role === 'finance_manager') {
-            navigate('/app/finance');
-          } else {
-            navigate('/app/pipeline');
-          }
-          return;
-        } catch (err) {
-          console.error('Authentication failed:', err);
-          let serverMsg = 'Signup failed. Please try again.';
-          if (err.response?.data?.error || err.response?.data?.message) {
-            serverMsg = err.response.data.error || err.response.data.message;
-          }
-          setError(serverMsg);
-        } finally {
-          setLoading(false);
+      } catch (err) {
+        console.error('Authentication failed:', err);
+        let serverMsg = 'Signup failed. Please try again.';
+        if (err.response?.data?.error || err.response?.data?.message) {
+          serverMsg = err.response.data.error || err.response.data.message;
         }
-      } else {
-        await executeLogin(email, password);
+        setError(serverMsg);
+      } finally {
+        setLoading(false);
       }
-    };
+    } else {
+      await executeLogin(email, password);
+    }
+  };
 
     return (
       <main className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 lg:p-10 bg-slate-100 font-sans text-text-body antialiased">
