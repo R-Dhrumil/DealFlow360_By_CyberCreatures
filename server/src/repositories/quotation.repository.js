@@ -648,6 +648,47 @@ class QuotationRepository {
       }
     }
   }
+
+  /**
+   * Calculate co-purchase frequencies from quotation_lines for given productIds.
+   * Returns: [{ product_id, co_purchase_count }, ...]
+   */
+  async getCoPurchaseSynergies(companyId, productIds = []) {
+    try {
+      if (!productIds || productIds.length === 0) {
+        const res = await db.query(
+          `SELECT ql.product_id, COUNT(DISTINCT ql.quotation_id) as co_purchase_count
+           FROM quotation_lines ql
+           JOIN quotations q ON ql.quotation_id = q.id
+           WHERE ($1::varchar IS NULL OR q.company_id = $1)
+           GROUP BY ql.product_id
+           ORDER BY co_purchase_count DESC
+           LIMIT 10`,
+          [companyId || null]
+        );
+        return res.rows;
+      }
+
+      const res = await db.query(
+        `SELECT ql2.product_id, COUNT(DISTINCT ql2.quotation_id) as co_purchase_count
+         FROM quotation_lines ql1
+         JOIN quotation_lines ql2 ON ql1.quotation_id = ql2.quotation_id AND ql1.product_id != ql2.product_id
+         JOIN quotations q ON ql2.quotation_id = q.id
+         WHERE ql1.product_id = ANY($1::varchar[])
+           AND ($2::varchar IS NULL OR q.company_id = $2)
+           AND NOT (ql2.product_id = ANY($1::varchar[]))
+         GROUP BY ql2.product_id
+         ORDER BY co_purchase_count DESC
+         LIMIT 10`,
+        [productIds, companyId || null]
+      );
+      return res.rows;
+    } catch (err) {
+      console.warn('Could not query co-purchase synergies:', err.message);
+      return [];
+    }
+  }
 }
 
 module.exports = new QuotationRepository();
+

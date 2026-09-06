@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import { useNotification } from '../contexts/NotificationContext';
@@ -17,6 +17,9 @@ export default function QuotationBuilder() {
   const [submitting, setSubmitting] = useState(false);
   const [dismissedUpsells, setDismissedUpsells] = useState([]);
   const [copied, setCopied] = useState(false);
+  const [serverRecommendations, setServerRecommendations] = useState([]);
+  const [upsellFilter, setUpsellFilter] = useState('all'); // 'all', 'promoted', 'boosters'
+
 
   // Form State
   const [customerName, setCustomerName] = useState('');
@@ -117,9 +120,9 @@ export default function QuotationBuilder() {
     }
   };
 
-  const addLine = (product) => {
+  const addLine = useCallback((product) => {
     if (lines.find(l => l.productId === product.id)) return;
-    setLines([...lines, {
+    setLines(prev => [...prev, {
       productId: product.id,
       productName: product.name,
       category: product.category,
@@ -127,9 +130,9 @@ export default function QuotationBuilder() {
       floorPrice: product.floor_price ? parseFloat(product.floor_price) : null,
       quantity: 1,
       discountPercent: 0,
-      marginPercent: parseFloat(product.margin_percent || 45)
+      marginPercent: parseFloat(product.margin_percent !== undefined ? product.margin_percent : 45)
     }]);
-  };
+  }, [lines]);
 
   const updateLine = (index, field, value) => {
     const newLines = [...lines];
@@ -139,20 +142,185 @@ export default function QuotationBuilder() {
 
   const removeLine = (index) => setLines(lines.filter((_, i) => i !== index));
 
-  const calculateTotal = () =>
-    lines.reduce((t, l) => t + (l.basePrice * (1 - l.discountPercent / 100) * l.quantity), 0);
+  const calculateTotal = useCallback(() =>
+    lines.reduce((t, l) => t + (l.basePrice * (1 - l.discountPercent / 100) * l.quantity), 0),
+    [lines]
+  );
 
-  const calculateOverallMargin = () => {
+  const calculateTotalCost = useCallback(() =>
+    lines.reduce((acc, l) => {
+      const unitCost = l.basePrice * (1 - (l.marginPercent !== undefined ? l.marginPercent : 45) / 100);
+      return acc + unitCost * l.quantity;
+    }, 0),
+    [lines]
+  );
+
+  const calculateOverallMargin = useCallback(() => {
     if (lines.length === 0) return 0;
     const totalRev = calculateTotal();
-    if (totalRev === 0) return 0;
-    const totalCost = lines.reduce((acc, l) => {
-      const net = l.basePrice * (1 - l.discountPercent / 100);
-      const estCost = net * (1 - (l.marginPercent || 40) / 100);
-      return acc + estCost * l.quantity;
-    }, 0);
-    return (((totalRev - totalCost) / totalRev) * 100).toFixed(1);
+    if (totalRev <= 0) return 0;
+    const totalCost = calculateTotalCost();
+    return parseFloat((((totalRev - totalCost) / totalRev) * 100).toFixed(1));
+  }, [lines, calculateTotal, calculateTotalCost]);
+
+  // Live Margin Delta Calculator for any candidate product
+  const getMarginDeltaIfAdded = useCallback((product) => {
+    const pBasePrice = parseFloat(product.base_price || 0);
+    const pMarginPercent = parseFloat(product.margin_percent !== undefined ? product.margin_percent : 45);
+    const pUnitCost = pBasePrice * (1 - pMarginPercent / 100);
+
+    if (lines.length === 0) {
+      return {
+        delta: pMarginPercent,
+        projectedMargin: pMarginPercent.toFixed(1),
+        isPositive: true,
+        isInitial: true
+      };
+    }
+
+    const currentMargin = parseFloat(calculateOverallMargin());
+    const currentRev = calculateTotal();
+    const currentCost = calculateTotalCost();
+
+    const projectedRev = currentRev + pBasePrice;
+    const projectedCost = currentCost + pUnitCost;
+
+    const projectedMargin = projectedRev > 0
+      ? parseFloat((((projectedRev - projectedCost) / projectedRev) * 100).toFixed(1))
+      : 0;
+
+    const delta = parseFloat((projectedMargin - currentMargin).toFixed(1));
+
+    return {
+      delta,
+      projectedMargin: projectedMargin.toFixed(1),
+      isPositive: delta >= 0,
+      isInitial: false
+    };
+  }, [lines, calculateOverallMargin, calculateTotal, calculateTotalCost]);
+
+  // Query backend co-purchase synergies whenever quotation lines change
+  useEffect(() => {
+    let isCancelled = false;
+    const fetchRecs = async () => {
+      try {
+        const pIds = lines.map(l => l.productId).join(',');
+        const res = await api.get(`/quotations/recommendations?productIds=${pIds}`);
+        if (!isCancelled && Array.isArray(res.data)) {
+          setServerRecommendations(res.data);
+        }
+      } catch (err) {
+        // Fallback to client-side ranking gracefully
+      }
+    };
+    fetchRecs();
+    return () => { isCancelled = true; };
+  }, [lines]);
+
+  // Ranked Upsell & Cross-Sell Suggestions Engine
+  const rankedUpsellSuggestions = useMemo(() => {
+    if (!products || products.length === 0) return [];
+
+    const candidates = products.filter(
+      p => !lines.some(l => l.productId === p.id) && !dismissedUpsells.includes(p.id)
+    );
+
+    const currentCategories = new Set(lines.map(l => l.category));
+    const serverMap = new Map();
+    serverRecommendations.forEach(sr => {
+      serverMap.set(sr.id, sr);
+    });
+
+    const scored = candidates.map(product => {
+      let score = 0;
+      const reasons = [];
+      const isPromoted = Boolean(product.is_promoted);
+      const marginAnalysis = getMarginDeltaIfAdded(product);
+
+      // 1. Backend co-purchase history
+      const serverMatch = serverMap.get(product.id);
+      if (serverMatch?.coPurchaseCount > 0) {
+        score += serverMatch.coPurchaseCount * 35;
+        reasons.push(`Co-purchased in ${serverMatch.coPurchaseCount} prior quotes`);
+      }
+
+      // 2. Active Promotions boost
+      if (isPromoted) {
+        score += 50;
+        reasons.push('Active Promotion');
+      }
+
+      // 3. Category Synergy
+      if (currentCategories.has('Hardware') && product.category === 'Services') {
+        score += 45;
+        reasons.push('Hardware attach: Support & SLA bundle');
+      } else if (currentCategories.has('Hardware') && product.category === 'Software') {
+        score += 35;
+        reasons.push('Hardware attach: Enterprise software add-on');
+      } else if (currentCategories.has('Software') && product.category === 'Services') {
+        score += 40;
+        reasons.push('Software attach: Implementation & support');
+      }
+
+      // 4. Known high-frequency co-purchase combinations
+      const linePids = new Set(lines.map(l => l.productId));
+      if (linePids.has('p1') && product.id === 'p4') {
+        score += 60;
+        reasons.push('82% co-purchase attach with Industrial Router');
+      }
+      if (linePids.has('p2') && (product.id === 'p7' || product.id === 'p4')) {
+        score += 50;
+        reasons.push('Frequently bundled enterprise solution');
+      }
+      if (linePids.has('p6') && product.id === 'p4') {
+        score += 55;
+        reasons.push('Standard security SLA bundle');
+      }
+
+      // 5. Margin Booster contribution
+      if (marginAnalysis.delta > 0) {
+        score += marginAnalysis.delta * 2.5;
+        reasons.push(`Boosts overall quote margin by +${marginAnalysis.delta}%`);
+      }
+
+      const primaryReason = reasons[0] || (isPromoted ? 'Active Promotion' : 'Recommended complement');
+
+      return {
+        ...product,
+        base_price: parseFloat(product.base_price),
+        margin_percent: parseFloat(product.margin_percent !== undefined ? product.margin_percent : 45),
+        is_promoted: isPromoted,
+        score,
+        marginAnalysis,
+        primaryReason
+      };
+    });
+
+    let filtered = scored;
+    if (upsellFilter === 'promoted') {
+      filtered = scored.filter(s => s.is_promoted);
+    } else if (upsellFilter === 'boosters') {
+      filtered = scored.filter(s => s.marginAnalysis.delta > 0);
+    }
+
+    return filtered.sort((a, b) => b.score - a.score);
+  }, [products, lines, dismissedUpsells, serverRecommendations, upsellFilter, getMarginDeltaIfAdded]);
+
+  const handleAddUpsell = (product) => {
+    addLine(product);
+    const analysis = getMarginDeltaIfAdded(product);
+    if (analysis.delta > 0) {
+      showNotification('success', `Added ${product.name} to quote! Margin boosted to ${analysis.projectedMargin}%.`);
+    } else {
+      showNotification('success', `Added ${product.name} to quote.`);
+    }
   };
+
+  const handleDismissUpsell = (productId) => {
+    setDismissedUpsells(prev => [...prev, productId]);
+    showNotification('info', 'Suggestion dismissed');
+  };
+
 
   const handleGenerateLiveDocument = async (e) => {
     if (e) e.preventDefault();
@@ -265,6 +433,19 @@ export default function QuotationBuilder() {
           </div>
         </div>
         <div className="flex items-center space-x-3">
+          {lines.length > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-xl shadow-2xs">
+              <i className="fa-solid fa-chart-line text-indigo-500 text-xs"></i>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Blended Margin:</span>
+              <span className={`text-xs font-black px-2 py-0.5 rounded-md ${
+                overallMargin >= 35 ? 'bg-emerald-100 text-emerald-800' :
+                overallMargin >= 20 ? 'bg-amber-100 text-amber-800' :
+                'bg-rose-100 text-rose-800'
+              }`}>
+                {overallMargin}%
+              </span>
+            </div>
+          )}
           <button
             type="button"
             className="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
@@ -437,7 +618,7 @@ export default function QuotationBuilder() {
 
             {/* Totals */}
             <div className="mt-6 flex justify-end">
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 min-w-[280px] space-y-2 text-xs">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 min-w-[300px] space-y-2 text-xs">
                 <div className="flex justify-between text-slate-500">
                   <span>Gross Total:</span>
                   <span className="font-semibold text-slate-800">{fmt(lines.reduce((acc, l) => acc + (l.basePrice * l.quantity), 0))}</span>
@@ -446,6 +627,20 @@ export default function QuotationBuilder() {
                   <span>Total Discount:</span>
                   <span className="font-semibold text-amber-600">-{fmt(lines.reduce((acc, l) => acc + (l.basePrice * l.quantity), 0) - calculateTotal())}</span>
                 </div>
+                <div className="flex justify-between text-slate-500">
+                  <span>Estimated Total Cost:</span>
+                  <span className="font-semibold text-slate-700">{fmt(calculateTotalCost())}</span>
+                </div>
+                <div className="flex justify-between text-slate-500 items-center">
+                  <span>Blended Margin:</span>
+                  <span className={`font-black text-xs px-2 py-0.5 rounded-md ${
+                    overallMargin >= 35 ? 'bg-emerald-100 text-emerald-800' :
+                    overallMargin >= 20 ? 'bg-amber-100 text-amber-800' :
+                    'bg-rose-100 text-rose-800'
+                  }`}>
+                    {overallMargin}%
+                  </span>
+                </div>
                 <div className="flex justify-between text-sm font-black text-slate-900 border-t border-slate-200 pt-2 mt-2">
                   <span>Final Quote Total:</span>
                   <span>{fmt(calculateTotal())}</span>
@@ -453,44 +648,6 @@ export default function QuotationBuilder() {
               </div>
             </div>
           </div>
-
-          {/* Cross-sell */}
-          {lines.length > 0 && availableUpsells.length > 0 && (
-            <div className="border border-indigo-200 rounded-2xl overflow-hidden bg-white shadow-sm">
-              <div className="bg-gradient-to-r from-indigo-50 to-blue-50 px-5 py-3 border-b border-indigo-100 flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <i className="fa-solid fa-wand-magic-sparkles text-primary"></i>
-                  <h3 className="font-bold text-indigo-950 text-xs">Smart Cross-Sell & Upsell Suggestions</h3>
-                </div>
-              </div>
-              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-indigo-50/20">
-                {availableUpsells.slice(0, 2).map(product => (
-                  <div key={product.id} className="bg-white border border-indigo-100 rounded-xl p-4 flex justify-between items-center shadow-sm">
-                    <div className="space-y-1">
-                      <h4 className="font-bold text-slate-900 text-xs">{product.name}</h4>
-                      <span className="text-[11px] text-slate-500 block">{product.category} &bull; {fmt(product.base_price)}</span>
-                    </div>
-                    <div className="flex flex-col space-y-1 text-right">
-                      <button
-                        type="button"
-                        onClick={() => addLine(product)}
-                        className="text-xs font-bold text-white bg-primary hover:bg-primary-dark px-3 py-1.5 rounded-lg shadow-sm transition-colors flex items-center justify-center"
-                      >
-                        <i className="fa-solid fa-plus mr-1 text-[10px]"></i> Add
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDismissedUpsells([...dismissedUpsells, product.id])}
-                        className="text-[10px] text-slate-400 hover:text-slate-600 pt-1"
-                      >
-                        Dismiss
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Sidebar: Products + Validation Panel */}
@@ -590,6 +747,201 @@ export default function QuotationBuilder() {
               )}
             </div>
           )}
+
+          {/* ── Upsell and Cross-Sell Panel (Shown Alongside the Cart) ── */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 space-y-4">
+            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-primary flex items-center justify-center font-bold text-sm shadow-2xs">
+                  <i className="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-slate-900">Upsell & Cross-Sell</h2>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-primary border border-indigo-100">
+                      {rankedUpsellSuggestions.length}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">Ranked by co-purchase history & active promos</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Live Quote Margin Gauge */}
+            <div className="bg-slate-50 border border-slate-200/70 rounded-xl p-3 flex items-center justify-between">
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Current Quote Margin</span>
+                <span className="text-xs text-slate-500">Benchmark: &gt;35%</span>
+              </div>
+              <div className="text-right">
+                <span className={`text-base font-black ${
+                  overallMargin >= 35 ? 'text-emerald-600' :
+                  overallMargin >= 20 ? 'text-amber-600' :
+                  'text-rose-600'
+                }`}>
+                  {overallMargin}%
+                </span>
+              </div>
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex items-center gap-1.5 text-[11px]">
+              <button
+                type="button"
+                onClick={() => setUpsellFilter('all')}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-colors ${
+                  upsellFilter === 'all'
+                    ? 'bg-slate-800 text-white shadow-2xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                All ({products.filter(p => !lines.some(l => l.productId === p.id) && !dismissedUpsells.includes(p.id)).length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setUpsellFilter('promoted')}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-colors flex items-center gap-1 ${
+                  upsellFilter === 'promoted'
+                    ? 'bg-amber-600 text-white shadow-2xs'
+                    : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/60'
+                }`}
+              >
+                <i className="fa-solid fa-bolt text-[9px]"></i> Active Promos
+              </button>
+              <button
+                type="button"
+                onClick={() => setUpsellFilter('boosters')}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-colors flex items-center gap-1 ${
+                  upsellFilter === 'boosters'
+                    ? 'bg-emerald-700 text-white shadow-2xs'
+                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60'
+                }`}
+              >
+                <i className="fa-solid fa-arrow-trend-up text-[9px]"></i> Margin Boosters
+              </button>
+            </div>
+
+            {/* Ranked Suggestions List */}
+            <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+              {rankedUpsellSuggestions.length === 0 ? (
+                <div className="text-center py-7 px-3 bg-slate-50/60 rounded-xl border border-dashed border-slate-200 text-xs text-slate-400 space-y-2">
+                  <i className="fa-solid fa-check-double text-2xl text-emerald-400 block"></i>
+                  <p className="font-semibold text-slate-700">All suggestions reviewed!</p>
+                  <p className="text-[11px] text-slate-400">
+                    {dismissedUpsells.length > 0
+                      ? `${dismissedUpsells.length} suggestion(s) currently dismissed.`
+                      : 'All available products are in your quotation.'}
+                  </p>
+                  {dismissedUpsells.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setDismissedUpsells([])}
+                      className="text-xs font-bold text-primary hover:underline pt-1 inline-flex items-center gap-1"
+                    >
+                      <i className="fa-solid fa-rotate-left text-[10px]"></i> Restore Dismissed ({dismissedUpsells.length})
+                    </button>
+                  )}
+                </div>
+              ) : (
+                rankedUpsellSuggestions.map(product => {
+                  const { delta, projectedMargin, isPositive, isInitial } = product.marginAnalysis;
+                  return (
+                    <div
+                      key={product.id}
+                      className={`rounded-xl p-3.5 border transition-all space-y-2.5 ${
+                        product.is_promoted
+                          ? 'bg-gradient-to-br from-amber-50/50 via-white to-indigo-50/30 border-amber-200/80 shadow-2xs'
+                          : 'bg-white border-slate-200/80 hover:border-indigo-200 shadow-2xs'
+                      }`}
+                    >
+                      {/* Product Header & Promo Tag */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <h4 className="font-bold text-slate-900 text-xs tracking-tight">{product.name}</h4>
+                            <span className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 border border-slate-200/50">
+                              {product.category}
+                            </span>
+                          </div>
+                          <span className="text-[11px] font-semibold text-slate-700 block">
+                            {fmt(product.base_price)} {product.unit ? <span className="text-slate-400 font-normal">/ {product.unit}</span> : ''}
+                          </span>
+                        </div>
+
+                        {/* Promotion Tag */}
+                        {product.is_promoted && (
+                          <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 text-amber-800 border border-amber-300 shadow-2xs">
+                            <i className="fa-solid fa-bolt text-amber-500 text-[9px]"></i> Active Promotion
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Margin Delta & Impact */}
+                      <div className="flex items-center justify-between gap-2 bg-white/80 p-2 rounded-lg border border-slate-100 text-xs">
+                        <div>
+                          <span className="text-[10px] text-slate-400 block font-medium">Margin Impact</span>
+                          <span className="text-[11px] text-slate-600 font-semibold">
+                            {isInitial ? 'Initial Margin' : `Yields ${projectedMargin}%`}
+                          </span>
+                        </div>
+
+                        {/* Margin Delta Badge */}
+                        <div className={`px-2 py-1 rounded-md text-[11px] font-bold flex items-center gap-1 ${
+                          isPositive
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        }`}>
+                          <i className={`fa-solid ${isPositive ? 'fa-arrow-trend-up text-emerald-600' : 'fa-arrow-trend-down text-amber-600'} text-[10px]`}></i>
+                          {isPositive ? `+${delta}%` : `${delta}%`} Margin
+                        </div>
+                      </div>
+
+                      {/* Recommendation Rationale / Co-purchase history */}
+                      <p className="text-[10px] text-slate-500 flex items-center gap-1.5 font-medium">
+                        <i className="fa-solid fa-circle-check text-indigo-500 text-[9px]"></i>
+                        {product.primaryReason}
+                      </p>
+
+                      {/* Action Buttons: Add to Quote & Dismiss */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => handleAddUpsell(product)}
+                          className="flex-1 py-1.5 px-3 text-xs font-bold text-white bg-primary hover:bg-primary-dark rounded-xl shadow-2xs hover:shadow-xs transition-all flex items-center justify-center gap-1.5"
+                        >
+                          <i className="fa-solid fa-cart-plus text-[10px]"></i>
+                          Add to Quote
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDismissUpsell(product.id)}
+                          className="py-1.5 px-2.5 text-xs font-semibold text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors flex items-center gap-1"
+                          title="Dismiss suggestion"
+                        >
+                          <i className="fa-solid fa-xmark text-[10px]"></i>
+                          Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Dismissed Count Bar with Restore Option */}
+            {dismissedUpsells.length > 0 && (
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                <span>{dismissedUpsells.length} suggestion{dismissedUpsells.length > 1 ? 's' : ''} dismissed</span>
+                <button
+                  type="button"
+                  onClick={() => setDismissedUpsells([])}
+                  className="text-primary hover:underline font-semibold flex items-center gap-1"
+                >
+                  <i className="fa-solid fa-rotate-left text-[9px]"></i> Reset Dismissed
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* ── Available Products ── */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sticky top-6">

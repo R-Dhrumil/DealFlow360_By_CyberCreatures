@@ -756,6 +756,83 @@ class QuotationService {
       requiresManagerApproval
     };
   }
+
+  /**
+   * Get intelligent ranked upsell and cross-sell recommendations
+   * based on co-purchase history, active promotions, and category affinity.
+   */
+  async getRecommendations(companyId, currentProductIds = []) {
+    const allProducts = await productRepository.findByCompany(companyId);
+    if (!allProducts || allProducts.length === 0) return [];
+
+    const productIdsArray = Array.isArray(currentProductIds)
+      ? currentProductIds
+      : (typeof currentProductIds === 'string' && currentProductIds.trim())
+        ? currentProductIds.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+
+    const synergies = await quotationRepository.getCoPurchaseSynergies(companyId, productIdsArray);
+    const coPurchaseMap = new Map();
+    synergies.forEach(s => {
+      coPurchaseMap.set(s.product_id, parseInt(s.co_purchase_count, 10) || 0);
+    });
+
+    const currentProducts = allProducts.filter(p => productIdsArray.includes(p.id));
+    const currentCategories = new Set(currentProducts.map(p => p.category));
+    const candidates = allProducts.filter(p => !productIdsArray.includes(p.id));
+
+    const ranked = candidates.map(product => {
+      let score = 0;
+      const reasons = [];
+
+      const coCount = coPurchaseMap.get(product.id) || 0;
+      if (coCount > 0) {
+        score += coCount * 30;
+        reasons.push(`Co-purchased in ${coCount} previous quote${coCount > 1 ? 's' : ''}`);
+      }
+
+      if (product.is_promoted) {
+        score += 50;
+        reasons.push('Active promotional deal');
+      }
+
+      if (currentCategories.has('Hardware') && product.category === 'Services') {
+        score += 40;
+        reasons.push('Hardware attach: Service & SLA bundle');
+      } else if (currentCategories.has('Hardware') && product.category === 'Software') {
+        score += 35;
+        reasons.push('Hardware attach: Enterprise software integration');
+      } else if (currentCategories.has('Software') && product.category === 'Services') {
+        score += 35;
+        reasons.push('Software attach: Implementation & support');
+      } else if (currentCategories.size === 0 && product.is_promoted) {
+        score += 25;
+        reasons.push('Featured popular offering');
+      }
+
+      const margin = parseFloat(product.margin_percent || 40);
+      if (margin >= 70) {
+        score += 20;
+        reasons.push('High margin accelerator');
+      } else if (margin >= 50) {
+        score += 10;
+      }
+
+      return {
+        ...product,
+        base_price: parseFloat(product.base_price),
+        floor_price: product.floor_price ? parseFloat(product.floor_price) : null,
+        margin_percent: margin,
+        score,
+        coPurchaseCount: coCount,
+        recommendationReason: reasons.join(' • ') || 'Recommended complement'
+      };
+    });
+
+    ranked.sort((a, b) => b.score - a.score);
+    return ranked;
+  }
 }
 
 module.exports = new QuotationService();
+

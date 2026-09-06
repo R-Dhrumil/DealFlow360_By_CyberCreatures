@@ -164,18 +164,6 @@ export default function CustomerPortal() {
           </div>
 
           <div className="flex items-center space-x-2">
-            {quotation.latest_quotation_id && quotation.latest_quotation_id !== quotation.id ? (
-              <button
-                onClick={() => navigate(`/portal/${quotation.latest_quotation_id}`)}
-                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer print:hidden"
-              >
-                <i className="fa-solid fa-bolt"></i> Switch to Latest #{formatQuoteCode(quotation.latest_quotation_id)}
-              </button>
-            ) : (
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold">
-                <i className="fa-solid fa-check-double text-[10px]"></i> Latest Quotation
-              </span>
-            )}
             <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-700 border border-slate-200 rounded-full text-xs font-semibold">
               <i className="fa-solid fa-globe text-[10px]"></i> Public Demo Access
             </span>
@@ -194,31 +182,6 @@ export default function CustomerPortal() {
 
       {/* Main Content Body */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-
-        {/* Newer Quotation Notice Banner */}
-        {quotation.latest_quotation_id && quotation.latest_quotation_id !== quotation.id && (
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-xs">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-lg font-bold shadow">
-                <i className="fa-solid fa-clock-rotate-left"></i>
-              </div>
-              <div>
-                <h3 className="font-extrabold text-sm text-amber-950">You are viewing Quotation #{formatQuoteCode(quotation.id)}</h3>
-                <p className="text-xs text-amber-800 mt-0.5">
-                  A newer quotation <strong>#{formatQuoteCode(quotation.latest_quotation_id)}</strong> is available for your account.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => navigate(`/portal/${quotation.latest_quotation_id}`)}
-              className="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow flex items-center gap-2 cursor-pointer"
-            >
-              <i className="fa-solid fa-bolt"></i>
-              <span>Switch to Latest Quotation</span>
-              <i className="fa-solid fa-arrow-right text-[10px]"></i>
-            </button>
-          </div>
-        )}
 
         {/* Status Banner when Approved */}
         {quotation.status === 'approved' && (

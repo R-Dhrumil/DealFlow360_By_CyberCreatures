@@ -20,6 +20,7 @@ class WarehouseRepository {
       name: row.name,
       location: row.location || '',
       shippingCostWeight: parseFloat(row.shipping_cost_weight) || 1.0,
+      shippingCost: parseFloat(row.shipping_cost_weight) || 15.0,
       stockCount: parseInt(row.stock_count, 10) || 0,
       minInventory: 10,
       status: 'Active'
@@ -30,7 +31,8 @@ class WarehouseRepository {
     const id = 'wh_' + crypto.randomUUID().substring(0, 8);
     const name = data.name;
     const location = data.location || 'Main Depot';
-    const shippingCostWeight = parseFloat(data.shippingCostWeight) || 1.0;
+    const costVal = data.shippingCost !== undefined ? data.shippingCost : data.shippingCostWeight;
+    const shippingCostWeight = parseFloat(costVal) || 1.0;
     const stockCount = parseInt(data.stockCount, 10) || 0;
     const minInventory = parseInt(data.minInventory, 10) || 10;
 
@@ -48,6 +50,7 @@ class WarehouseRepository {
       name: row.name,
       location: row.location,
       shippingCostWeight: parseFloat(row.shipping_cost_weight) || 1.0,
+      shippingCost: parseFloat(row.shipping_cost_weight) || 15.0,
       stockCount,
       minInventory,
       status: 'Active'
@@ -67,9 +70,10 @@ class WarehouseRepository {
       fields.push(`location = $${idx++}`);
       values.push(data.location);
     }
-    if (data.shippingCostWeight !== undefined) {
+    const costVal = data.shippingCost !== undefined ? data.shippingCost : data.shippingCostWeight;
+    if (costVal !== undefined) {
       fields.push(`shipping_cost_weight = $${idx++}`);
-      values.push(parseFloat(data.shippingCostWeight) || 1.0);
+      values.push(parseFloat(costVal) || 1.0);
     }
 
     if (fields.length === 0) {
@@ -85,6 +89,7 @@ class WarehouseRepository {
         name: row.name,
         location: row.location,
         shippingCostWeight: parseFloat(row.shipping_cost_weight) || 1.0,
+        shippingCost: parseFloat(row.shipping_cost_weight) || 15.0,
         stockCount: data.stockCount !== undefined ? parseInt(data.stockCount, 10) : 0,
         status: data.status || 'Active'
       };
@@ -103,6 +108,7 @@ class WarehouseRepository {
       name: row.name,
       location: row.location,
       shippingCostWeight: parseFloat(row.shipping_cost_weight) || 1.0,
+      shippingCost: parseFloat(row.shipping_cost_weight) || 15.0,
       stockCount: data.stockCount !== undefined ? parseInt(data.stockCount, 10) : 0,
       status: data.status || 'Active'
     };
