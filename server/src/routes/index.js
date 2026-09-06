@@ -47,6 +47,7 @@ router.use('/payments', require('./payment.routes'));
 router.use('/approvals', approvalRoutes);
 router.use('/inquiries', inquiryRoutes);
 router.use('/warehouses', warehouseRoutes);
+router.use('/inventory', require('./inventory.routes'));
 router.use('/dashboard', dashboardRoutes);
 router.use('/superadmin', superadminRoutes);
 router.use('/export', exportRoutes);

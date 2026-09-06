@@ -23,6 +23,7 @@ export default function Layout() {
     { name: 'Inquiries', path: '/app/inquiries', icon: 'fa-inbox', roles: ['sales_rep', 'sales_manager', 'finance_manager', 'admin'] },
     { name: 'Approvals', path: '/app/approvals', icon: 'fa-check-double', roles: ['sales_manager', 'admin', 'finance_manager', 'sales_rep'] },
     { name: 'Operations Hub', path: '/app/operations', icon: 'fa-boxes-packing', roles: ['operations', 'admin'] },
+    { name: 'Inventory Management', path: '/app/inventory', icon: 'fa-warehouse', roles: ['operations', 'admin', 'sales_manager'] },
     { name: 'Finance Hub', path: '/app/finance', icon: 'fa-coins', roles: ['finance_manager', 'admin', 'sales_manager'] },
     { name: 'Admin Operations', path: '/app/admin', icon: 'fa-user-gear', roles: ['admin'] },
     { name: 'Payment Settings', path: '/app/payment-settings', icon: 'fa-credit-card', roles: ['admin', 'super_admin', 'finance_manager'] },

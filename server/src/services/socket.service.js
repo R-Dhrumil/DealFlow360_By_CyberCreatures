@@ -152,6 +152,23 @@ function broadcastPipelineUpdate(companyId, data) {
   io.emit('pipeline_updated', payload);
 }
 
+/**
+ * Broadcast live inventory update to all connected clients in company
+ * @param {string} companyId 
+ * @param {object} data 
+ */
+function broadcastInventoryUpdate(companyId, data) {
+  if (!io) return;
+  const payload = {
+    ...data,
+    timestamp: new Date(),
+  };
+  if (companyId) {
+    io.to(`company_${companyId}`).emit('inventory_updated', payload);
+  }
+  io.emit('inventory_updated', payload);
+}
+
 module.exports = {
   initSocket,
   getIo,
@@ -161,4 +178,5 @@ module.exports = {
   emitRoleNotification,
   emitCompanyRoleNotification,
   broadcastPipelineUpdate,
+  broadcastInventoryUpdate,
 };

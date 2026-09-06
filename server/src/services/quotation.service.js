@@ -1,9 +1,10 @@
 const quotationRepository = require('../repositories/quotation.repository');
 const approvalRepository = require('../repositories/approval.repository');
+const inventoryRepository = require('../repositories/inventory.repository');
 const db = require('../config/db');
 const { computeBlendedRiskScore } = require('./riskScore.service');
 const ApiError = require('../utils/apiError');
-const { emitCompanyRoleNotification, emitUserNotification, broadcastPipelineUpdate } = require('./socket.service');
+const { emitCompanyRoleNotification, emitUserNotification, broadcastPipelineUpdate, broadcastInventoryUpdate } = require('./socket.service');
 const { logAction } = require('./audit.service');
 
 const crypto = require('crypto');
@@ -697,6 +698,45 @@ class QuotationService {
         await quotationRepository.updateQuotationStatusAndScore(
           quotationId, 'closed', quotation.blended_risk_score || 0, client
         );
+
+        // Auto-deduct inventory stock for customer purchase
+        try {
+          const linesRes = await client.query(
+            `SELECT ql.product_id, ql.quantity
+             FROM quotation_lines ql
+             WHERE ql.quotation_id = $1`,
+            [quotationId]
+          );
+
+          // Get warehouse ID
+          const whRes = await client.query(
+            `SELECT id FROM warehouses WHERE company_id = $1 ORDER BY created_at ASC LIMIT 1`,
+            [quotation.company_id || 'c1']
+          );
+          let targetWarehouseId = whRes.rows[0]?.id;
+          if (!targetWarehouseId) {
+            const anyWh = await client.query('SELECT id FROM warehouses LIMIT 1');
+            targetWarehouseId = anyWh.rows[0]?.id || 'w1';
+          }
+
+          for (const line of linesRes.rows) {
+            const prodId = line.product_id;
+            const qty = parseInt(line.quantity, 10) || 1;
+            await inventoryRepository.adjustStock(
+              client,
+              quotation.company_id || 'c1',
+              targetWarehouseId,
+              prodId,
+              quotation.customer_id || null,
+              'out',
+              qty,
+              `Customer Purchase (Quote #${quotationId})`,
+              quotationId
+            );
+          }
+        } catch (invErr) {
+          console.warn('Auto stock deduction warning:', invErr.message);
+        }
       }
 
       await client.query('COMMIT');
@@ -714,6 +754,7 @@ class QuotationService {
 
     const effectiveCompanyId = companyId || quotation.company_id;
     broadcastPipelineUpdate(effectiveCompanyId, { quotationId, newStatus: 'confirmed' });
+    broadcastInventoryUpdate(effectiveCompanyId, { quotationId, type: 'customer_purchase' });
 
     if (quotation) {
       emitCompanyRoleNotification(effectiveCompanyId, ['admin', 'sales_manager', 'operations'], {

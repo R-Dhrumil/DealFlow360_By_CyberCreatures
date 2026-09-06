@@ -23,6 +23,7 @@ import AdminWorkspace from './pages/AdminWorkspace';
 import FinanceOperations from './pages/FinanceOperations';
 import TransactionHistory from './pages/TransactionHistory';
 import OperationsDashboard from './pages/OperationsDashboard';
+import InventoryManagement from './pages/InventoryManagement';
 import InquiryList from './pages/InquiryList';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
@@ -108,6 +109,7 @@ function App() {
                 <Route path="finance" element={<FinanceOperations />} />
                 <Route path="transactions" element={<TransactionHistory />} />
                 <Route path="operations" element={<OperationsDashboard />} />
+                <Route path="inventory" element={<InventoryManagement />} />
                 {/* Intelligent Redirect */}
                 <Route index element={<AppIndexRedirect />} />
               </Route>
