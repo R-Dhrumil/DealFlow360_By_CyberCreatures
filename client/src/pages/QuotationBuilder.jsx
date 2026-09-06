@@ -496,59 +496,96 @@ export default function QuotationBuilder() {
         {/* Sidebar: Products + Validation Panel */}
         <div className="lg:col-span-1 space-y-5">
 
-          {/* ── Live Discount Authority Panel ── */}
+          {/* ── Live Risk Analysis Panel ── */}
           {lines.length > 0 && (
-            <div className={`rounded-2xl border p-5 shadow-sm ${hasApprovalIssue ? 'bg-rose-50 border-rose-200' : 'bg-emerald-50 border-emerald-200'}`}>
+            <div className={`rounded-2xl border p-5 shadow-sm transition-colors ${
+              validation?.riskLevel === 'CRITICAL' ? 'bg-red-50 border-red-300' :
+              validation?.riskLevel === 'HIGH' ? 'bg-rose-50 border-rose-200' : 
+              validation?.riskLevel === 'MEDIUM' ? 'bg-amber-50 border-amber-200' : 
+              'bg-emerald-50 border-emerald-200'
+            }`}>
               <div className="flex items-center gap-2 mb-3">
-                <i className={`fa-solid ${hasApprovalIssue ? 'fa-triangle-exclamation text-rose-500' : 'fa-shield-check text-emerald-600'} text-sm`}></i>
-                <h3 className={`text-xs font-bold ${hasApprovalIssue ? 'text-rose-800' : 'text-emerald-800'}`}>
-                  {hasApprovalIssue ? 'Manager Approval Required' : 'Within Your Authority'}
+                <i className={`fa-solid ${
+                  validation?.riskLevel === 'CRITICAL' ? 'fa-radiation text-red-600' :
+                  validation?.riskLevel === 'HIGH' ? 'fa-triangle-exclamation text-rose-500' :
+                  validation?.riskLevel === 'MEDIUM' ? 'fa-circle-exclamation text-amber-500' : 
+                  'fa-shield-check text-emerald-600'} text-sm`}></i>
+                <h3 className={`text-xs font-bold ${
+                  validation?.riskLevel === 'CRITICAL' ? 'text-red-800' :
+                  validation?.riskLevel === 'HIGH' ? 'text-rose-800' :
+                  validation?.riskLevel === 'MEDIUM' ? 'text-amber-800' : 
+                  'text-emerald-800'
+                }`}>
+                  {validation?.requiresFinance ? 'Finance Approval Required' : 
+                   validation?.requiresManager ? 'Manager Approval Required' : 'Within Allowed Limits'}
                 </h3>
                 {validating && <i className="fa-solid fa-spinner fa-spin text-slate-400 text-xs ml-auto"></i>}
               </div>
 
               {validation && (
                 <div className="space-y-3">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-600">Your Max Discount:</span>
-                    <span className="font-bold text-slate-800">{validation.repMaxDiscount}%</span>
+                  <div className="grid grid-cols-2 gap-2 text-xs mb-2 bg-white/60 p-2 rounded-xl">
+                    <div className="flex flex-col">
+                      <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wide">Risk Score</span>
+                      <span className={`text-xl font-bold ${
+                        validation.riskLevel === 'CRITICAL' ? 'text-red-700' :
+                        validation.riskLevel === 'HIGH' ? 'text-rose-600' :
+                        validation.riskLevel === 'MEDIUM' ? 'text-amber-600' : 'text-emerald-600'
+                      }`}>{validation.riskScore}<span className="text-sm">/100</span></span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wide">Violations</span>
+                      <span className="text-xl font-bold text-slate-700">{validation.violationsCount}</span>
+                    </div>
                   </div>
 
-                  {validation.lineResults?.map((lr, i) => (
-                    <div key={i} className="bg-white/70 rounded-xl p-3 space-y-1.5 text-xs">
-                      <div className="font-semibold text-slate-700 truncate">{lr.productName}</div>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
-                        <span className="text-slate-500">Base Price</span>
-                        <span className="text-right font-mono font-bold">{fmt(lr.basePrice)}</span>
-                        <span className="text-slate-500">Discount</span>
-                        <span className={`text-right font-mono font-bold ${lr.exceedsAuthority ? 'text-rose-600' : 'text-slate-700'}`}>{lr.discount}%</span>
-                        <span className="text-slate-500">Net Price</span>
-                        <span className="text-right font-mono font-bold">{fmt(lr.netPrice)}</span>
-                        {lr.floorPrice && (
-                          <>
-                            <span className="text-slate-500">Floor Price</span>
-                            <span className={`text-right font-mono font-bold ${lr.belowFloor ? 'text-rose-600' : 'text-emerald-600'}`}>{fmt(lr.floorPrice)}</span>
-                          </>
-                        )}
-                      </div>
-                      {lr.exceedsAuthority && (
-                        <div className="mt-1 text-[10px] font-bold text-rose-600 bg-rose-100 rounded-lg px-2 py-1">
-                          ⚠ Discount {lr.discount}% exceeds your limit of {validation.repMaxDiscount}%
-                        </div>
-                      )}
-                      {lr.belowFloor && !lr.exceedsAuthority && (
-                        <div className="mt-1 text-[10px] font-bold text-amber-600 bg-amber-100 rounded-lg px-2 py-1">
-                          ⚠ Net price below floor — manager approval required
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  <details className="group">
+                    <summary className="text-[11px] font-bold text-slate-600 cursor-pointer list-none flex items-center justify-between bg-white/40 hover:bg-white/70 p-2 rounded-lg transition-colors">
+                      View Risk Breakdown
+                      <i className="fa-solid fa-chevron-down transition-transform group-open:rotate-180"></i>
+                    </summary>
+                    <div className="mt-3 space-y-2">
+                      {validation.lineResults?.map((lr, i) => (
+                        <div key={i} className={`bg-white rounded-xl p-3 space-y-1.5 text-xs border ${lr.isViolation || lr.belowFloor ? 'border-rose-200' : 'border-transparent shadow-sm'}`}>
+                          <div className="font-semibold text-slate-700 truncate">{lr.productName}</div>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                            <span className="text-slate-500">Allowed Discount</span>
+                            <span className="text-right font-mono font-bold text-emerald-600">{lr.allowedDiscount}%</span>
+                            
+                            <span className="text-slate-500">Given Discount</span>
+                            <span className={`text-right font-mono font-bold ${lr.isViolation ? 'text-rose-600' : 'text-slate-700'}`}>{lr.discount}%</span>
+                            
+                            {lr.isViolation && (
+                              <>
+                                <span className="text-slate-500 text-rose-600 font-semibold">Excess</span>
+                                <span className="text-right font-mono font-bold text-rose-600">+{lr.excessDiscount}%</span>
+                              </>
+                            )}
 
-                  {hasApprovalIssue && (
-                    <div className="bg-rose-100 border border-rose-200 rounded-xl p-3 text-[11px] text-rose-700 font-semibold">
-                      This quotation will be submitted for <strong>manager approval</strong> automatically.
+                            {lr.floorPrice && (
+                              <>
+                                <span className="text-slate-500 mt-1">Floor Price</span>
+                                <span className={`text-right font-mono font-bold mt-1 ${lr.belowFloor ? 'text-rose-600' : 'text-slate-600'}`}>{fmt(lr.floorPrice)}</span>
+                                <span className="text-slate-500">Net Price</span>
+                                <span className={`text-right font-mono font-bold ${lr.belowFloor ? 'text-rose-600' : 'text-emerald-600'}`}>{fmt(lr.netPrice)}</span>
+                              </>
+                            )}
+                          </div>
+                          
+                          {lr.belowFloor && (
+                            <div className="mt-1 text-[10px] font-bold text-amber-600 bg-amber-100 rounded-lg px-2 py-1">
+                              ⚠ Net price below floor
+                            </div>
+                          )}
+                          {lr.exceedsAuthority && !lr.isViolation && (
+                            <div className="mt-1 text-[10px] font-bold text-amber-600 bg-amber-100 rounded-lg px-2 py-1">
+                              ⚠ Discount {lr.discount}% exceeds your personal limit of {validation.repMaxDiscount}%
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  )}
+                  </details>
                 </div>
               )}
             </div>

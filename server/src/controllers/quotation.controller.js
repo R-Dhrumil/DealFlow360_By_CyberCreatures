@@ -117,14 +117,44 @@ class QuotationController {
   async validateDiscount(req, res) {
     const companyId = req.companyId;
     const userId = req.user?.userId || req.user?.id;
-    const { lines } = req.body;
+    const { lines, customerId } = req.body;
 
     if (!lines || !Array.isArray(lines)) {
       return res.status(400).json({ error: 'lines array is required' });
     }
 
-    const result = await quotationService.validateDiscountLive(companyId, userId, lines);
+    const result = await quotationService.validateDiscountLive(companyId, userId, lines, customerId);
     return res.json(result);
+  }
+
+  /** POST /quotations/:id/calculate-risk — Trigger full recalculation and persist */
+  async calculateRisk(req, res) {
+    const quotationId = req.params.id;
+    const result = await quotationService.submitQuotation(req.companyId, quotationId, req.user?.id);
+    return res.json({ success: true, ...result });
+  }
+
+  /** GET /quotations/:id/risk-analysis — Return detailed risk breakdown */
+  async getRiskAnalysis(req, res) {
+    const quotationId = req.params.id;
+    // We already return full lines with detail in getQuotationById (if we map them)
+    // For specific breakdown, let's fetch it via riskEngine
+    const quote = await quotationRepository.findDetailById(quotationId);
+    if (!quote) return res.status(404).json({ error: 'Quotation not found' });
+    
+    // We can do a live calculation to get the exact breakdown structure
+    const lines = quote.lines.map(l => ({
+      productId: l.product_id,
+      productName: l.product_name,
+      category: l.category,
+      quantity: parseInt(l.quantity, 10),
+      unitPrice: parseFloat(l.unit_price),
+      discountPercent: parseFloat(l.discount_percent || 0)
+    }));
+    
+    const riskEngineService = require('../services/riskEngine.service');
+    const riskData = await riskEngineService.calculateLiveRisk(req.companyId, quote.customer_id, lines);
+    return res.json({ success: true, riskData });
   }
 
   /** PUT /quotations/:id/submit */

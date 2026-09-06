@@ -36,7 +36,7 @@ class QuotationRepository {
 
     const result = await db.query(
       `SELECT 
-         q.id, q.status, q.blended_risk_score, q.created_at, q.updated_at,
+         q.id, q.status, q.blended_risk_score, q.risk_level, q.manager_required, q.finance_required, q.created_at, q.updated_at,
          c.name as customer_name, c.email as customer_email,
          u.name as sales_rep_name,
          COALESCE(STRING_AGG(DISTINCT p.name, ', '), 'Custom Proposal') as product_summary,

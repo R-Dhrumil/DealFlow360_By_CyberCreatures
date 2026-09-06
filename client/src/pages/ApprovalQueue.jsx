@@ -310,10 +310,23 @@ export default function ApprovalQueue() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
-                            <i className="fa-solid fa-triangle-exclamation"></i>
-                            <span>{parseFloat(approval.blended_risk_score || 0).toFixed(2)}%</span>
-                          </span>
+                          <div className="flex flex-col items-center gap-1">
+                            <span className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                              approval.risk_level === 'CRITICAL' ? 'bg-red-100 text-red-700' :
+                              approval.risk_level === 'HIGH' ? 'bg-rose-100 text-rose-700' :
+                              approval.risk_level === 'MEDIUM' ? 'bg-amber-100 text-amber-700' :
+                              'bg-emerald-100 text-emerald-700'
+                            }`}>
+                              <i className={`fa-solid ${
+                                approval.risk_level === 'CRITICAL' ? 'fa-radiation' :
+                                approval.risk_level === 'HIGH' ? 'fa-triangle-exclamation' :
+                                approval.risk_level === 'MEDIUM' ? 'fa-circle-exclamation' :
+                                'fa-shield-check'
+                              }`}></i>
+                              <span>{parseFloat(approval.blended_risk_score || 0).toFixed(0)} / 100</span>
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-500 uppercase">{approval.risk_level || 'LOW'} RISK</span>
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">

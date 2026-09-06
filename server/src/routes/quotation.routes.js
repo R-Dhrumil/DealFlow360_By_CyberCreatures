@@ -29,6 +29,12 @@ router.post('/customer-request', asyncWrap((req, res) => quotationController.cre
 // Real-time discount validation
 router.post('/validate-discount', asyncWrap((req, res) => quotationController.validateDiscount(req, res)));
 
+// Calculate Risk and Risk Analysis
+router.post('/:id/calculate-risk', checkRole('sales_rep', 'sales_manager', 'finance_manager', 'finance', 'admin', 'super_admin'),
+  asyncWrap((req, res) => quotationController.calculateRisk(req, res)));
+router.get('/:id/risk-analysis', checkRole('sales_rep', 'sales_manager', 'finance_manager', 'finance', 'admin', 'super_admin'),
+  asyncWrap((req, res) => quotationController.getRiskAnalysis(req, res)));
+
 // Approval / rejection (sales_manager + admin can also approve pending_admin_approval)
 router.put('/:id/approve', checkRole('finance_manager', 'finance', 'admin', 'sales_manager', 'super_admin'),
   asyncWrap((req, res) => quotationController.approve(req, res)));

@@ -7,7 +7,7 @@ const customerRepository = require('../repositories/customer.repository');
 const companyRepository = require('../repositories/company.repository');
 const warehouseRepository = require('../repositories/warehouse.repository');
 const db = require('../config/db');
-const { computeBlendedRiskScore } = require('./riskScore.service');
+const riskEngineService = require('./riskEngine.service');
 const ApiError = require('../utils/apiError');
 const { emitCompanyRoleNotification, emitUserNotification, broadcastPipelineUpdate, broadcastInventoryUpdate } = require('./socket.service');
 const { logAction } = require('./audit.service');
@@ -246,11 +246,13 @@ class QuotationService {
         category: row.category
       }));
 
-      // 3. Existing risk score calculation
-      const tierCeiling = await approvalRepository.getCustomerTierCeiling(companyId, quotation.customer_id);
-      const categoryCeilings = await approvalRepository.getCategoryCeilings(companyId);
-      const chains = await approvalRepository.getApprovalChains(companyId);
-      riskResult = computeBlendedRiskScore(lines, tierCeiling, categoryCeilings, chains);
+      // 3. New Risk Engine calculation (persists line-level details)
+      const riskData = await riskEngineService.calculateQuotationRisk(quotationId, companyId, client);
+      riskResult = {
+        blendedScore: riskData.riskScore,
+        requiresManager: riskData.requiresManager,
+        requiresFinance: riskData.requiresFinance
+      };
 
       // 4. Salesperson discount authority check
       const repId = userId || quotation.sales_rep_id;
@@ -261,12 +263,19 @@ class QuotationService {
       const floorCheck = await checkFloorPrice(quotationId);
 
       // 6. Determine final status per workflow hierarchy
-      if (!authorityCheck.exceedsAuthority && !floorCheck.belowFloor) {
-        finalStatus = 'approved';
-        approvalLevel = null;
+      // We now strictly use the state machine logic mapped to risk levels
+      if (floorCheck.belowFloor) {
+         finalStatus = 'pending_admin_approval';
+         approvalLevel = 'admin';
+      } else if (riskData.requiresFinance) {
+         finalStatus = 'pending_finance'; // or pending_finance_approval
+         approvalLevel = 'finance';
+      } else if (riskData.requiresManager || authorityCheck.exceedsAuthority) {
+         finalStatus = 'pending_manager'; // or pending_approval
+         approvalLevel = 'manager';
       } else {
-        finalStatus = 'pending_approval';
-        approvalLevel = 'manager';
+         finalStatus = 'approved';
+         approvalLevel = null;
       }
 
       // 7. Update quotation via repository
@@ -299,11 +308,11 @@ class QuotationService {
         message: `Quote #${quotationId} is within all limits and was auto-approved!`,
         link: `/app/quote/${quotationId}`
       });
-    } else if (finalStatus === 'pending_approval') {
+    } else if (finalStatus === 'pending_manager' || finalStatus === 'pending_approval') {
       emitCompanyRoleNotification(companyId, ['sales_manager', 'admin'], {
         type: 'warning',
         title: '⏳ Manager Approval Required',
-        message: `Quote #${quotationId} requires manager review (discount/floor price).`,
+        message: `Quote #${quotationId} requires manager review (High Risk or Discount/Floor).`,
         link: `/app/approvals`
       });
       emitUserNotification(salesRepId, {
@@ -312,7 +321,7 @@ class QuotationService {
         message: `Quote #${quotationId} sent to Sales Manager for review.`,
         link: `/app/quote/${quotationId}`
       });
-    } else if (finalStatus === 'pending_finance_approval') {
+    } else if (finalStatus === 'pending_finance' || finalStatus === 'pending_finance_approval') {
       emitCompanyRoleNotification(companyId, ['finance', 'admin'], {
         type: 'warning',
         title: 'High-Risk Finance Review',
@@ -366,8 +375,8 @@ class QuotationService {
       }
 
       // Specific escalated role gates
-      if (quotation.status === 'pending_finance_approval' && !['finance_manager', 'finance', 'admin', 'super_admin'].includes(userRole)) {
-        throw ApiError.forbidden('Only Finance Manager or Admin can approve this quotation');
+      if (['pending_finance', 'pending_finance_approval'].includes(quotation.status) && !['finance_manager', 'finance', 'admin', 'super_admin'].includes(userRole)) {
+        throw ApiError.forbidden('Only Finance or Admin can approve this high-risk quotation');
       }
       if (quotation.status === 'pending_admin_approval' && !['admin', 'super_admin'].includes(userRole)) {
         throw ApiError.forbidden('Only Company Admin or Super Admin can approve this below-floor quotation');
@@ -402,7 +411,7 @@ class QuotationService {
         );
       }
 
-      // 7. Floor price check
+      // 7. Floor price and workflow check
       const floorCheck = await checkFloorPrice(quotationId);
       newStatus = 'approved';
       newApprovalLevel = null;
@@ -414,6 +423,10 @@ class QuotationService {
           newStatus = 'pending_admin_approval';
           newApprovalLevel = 'admin';
         }
+      } else if (quotation.finance_required && !['finance', 'finance_manager', 'admin', 'super_admin'].includes(userRole)) {
+         // If a Sales Manager is approving, but Finance is required, advance to Finance step
+         newStatus = 'pending_finance';
+         newApprovalLevel = 'finance';
       }
 
       // 8. Commit update to DB via repository
@@ -687,45 +700,58 @@ class QuotationService {
    * Validate discount in real-time (called by QuotationBuilder UI before submit).
    * Returns: repMaxDiscount, floorPriceViolations, exceedsAuthority indicator.
    */
-  async validateDiscountLive(companyId, userId, lines) {
+  async validateDiscountLive(companyId, userId, lines, customerId = null) {
     const { maxDiscount, role } = await getUserDiscountAuthority(companyId, userId);
 
-    // Fetch product floor prices via repository
+    // Call the new risk engine (without persisting)
+    const riskData = await riskEngineService.calculateLiveRisk(companyId, customerId, lines);
+
+    // Fetch product floor prices via repository for floor price checking
     const productIds = lines.map(l => l.productId);
     const productsRows = await productRepository.findPricesByIds(productIds);
     const productMap = {};
     productsRows.forEach(p => { productMap[p.id] = p; });
 
-    const lineResults = lines.map(line => {
-      const product = productMap[line.productId];
-      const discount = parseFloat(line.discountPercent || 0);
-      const basePrice = product ? parseFloat(product.base_price) : parseFloat(line.unitPrice || 0);
+    // We merge our risk engine line details with floor price checks
+    const lineResults = riskData.lineDetails.map(rLine => {
+      const product = productMap[rLine.productId];
       const floorPrice = product?.floor_price ? parseFloat(product.floor_price) : null;
-      const netPrice = basePrice * (1 - discount / 100);
-      const qty = parseInt(line.quantity || 1);
-
-      const exceedsAuthority = discount > maxDiscount;
+      
+      const basePrice = product ? parseFloat(product.base_price) : parseFloat(rLine.unitPrice || 0);
+      const netPrice = basePrice * (1 - rLine.discountPercent / 100);
+      
+      const exceedsAuthority = rLine.discountPercent > maxDiscount;
       const belowFloor = floorPrice !== null && netPrice < floorPrice;
 
       return {
-        productId: line.productId,
-        productName: line.productName,
+        productId: rLine.productId,
+        productName: rLine.productName,
         basePrice,
         netPrice,
-        lineTotal: netPrice * qty,
-        discount,
+        lineTotal: netPrice * rLine.quantity,
+        discount: rLine.discountPercent,
+        allowedDiscount: rLine.allowedDiscount,
+        excessDiscount: rLine.excessDiscount,
         floorPrice,
         exceedsAuthority,
         belowFloor,
-        requiresApproval: exceedsAuthority || belowFloor
+        isViolation: rLine.isViolation,
+        requiresApproval: exceedsAuthority || belowFloor || rLine.isViolation
       };
     });
 
-    const requiresManagerApproval = lineResults.some(l => l.requiresApproval);
+    const requiresManagerApproval = riskData.requiresManager || lineResults.some(l => l.requiresApproval);
 
     return {
       repMaxDiscount: maxDiscount,
       repRole: role,
+      riskScore: riskData.riskScore,
+      riskLevel: riskData.riskLevel,
+      requiresManager: riskData.requiresManager,
+      requiresFinance: riskData.requiresFinance,
+      violationsCount: riskData.violationsCount,
+      totalDiscountAmount: riskData.totalDiscountAmount,
+      excessDiscountAmount: riskData.excessDiscountAmount,
       lineResults,
       requiresManagerApproval
     };
