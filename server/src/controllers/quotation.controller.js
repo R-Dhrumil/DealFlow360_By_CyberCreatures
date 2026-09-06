@@ -121,10 +121,13 @@ class QuotationController {
       success: true,
       quotation,
       inquiry,
-      message: `Quotation #${quotation.id} created for ${product.name} (Qty: ${qty}) and assigned to your dedicated sales rep.`
+      message: `Quotation #${quotation.id} ${quotation.discount} created for ${product.name} (Qty: ${qty}) and assigned to your dedicated sales rep.`
     });
   }
 
+  async createQuotation(req, res) {
+    
+  }
   /** POST /quotations/validate-discount — Real-time discount validation for QuotationBuilder UI */
   async validateDiscount(req, res) {
     const companyId = req.companyId;
