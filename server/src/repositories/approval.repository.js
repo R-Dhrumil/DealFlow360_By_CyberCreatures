@@ -188,17 +188,64 @@ class ApprovalRepository {
     return result.rows;
   }
 
-  async upsertCategoryDiscount(companyId, category, maxDiscountPercent) {
+  async upsertCategoryDiscount(companyId, category, maxDiscountPercent, defaultMargin = null) {
     const id = 'cdc_' + crypto.randomUUID().substring(0, 8);
     const result = await db.query(
-      `INSERT INTO category_discount_ceiling (id, company_id, category, max_discount_percent)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO category_discount_ceiling (id, company_id, category, max_discount_percent, default_margin)
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (company_id, category)
-       DO UPDATE SET max_discount_percent = EXCLUDED.max_discount_percent
+       DO UPDATE SET 
+         max_discount_percent = EXCLUDED.max_discount_percent,
+         default_margin = COALESCE(EXCLUDED.default_margin, category_discount_ceiling.default_margin)
        RETURNING *`,
-      [id, companyId, category, maxDiscountPercent]
+      [id, companyId, category, maxDiscountPercent, defaultMargin]
     );
     return result.rows[0];
+  }
+
+  async getAuditLogs(companyId, limit = 50) {
+    try {
+      const result = await db.query(
+        `SELECT al.id, al.action, al.entity_type, al.entity_id, al.user_id, al.timestamp, al.details,
+                COALESCE(u.name, 'System Admin') as user_name,
+                COALESCE(u.role, 'admin') as user_role
+         FROM audit_log al
+         LEFT JOIN users u ON al.user_id = u.id
+         WHERE al.user_id IS NULL OR u.company_id = $1 OR u.company_id IS NULL
+         ORDER BY al.timestamp DESC
+         LIMIT $2`,
+        [companyId, limit]
+      );
+      return result.rows.map(row => {
+        let detailsText = '';
+        let entityText = `${row.entity_type} #${row.entity_id}`;
+        let userText = row.user_name;
+        let roleText = row.user_role;
+
+        if (row.details && typeof row.details === 'object') {
+          if (row.details.details) detailsText = row.details.details;
+          else if (row.details.name) detailsText = `Name: ${row.details.name}`;
+          else detailsText = JSON.stringify(row.details);
+
+          if (row.details.entity) entityText = row.details.entity;
+          if (row.details.user) userText = row.details.user;
+          if (row.details.role) roleText = row.details.role;
+        }
+
+        return {
+          id: row.id,
+          action: row.action,
+          entity: entityText,
+          user: userText,
+          role: roleText,
+          timestamp: row.timestamp ? new Date(row.timestamp).toISOString().replace('T', ' ').slice(0, 16) : '',
+          details: detailsText
+        };
+      });
+    } catch (err) {
+      console.warn('Fallback getting audit logs:', err.message);
+      return [];
+    }
   }
 }
 

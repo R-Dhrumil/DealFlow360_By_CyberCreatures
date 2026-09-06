@@ -334,7 +334,7 @@ export default function AdminWorkspace() {
   const [newTierApprover, setNewTierApprover] = useState('Sales Manager');
 
   // Category-Level Discount Ceiling Rules
-  const [categoryRules] = useState([
+  const [categoryRules, setCategoryRules] = useState([
     { category: 'Hardware', maxDiscount: 12.0, defaultMargin: 35.0 },
     { category: 'Software', maxDiscount: 18.0, defaultMargin: 80.0 },
     { category: 'Services', maxDiscount: 10.0, defaultMargin: 60.0 },
@@ -342,11 +342,10 @@ export default function AdminWorkspace() {
 
   // Fallback Team Directory
   const INITIAL_TEAM = [
-    { id: 'u-1', name: 'Super Admin', email: 'superadmin@dealflow360.com', role: 'super_admin', status: 'Active', dealsCount: 0 },
     { id: 'u-2', name: 'CyberCreatures Admin', email: 'admin@cybercreatures.com', role: 'admin', status: 'Active', dealsCount: 1 },
     { id: 'u-3', name: 'Sarah Manager', email: 'manager@cybercreatures.com', role: 'sales_manager', status: 'Active', dealsCount: 0 },
     { id: 'u-4', name: 'M. Shah', email: 'sales@cybercreatures.com', role: 'sales_rep', status: 'Active', dealsCount: 16 },
-    { id: 'u-5', name: 'Finance Lead', email: 'finance@cybercreatures.com', role: 'finance', status: 'Active', dealsCount: 0 },
+    { id: 'u-5', name: 'Finance Lead', email: 'finance@cybercreatures.com', role: 'finance_manager', status: 'Active', dealsCount: 0 },
     { id: 'u-6', name: 'J. Rao', email: 'j.rao@cybercreatures.com', role: 'sales_rep', status: 'Active', dealsCount: 1 },
     { id: 'u-7', name: 'Jim Halpert', email: 'j.halpert@cybercreatures.com', role: 'sales_rep', status: 'Active', dealsCount: 1 },
   ];
@@ -459,11 +458,39 @@ export default function AdminWorkspace() {
     }
   };
 
+  const fetchCategoryRules = async () => {
+    try {
+      const res = await api.get('/approvals/config/category-discounts');
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        setCategoryRules(res.data.map(c => ({
+          category: c.category,
+          maxDiscount: parseFloat(c.max_discount_percent) || 10.0,
+          defaultMargin: parseFloat(c.default_margin) || 35.0
+        })));
+      }
+    } catch (err) {
+      console.warn('Could not fetch category rules from API:', err);
+    }
+  };
+
+  const fetchAuditLogs = async () => {
+    try {
+      const res = await api.get('/approvals/audit-logs');
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        setAuditLogs(res.data);
+      }
+    } catch (err) {
+      console.warn('Could not fetch audit logs from API:', err);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchTeam();
     fetchTiers();
     fetchWarehouses();
+    fetchCategoryRules();
+    fetchAuditLogs();
   }, []);
 
   const handleAddProduct = async (e) => {
@@ -978,8 +1005,8 @@ export default function AdminWorkspace() {
         <button
           onClick={() => setActiveTab('products')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${activeTab === 'products'
-              ? 'bg-primary text-white shadow'
-              : 'text-slate-600 hover:bg-slate-100'
+            ? 'bg-primary text-white shadow'
+            : 'text-slate-600 hover:bg-slate-100'
             }`}
         >
           <i className="fa-solid fa-boxes-stacked"></i>
@@ -989,8 +1016,8 @@ export default function AdminWorkspace() {
         <button
           onClick={() => setActiveTab('tiers')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${activeTab === 'tiers'
-              ? 'bg-primary text-white shadow'
-              : 'text-slate-600 hover:bg-slate-100'
+            ? 'bg-primary text-white shadow'
+            : 'text-slate-600 hover:bg-slate-100'
             }`}
         >
           <i className="fa-solid fa-tags"></i>
@@ -1000,8 +1027,8 @@ export default function AdminWorkspace() {
         <button
           onClick={() => setActiveTab('team')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${activeTab === 'team'
-              ? 'bg-primary text-white shadow'
-              : 'text-slate-600 hover:bg-slate-100'
+            ? 'bg-primary text-white shadow'
+            : 'text-slate-600 hover:bg-slate-100'
             }`}
         >
           <i className="fa-solid fa-users-gear"></i>
@@ -1011,8 +1038,8 @@ export default function AdminWorkspace() {
         <button
           onClick={() => setActiveTab('warehouses')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${activeTab === 'warehouses'
-              ? 'bg-primary text-white shadow'
-              : 'text-slate-600 hover:bg-slate-100'
+            ? 'bg-primary text-white shadow'
+            : 'text-slate-600 hover:bg-slate-100'
             }`}
         >
           <i className="fa-solid fa-warehouse"></i>
@@ -1022,8 +1049,8 @@ export default function AdminWorkspace() {
         <button
           onClick={() => setActiveTab('audit')}
           className={`py-2.5 px-4 font-bold text-xs rounded-xl transition-all flex items-center space-x-2 ${activeTab === 'audit'
-              ? 'bg-primary text-white shadow'
-              : 'text-slate-600 hover:bg-slate-100'
+            ? 'bg-primary text-white shadow'
+            : 'text-slate-600 hover:bg-slate-100'
             }`}
         >
           <i className="fa-solid fa-list-check"></i>
@@ -1155,10 +1182,10 @@ export default function AdminWorkspace() {
                         </td>
                         <td className="p-3 text-center">
                           <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${p.status === 'Inactive'
-                              ? 'bg-slate-100 text-slate-600'
-                              : p.status === 'Archived'
-                                ? 'bg-red-100 text-red-700'
-                                : 'bg-emerald-100 text-emerald-800'
+                            ? 'bg-slate-100 text-slate-600'
+                            : p.status === 'Archived'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-emerald-100 text-emerald-800'
                             }`}>
                             {p.status || 'Active'}
                           </span>
@@ -1528,27 +1555,31 @@ export default function AdminWorkspace() {
                       <td className="p-3 font-bold text-text-main">{m.name}</td>
                       <td className="p-3 text-slate-600 font-mono">{m.email}</td>
                       <td className="p-3">
-                        <div className="relative inline-flex items-center group" title="Click to change team member role">
-                          <select
-                            value={m.role}
-                            onChange={(e) => handleRoleChange(m.id, e.target.value)}
-                            className={`cursor-pointer appearance-none pl-3 pr-7 py-1 rounded-full text-[10px] font-extrabold uppercase border focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all ${m.role === 'super_admin' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
+                        {m.role === 'super_admin' ? (
+                          <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase border bg-amber-100 text-amber-900 border-amber-300">
+                            SUPER ADMIN
+                          </span>
+                        ) : (
+                          <div className="relative inline-flex items-center group" title="Click to change team member role">
+                            <select
+                              value={m.role}
+                              onChange={(e) => handleRoleChange(m.id, e.target.value)}
+                              className={`cursor-pointer appearance-none pl-3 pr-7 py-1 rounded-full text-[10px] font-extrabold uppercase border focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all ${
                                 m.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
                                   m.role === 'sales_manager' ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' :
                                     m.role === 'sales_rep' ? 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200' :
-                                      m.role === 'finance' ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' :
-                                        m.role === 'finance_manager' ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' :
+                                      m.role === 'finance' || m.role === 'finance_manager' ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' :
                                           'bg-slate-200 text-slate-800 border-slate-300 hover:bg-slate-300'
-                              }`}
-                          >
-                            <option value="super_admin" className="bg-white text-slate-800 font-bold">SUPER ADMIN</option>
-                            <option value="admin" className="bg-white text-slate-800 font-bold">ADMIN</option>
-                            <option value="sales_manager" className="bg-white text-slate-800 font-bold">SALES MANAGER</option>
-                            <option value="sales_rep" className="bg-white text-slate-800 font-bold">SALES REP</option>
-                            <option value="finance_manager" className="bg-white text-slate-800 font-bold">FINANCE MANAGER</option>
-                          </select>
-                          <i className="fa-solid fa-chevron-down text-[8px] pointer-events-none absolute right-2.5 opacity-60 text-current"></i>
-                        </div>
+                                }`}
+                            >
+                              <option value="admin" className="bg-white text-slate-800 font-bold">ADMIN</option>
+                              <option value="sales_manager" className="bg-white text-slate-800 font-bold">SALES MANAGER</option>
+                              <option value="sales_rep" className="bg-white text-slate-800 font-bold">SALES REP</option>
+                              <option value="finance_manager" className="bg-white text-slate-800 font-bold">FINANCE MANAGER</option>
+                            </select>
+                            <i className="fa-solid fa-chevron-down text-[8px] pointer-events-none absolute right-2.5 opacity-60 text-current"></i>
+                          </div>
+                        )}
                       </td>
                       <td className="p-3 text-center">
                         <span className="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full text-[10px]">
@@ -1669,13 +1700,12 @@ export default function AdminWorkspace() {
                         </p>
                       </div>
                       <div className="flex items-center space-x-1 shrink-0">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          w.status === 'Inactive' || w.status === 'Decommissioned'
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${w.status === 'Inactive' || w.status === 'Decommissioned'
                             ? 'bg-slate-200 text-slate-700'
                             : w.status === 'Maintenance'
                               ? 'bg-amber-100 text-amber-800'
                               : 'bg-emerald-100 text-emerald-800'
-                        }`}>
+                          }`}>
                           {w.status || 'Active Depot'}
                         </span>
                         <button

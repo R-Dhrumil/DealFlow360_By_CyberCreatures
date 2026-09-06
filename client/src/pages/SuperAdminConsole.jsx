@@ -634,27 +634,32 @@ export default function SuperAdminConsole({ defaultTab }) {
                         </td>
                         <td className="p-3.5 text-slate-600 font-mono text-[11px]">{user.email}</td>
                         <td className="p-3.5">
-                          <div className="relative inline-flex items-center group" title="Click to change user role">
-                            <select
-                              value={user.role}
-                              onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                              className={`cursor-pointer appearance-none pl-3 pr-7 py-1 rounded-full text-[10px] font-extrabold uppercase border focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all ${user.role === 'super_admin' ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200' :
-                                user.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200' :
-                                  user.role === 'sales_manager' ? 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200' :
-                                    user.role === 'finance_manager' ? 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200' :
-                                      user.role === 'operations' ? 'bg-indigo-100 text-indigo-800 border-indigo-200 hover:bg-indigo-200' :
-                                        'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
-                                }`}
-                            >
-                              <option value="super_admin" className="bg-white text-slate-800 font-bold">SUPER ADMIN</option>
-                              <option value="admin" className="bg-white text-slate-800 font-bold">ADMIN</option>
-                              <option value="sales_manager" className="bg-white text-slate-800 font-bold">SALES MANAGER</option>
-                              <option value="sales_rep" className="bg-white text-slate-800 font-bold">SALES REP</option>
-                              <option value="finance_manager" className="bg-white text-slate-800 font-bold">FINANCE MANAGER</option>
-                              <option value="operations" className="bg-white text-slate-800 font-bold">OPERATIONS</option>
-                            </select>
-                            <i className="fa-solid fa-chevron-down text-[8px] pointer-events-none absolute right-2.5 opacity-60 text-current"></i>
-                          </div>
+                          {user.role === 'super_admin' ? (
+                            <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase border bg-amber-100 text-amber-900 border-amber-300">
+                              SUPER ADMIN
+                            </span>
+                          ) : (
+                            <div className="relative inline-flex items-center group" title="Click to change user role">
+                              <select
+                                value={user.role}
+                                onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                                className={`cursor-pointer appearance-none pl-3 pr-7 py-1 rounded-full text-[10px] font-extrabold uppercase border focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all ${
+                                  user.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200' :
+                                    user.role === 'sales_manager' ? 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200' :
+                                      user.role === 'finance_manager' ? 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200' :
+                                        user.role === 'operations' ? 'bg-indigo-100 text-indigo-800 border-indigo-200 hover:bg-indigo-200' :
+                                          'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                                  }`}
+                              >
+                                <option value="admin" className="bg-white text-slate-800 font-bold">ADMIN</option>
+                                <option value="sales_manager" className="bg-white text-slate-800 font-bold">SALES MANAGER</option>
+                                <option value="sales_rep" className="bg-white text-slate-800 font-bold">SALES REP</option>
+                                <option value="finance_manager" className="bg-white text-slate-800 font-bold">FINANCE MANAGER</option>
+                                <option value="operations" className="bg-white text-slate-800 font-bold">OPERATIONS</option>
+                              </select>
+                              <i className="fa-solid fa-chevron-down text-[8px] pointer-events-none absolute right-2.5 opacity-60 text-current"></i>
+                            </div>
+                          )}
                         </td>
                         <td className="p-3.5 text-slate-800 font-bold">{user.company_name || 'CyberCreatures Operations'}</td>
                         <td className="p-3.5 text-purple-600 font-mono text-[11px]">{user.subdomain_slug || 'main'}</td>
