@@ -60,11 +60,10 @@ export default function Layout() {
               <Link
                 key={fullTarget}
                 to={fullTarget}
-                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all ${
-                  isActive
+                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all ${isActive
                     ? 'bg-primary text-on-primary shadow-md font-semibold'
                     : 'text-text-muted hover:bg-surface-soft hover:text-text-main'
-                }`}
+                  }`}
               >
                 <i className={`fa-solid ${item.icon} w-5 text-center text-base`}></i>
                 <span className="text-sm">{item.name}</span>
