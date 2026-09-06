@@ -349,7 +349,6 @@ export default function AdminWorkspace() {
 
   // Fallback Team Directory
   const INITIAL_TEAM = [
-    { id: 'u-1', name: 'Super Admin', email: 'superadmin@dealflow360.com', role: 'super_admin', status: 'Active', dealsCount: 0 },
     { id: 'u-2', name: 'CyberCreatures Admin', email: 'admin@cybercreatures.com', role: 'admin', status: 'Active', dealsCount: 1 },
     { id: 'u-3', name: 'Sarah Manager', email: 'manager@cybercreatures.com', role: 'sales_manager', status: 'Active', dealsCount: 0 },
     { id: 'u-4', name: 'M. Shah', email: 'sales@cybercreatures.com', role: 'sales_rep', status: 'Active', dealsCount: 16 },
