@@ -393,10 +393,11 @@ class QuotationRepository {
       // Auto-generate Order and Invoice if confirmed
       if (status === 'confirmed' || status === 'closed') {
         try {
-          // Create Order
+          // Create Order with generated ID
+          const orderId = 'ord_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
           const orderRes = await client.query(
-            `INSERT INTO orders (company_id, quotation_id, status) VALUES ($1, $2, 'pending_fulfillment') ON CONFLICT (quotation_id) DO NOTHING RETURNING id`,
-            [updatedQuotation.company_id, quotationId]
+            `INSERT INTO orders (id, company_id, quotation_id, status) VALUES ($1, $2, $3, 'pending_fulfillment') ON CONFLICT (quotation_id) DO NOTHING RETURNING id`,
+            [orderId, updatedQuotation.company_id, quotationId]
           );
           
           if (orderRes.rows[0]) {
@@ -404,10 +405,11 @@ class QuotationRepository {
             const linesRes = await client.query(`SELECT SUM(unit_price * quantity * (1 - discount_percent/100)) as total FROM quotation_lines WHERE quotation_id = $1`, [quotationId]);
             const totalAmount = linesRes.rows[0]?.total || 0;
 
-            // Create Invoice
+            // Create Invoice with generated ID
+            const invoiceId = 'inv_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
             await client.query(
-              `INSERT INTO invoices (company_id, order_id, amount, status) VALUES ($1, $2, $3, 'unpaid')`,
-              [updatedQuotation.company_id, orderRes.rows[0].id, totalAmount]
+              `INSERT INTO invoices (id, company_id, order_id, amount, status) VALUES ($1, $2, $3, $4, 'unpaid')`,
+              [invoiceId, updatedQuotation.company_id, orderRes.rows[0].id, totalAmount]
             );
             await logAction('order', orderRes.rows[0].id, null, 'auto_created_from_quote', { quotation_id: quotationId });
           }
