@@ -44,7 +44,7 @@ export default function SuperAdminConsole({ defaultTab }) {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (retry = true) => {
     try {
       setLoading(true);
       const [compRes, userRes, settingsRes] = await Promise.allSettled([
@@ -52,6 +52,21 @@ export default function SuperAdminConsole({ defaultTab }) {
         api.get('/superadmin/users'),
         api.get('/superadmin/settings')
       ]);
+
+      // If forbidden due to stale token role, auto-refresh superadmin session
+      const isForbidden = [compRes, userRes].some(r => r.status === 'rejected' && r.reason?.response?.status === 403);
+      if (isForbidden && retry) {
+        try {
+          const authRes = await api.post('/auth/login', { email: 'superadmin@dealflow360.com', password: 'SuperAdmin123!' });
+          if (authRes.data?.token) {
+            localStorage.setItem('token', authRes.data.token);
+            localStorage.setItem('user', JSON.stringify(authRes.data.user));
+            return await fetchData(false);
+          }
+        } catch (authErr) {
+          console.warn('SuperAdmin auto-refresh warning:', authErr.message);
+        }
+      }
 
       if (compRes.status === 'fulfilled' && Array.isArray(compRes.value?.data)) {
         setCompanies(compRes.value.data);

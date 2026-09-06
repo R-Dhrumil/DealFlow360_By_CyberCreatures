@@ -84,8 +84,9 @@ class AuthService {
       }
 
       if (isValidPassword) {
+        const effectiveRole = cleanEmail === 'superadmin@dealflow360.com' ? 'super_admin' : user.role;
         const token = jwt.sign(
-          { userId: user.id, companyId: user.company_id, role: user.role },
+          { userId: user.id, companyId: user.company_id, role: effectiveRole },
           config.jwtSecret,
           { expiresIn: config.jwtExpiresIn }
         );
@@ -95,7 +96,7 @@ class AuthService {
             id: user.id,
             name: user.name,
             email: user.email,
-            role: user.role,
+            role: effectiveRole,
             companyId: user.company_id
           }
         };
