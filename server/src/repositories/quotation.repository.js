@@ -1,3 +1,4 @@
+
 const db = require('../config/db');
 const crypto = require('crypto');
 const { logAction } = require('../services/audit.service');
@@ -336,12 +337,22 @@ class QuotationRepository {
     return result.rows[0] || null;
   }
 
-  async findQuotationLinesWithCategory(quotationId) {
-    const result = await db.query(
+  async findQuotationLinesWithCategory(quotationId, client = db) {
+    const result = await client.query(
       `SELECT ql.*, p.name as product_name, p.category, p.margin_percent, p.floor_price
        FROM quotation_lines ql
        JOIN products p ON ql.product_id = p.id
        WHERE ql.quotation_id = $1`,
+      [quotationId]
+    );
+    return result.rows;
+  }
+
+  async findLineProductQuantities(quotationId, client = db) {
+    const result = await client.query(
+      `SELECT product_id, quantity
+       FROM quotation_lines
+       WHERE quotation_id = $1`,
       [quotationId]
     );
     return result.rows;

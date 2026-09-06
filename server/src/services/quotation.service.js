@@ -607,17 +607,11 @@ class QuotationService {
 
         // Auto-deduct inventory stock for customer purchase
         try {
-          const splitsRes = await client.query(
-            `SELECT fs.warehouse_id, fs.quantity, ql.product_id
-             FROM fulfillment_splits fs
-             JOIN quotation_lines ql ON fs.quotation_id = ql.quotation_id
-             WHERE fs.quotation_id = $1`,
-            [quotationId]
-          );
+          const splitsRows = await warehouseRepository.getFulfillmentSplitsWithProducts(quotationId, client);
 
-          if (splitsRes.rows.length > 0) {
+          if (splitsRows.length > 0) {
             // Deduct based on configured fulfillment splits
-            for (const split of splitsRes.rows) {
+            for (const split of splitsRows) {
               const qty = parseInt(split.quantity, 10) || 1;
               await inventoryRepository.adjustStock(
                 client,
@@ -633,14 +627,9 @@ class QuotationService {
             }
           } else {
             // Deduct dynamically across warehouses using deductProductStock
-            const linesRes = await client.query(
-              `SELECT ql.product_id, ql.quantity
-               FROM quotation_lines ql
-               WHERE ql.quotation_id = $1`,
-              [quotationId]
-            );
+            const linesRows = await quotationRepository.findLineProductQuantities(quotationId, client);
 
-            for (const line of linesRes.rows) {
+            for (const line of linesRows) {
               const prodId = line.product_id;
               const qty = parseInt(line.quantity, 10) || 1;
               await inventoryRepository.deductProductStock(

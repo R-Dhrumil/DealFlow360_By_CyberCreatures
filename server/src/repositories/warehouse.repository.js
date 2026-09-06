@@ -178,6 +178,20 @@ class WarehouseRepository {
     const anyWh = await client.query('SELECT id FROM warehouses LIMIT 1');
     return anyWh.rows[0]?.id || 'w1';
   }
+
+  /**
+   * Get fulfillment splits joined with product_id for a quotation.
+   */
+  async getFulfillmentSplitsWithProducts(quotationId, client = db) {
+    const result = await client.query(
+      `SELECT fs.warehouse_id, fs.quantity, ql.product_id
+       FROM fulfillment_splits fs
+       JOIN quotation_lines ql ON fs.quotation_id = ql.quotation_id
+       WHERE fs.quotation_id = $1`,
+      [quotationId]
+    );
+    return result.rows;
+  }
 }
 
 module.exports = new WarehouseRepository();
