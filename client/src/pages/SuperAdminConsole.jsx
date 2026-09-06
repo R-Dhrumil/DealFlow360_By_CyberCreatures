@@ -206,7 +206,7 @@ export default function SuperAdminConsole({ defaultTab }) {
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Super Admin Top Tab Navigation */}
-      <div className="flex items-center space-x-2 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs w-fit">
+      {/* <div className="flex items-center space-x-2 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs w-fit">
         <button
           type="button"
           onClick={() => switchTab('tenants')}
@@ -243,7 +243,7 @@ export default function SuperAdminConsole({ defaultTab }) {
           <i className="fa-solid fa-users"></i>
           <span>Details of Users</span>
         </button>
-      </div>
+      </div> */}
 
       {/* SECTION 1: GLOBAL TENANTS */}
       {activeTab === 'tenants' && (
