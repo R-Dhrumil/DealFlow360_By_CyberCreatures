@@ -13,10 +13,10 @@ class InventoryController {
   }
 
   async adjustStock(req, res) {
-    const { warehouseId, productId, type, quantity, reason, referenceId } = req.body;
+    const { warehouseId, fromWarehouseId, toWarehouseId, productId, type, quantity, reason, referenceId } = req.body;
     
-    if (!warehouseId || !productId || !type || quantity === undefined) {
-      throw ApiError.badRequest('Missing required fields for stock adjustment');
+    if (!productId || !type || quantity === undefined) {
+      throw ApiError.badRequest('Missing required fields (productId, type, quantity)');
     }
 
     const qty = parseInt(quantity, 10);
@@ -31,24 +31,54 @@ class InventoryController {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      const txnId = await inventoryRepository.adjustStock(
-        client,
-        req.companyId,
-        warehouseId,
-        productId,
-        req.user.id,
-        type,
-        qty,
-        reason,
-        referenceId
-      );
+
+      let resultData;
+      if (type === 'transfer') {
+        const sourceWh = fromWarehouseId || warehouseId;
+        if (!sourceWh || !toWarehouseId) {
+          throw ApiError.badRequest('Transfer requires both source and destination warehouses');
+        }
+        if (sourceWh === toWarehouseId) {
+          throw ApiError.badRequest('Source and destination warehouses cannot be the same');
+        }
+        resultData = await inventoryRepository.transferStock(
+          client,
+          req.companyId,
+          sourceWh,
+          toWarehouseId,
+          productId,
+          req.user.id,
+          qty,
+          reason,
+          referenceId
+        );
+      } else {
+        const targetWh = warehouseId || fromWarehouseId;
+        if (!targetWh) {
+          throw ApiError.badRequest('Warehouse ID is required for stock adjustment');
+        }
+        const txnId = await inventoryRepository.adjustStock(
+          client,
+          req.companyId,
+          targetWh,
+          productId,
+          req.user.id,
+          type,
+          qty,
+          reason,
+          referenceId
+        );
+        resultData = { txnId };
+      }
+
       await client.query('COMMIT');
-      broadcastInventoryUpdate(req.companyId, { productId, warehouseId, type, quantity: qty });
-      return res.json({ success: true, txnId });
+      broadcastInventoryUpdate(req.companyId, { productId, type, quantity: qty });
+      return res.json({ success: true, ...resultData });
     } catch (err) {
       await client.query('ROLLBACK');
       console.error('Stock adjustment error:', err);
-      throw ApiError.internal('Failed to adjust stock');
+      if (err.statusCode) throw err;
+      throw ApiError.badRequest(err.message || 'Failed to adjust stock');
     } finally {
       client.release();
     }
