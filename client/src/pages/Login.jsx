@@ -311,7 +311,7 @@ const Login = ({ defaultIsSignup = false }) => {
                     <div className="space-y-1.5">
                       <label className="block text-xs font-semibold text-text-main">Full Name</label>
                       <div className="relative">
-                        <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">person</span>
+                        <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-lg">person</span>
                         <input
                           className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-surface-soft text-text-main text-xs placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
                           placeholder="e.g. Sarah Connor"
@@ -328,7 +328,7 @@ const Login = ({ defaultIsSignup = false }) => {
                     <div className="space-y-1.5">
                       <label className="block text-xs font-semibold text-text-main">Company / Organization Name</label>
                       <div className="relative">
-                        <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">corporate_fare</span>
+                        <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-lg">corporate_fare</span>
                         <input
                           className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-surface-soft text-text-main text-xs placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
                           placeholder="e.g. CyberCreatures Inc."
@@ -345,7 +345,7 @@ const Login = ({ defaultIsSignup = false }) => {
                   <div className="space-y-1.5">
                     <label className="block text-xs font-semibold text-text-main">Email Address</label>
                     <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">alternate_email</span>
+                      <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-lg">alternate_email</span>
                       <input
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-surface-soft text-text-main text-xs placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="name@example.com"
@@ -363,7 +363,7 @@ const Login = ({ defaultIsSignup = false }) => {
                       <label className="block text-xs font-semibold text-text-main">Password</label>
                     </div>
                     <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3.5 top-3 text-text-muted text-lg">lock</span>
+                      <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-lg">lock</span>
                       <input
                         className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 border border-surface-soft text-text-main text-xs placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
                         type={showPassword ? "text" : "password"}
@@ -373,7 +373,7 @@ const Login = ({ defaultIsSignup = false }) => {
                         required
                       />
                       <button
-                        className="absolute right-3 top-2.5 text-text-muted hover:text-text-main transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
                         onClick={() => setShowPassword(!showPassword)}
                         type="button"
                       >
