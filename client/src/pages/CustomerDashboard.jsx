@@ -210,6 +210,30 @@ export default function CustomerDashboard() {
     }
   };
 
+  const handleDirectPurchase = async (product, quantity = 1) => {
+    try {
+      setInquirySuccess(`Processing purchase for ${product.name}...`);
+      const res = await api.post('/marketplace/purchase', {
+        productId: product.id,
+        quantity,
+        customerEmail: customer.email,
+        customerName: customer.name,
+        paymentMethod: 'card'
+      });
+      const { orderId, quantityPurchased, remainingStock } = res.data;
+      setInquirySuccess(`🎉 Purchase confirmed! Order #${orderId}. ${quantityPurchased} unit(s) deducted from warehouse stock.`);
+      setProducts(prev => prev.map(p => p.id === product.id ? { ...p, stock: remainingStock } : p));
+      if (selectedProductDetail) setSelectedProductDetail(null);
+      await fetchQuotations();
+      handleTabChange('quotations');
+    } catch (err) {
+      console.error('Purchase failed:', err);
+      const serverMsg = err.response?.data?.error || err.response?.data?.message || 'Failed to complete order. Please try again.';
+      setInquirySuccess(`Error: ${serverMsg}`);
+      setTimeout(() => setInquirySuccess(''), 5000);
+    }
+  };
+
   const categories = ['All', 'Hardware', 'Software', 'Services', 'Cloud License'];
 
   const filteredProducts = products.filter(p => {
@@ -380,6 +404,27 @@ export default function CustomerDashboard() {
 
                     <p className="text-xs text-text-muted line-clamp-2">{p.description || 'No detailed description available.'}</p>
 
+                    {/* Warehouse Stock Badge */}
+                    <div className="flex items-center justify-between text-xs py-1 px-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                      <span className="text-[11px] text-text-muted font-medium flex items-center gap-1.5">
+                        <i className="fa-solid fa-warehouse text-slate-400"></i>
+                        Available Stock:
+                      </span>
+                      {p.stock > 10 ? (
+                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          {p.stock} {p.unit || 'units'}
+                        </span>
+                      ) : p.stock > 0 ? (
+                        <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                          Low: {p.stock} left
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
+                          Out of Stock
+                        </span>
+                      )}
+                    </div>
+
                     <div className="pt-2 border-t border-slate-100 flex justify-between items-baseline">
                       <span className="text-xs text-text-muted font-medium">List Price:</span>
                       <span className="text-xl font-black text-emerald-700">
@@ -390,21 +435,35 @@ export default function CustomerDashboard() {
                   </div>
 
                   <div className="space-y-2 pt-2">
-                    <div className="text-[11px] font-semibold text-emerald-600 text-center flex items-center justify-center space-x-1 opacity-80 group-hover:opacity-100">
-                      <i className="fa-solid fa-eye text-xs"></i>
-                      <span>Click card for full details</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDirectPurchase(p, 1);
+                        }}
+                        disabled={p.stock <= 0}
+                        className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white text-xs font-bold py-2 px-3 rounded-xl shadow transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
+                      >
+                        <i className="fa-solid fa-cart-shopping text-xs"></i>
+                        <span>Order Now</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRequestQuoteForProduct(p, 1);
+                        }}
+                        className="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold py-2 px-3 rounded-xl shadow transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
+                      >
+                        <i className="fa-solid fa-paper-plane text-xs"></i>
+                        <span>Quote</span>
+                      </button>
                     </div>
 
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRequestQuoteForProduct(p, 1);
-                      }}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow transition-colors flex items-center justify-center space-x-2"
-                    >
-                      <i className="fa-solid fa-paper-plane"></i>
-                      <span>Request Quotation for Product</span>
-                    </button>
+                    <div className="text-[10px] font-semibold text-slate-400 text-center flex items-center justify-center space-x-1 group-hover:text-emerald-600 transition-colors">
+                      <i className="fa-solid fa-eye text-[10px]"></i>
+                      <span>Click card for full details</span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -691,38 +750,43 @@ export default function CustomerDashboard() {
                     <i className="fa-solid fa-boxes-packing"></i>
                   </div>
                   <div>
-                    <span className="text-[10px] text-text-muted block font-semibold">Availability Status</span>
-                    <span className="text-emerald-700 font-bold">In Stock & Ready for Quote</span>
+                    <span className="text-[10px] text-text-muted block font-semibold">Warehouse Stock</span>
+                    <span className={`font-bold ${selectedProductDetail.stock > 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+                      {selectedProductDetail.stock > 0 ? `${selectedProductDetail.stock} units available` : 'Out of stock'}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Action Box: Select Quantity & Request Quote */}
+              {/* Action Box: Select Quantity & Request Quote / Instant Order */}
               <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-5 rounded-2xl text-white space-y-4">
                 <div className="flex flex-wrap justify-between items-center gap-4">
                   <div>
-                    <h4 className="font-bold text-sm text-white">Ready to place a formal inquiry?</h4>
-                    <p className="text-xs text-slate-300">Select quantity below to generate a negotiable proposal instantly.</p>
+                    <h4 className="font-bold text-sm text-white">Direct Order or Formal Quotation</h4>
+                    <p className="text-xs text-slate-300">Choose to buy immediately with real-time stock deduction or request custom pricing.</p>
                   </div>
 
                   <div className="flex items-center space-x-3 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700">
                     <span className="text-xs font-semibold text-slate-300">Qty:</span>
                     <button
+                      type="button"
                       onClick={() => setModalQuantity(prev => Math.max(1, prev - 1))}
-                      className="w-7 h-7 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center text-xs transition-colors"
+                      className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center text-xs transition-colors cursor-pointer"
                     >
                       -
                     </button>
                     <input
                       type="number"
                       min="1"
-                      value={modalQuantity}
-                      onChange={(e) => setModalQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-12 text-center bg-slate-900 border border-slate-700 rounded-lg text-xs font-bold text-emerald-400 py-1 focus:outline-none"
+                      max={selectedProductDetail.stock ?? 9999}
+                      value={modalQuantity > (selectedProductDetail.stock ?? 9999) ? (selectedProductDetail.stock ?? 9999) : modalQuantity}
+                      onChange={(e) => setModalQuantity(Math.max(1, Math.min(selectedProductDetail.stock ?? 9999, parseInt(e.target.value) || 1)))}
+                      className="w-12 text-center bg-transparent border-0 text-xs font-bold text-emerald-400 py-1 focus:outline-none"
                     />
                     <button
-                      onClick={() => setModalQuantity(prev => prev + 1)}
-                      className="w-7 h-7 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center text-xs transition-colors"
+                      type="button"
+                      onClick={() => setModalQuantity(prev => Math.min(selectedProductDetail.stock ?? 9999, prev + 1))}
+                      className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center text-xs transition-colors cursor-pointer"
                     >
                       +
                     </button>
@@ -745,11 +809,19 @@ export default function CustomerDashboard() {
                       Close
                     </button>
                     <button
+                      onClick={() => handleDirectPurchase(selectedProductDetail, modalQuantity)}
+                      disabled={selectedProductDetail.stock <= 0}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-extrabold shadow-md transition-all flex items-center space-x-2 cursor-pointer"
+                    >
+                      <i className="fa-solid fa-cart-shopping"></i>
+                      <span>Instant Order ({modalQuantity})</span>
+                    </button>
+                    <button
                       onClick={() => handleRequestQuoteForProduct(selectedProductDetail, modalQuantity)}
-                      className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-extrabold shadow-md transition-all flex items-center space-x-2"
+                      className="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold shadow-md transition-all flex items-center space-x-2"
                     >
                       <i className="fa-solid fa-paper-plane"></i>
-                      <span>Request Quotation ({modalQuantity})</span>
+                      <span>Request Quote</span>
                     </button>
                   </div>
                 </div>

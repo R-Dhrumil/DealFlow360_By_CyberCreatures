@@ -35,7 +35,11 @@ export default function Marketplace() {
   const [modalQuantity, setModalQuantity] = useState(1);
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerNotes, setCustomerNotes] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [activeActionTab, setActiveActionTab] = useState('buy'); // 'buy' or 'quote'
   const [submittingInquiry, setSubmittingInquiry] = useState(false);
+  const [submittingPurchase, setSubmittingPurchase] = useState(false);
+  const [purchaseSuccessOrder, setPurchaseSuccessOrder] = useState(null);
 
   const categories = ['All', 'Hardware', 'Software', 'Services'];
 
@@ -89,6 +93,43 @@ export default function Marketplace() {
       }
     } finally {
       setSubmittingInquiry(false);
+    }
+  };
+
+  const handleInstantBuy = async (e) => {
+    if (e) e.preventDefault();
+    if (!selectedProduct) return;
+
+    const email = user?.email || customerEmail;
+    if (!email) {
+      showNotification('error', 'Please enter your email to confirm the order receipt.');
+      return;
+    }
+
+    try {
+      setSubmittingPurchase(true);
+      const res = await api.post('/marketplace/purchase', {
+        productId: selectedProduct.id,
+        quantity: modalQuantity,
+        customerEmail: email,
+        customerName: user?.name || (email ? email.split('@')[0] : 'Valued Buyer'),
+        paymentMethod,
+        notes: customerNotes
+      });
+
+      const { orderId, remainingStock, quantityPurchased } = res.data;
+      showNotification('success', `🎉 Order confirmed! #${orderId}. ${quantityPurchased} unit(s) deducted from stock.`);
+      
+      // Update local products list stock in real time
+      setProducts(prev => prev.map(p => p.id === selectedProduct.id ? { ...p, stock: remainingStock } : p));
+      setSelectedProduct(prev => prev ? { ...prev, stock: remainingStock } : null);
+      
+      setPurchaseSuccessOrder(res.data);
+    } catch (err) {
+      console.error('Purchase error:', err);
+      showNotification('error', err.response?.data?.error || 'Failed to complete order. Please try again.');
+    } finally {
+      setSubmittingPurchase(false);
     }
   };
 
@@ -271,6 +312,29 @@ export default function Marketplace() {
                       {p.description || 'Enterprise grade solution configured with automated margin governance.'}
                     </p>
 
+                    {/* Stock Status Bar */}
+                    <div className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <span className="text-[11px] text-text-muted font-semibold flex items-center gap-1.5">
+                        <Boxes className="w-3.5 h-3.5 text-slate-400" />
+                        Warehouse Stock:
+                      </span>
+                      {p.stock > 10 ? (
+                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          {p.stock} {p.unit || 'units'}
+                        </span>
+                      ) : p.stock > 0 ? (
+                        <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                          Low Stock: {p.stock} left
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
+                          Out of Stock
+                        </span>
+                      )}
+                    </div>
+
                     {/* Price Strip */}
                     <div className="pt-2 border-t border-slate-100 flex justify-between items-baseline">
                       <span className="text-xs text-text-muted font-medium">List Price:</span>
@@ -283,22 +347,41 @@ export default function Marketplace() {
 
                   {/* Actions Strip */}
                   <div className="space-y-2 pt-2">
-                    <div className="text-[11px] font-semibold text-primary text-center flex items-center justify-center space-x-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                      <Eye className="w-3 h-3" />
-                      <span>Click card for full details</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedProduct(p);
+                          setModalQuantity(1);
+                          setActiveActionTab('buy');
+                          setPurchaseSuccessOrder(null);
+                        }}
+                        disabled={p.stock <= 0}
+                        className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white py-2 px-3 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center space-x-1.5 cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Buy Now</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedProduct(p);
+                          setModalQuantity(1);
+                          setActiveActionTab('quote');
+                          setPurchaseSuccessOrder(null);
+                        }}
+                        className="btn-secondary py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Quote</span>
+                      </button>
                     </div>
 
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedProduct(p);
-                        setModalQuantity(1);
-                      }}
-                      className="btn-primary w-full py-2.5 px-4 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center space-x-2"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Request Quotation for Product</span>
-                    </button>
+                    <div className="text-[10px] font-semibold text-slate-400 text-center flex items-center justify-center space-x-1 group-hover:text-primary transition-colors">
+                      <Eye className="w-3 h-3" />
+                      <span>View details &amp; inventory routing</span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -358,12 +441,26 @@ export default function Marketplace() {
                 </div>
 
                 <div className="bg-slate-50 border border-surface-soft p-4 rounded-2xl">
-                  <span className="text-xs text-text-muted font-semibold block">Pricing Tier Eligible</span>
-                  <span className="text-xl font-bold text-slate-800 flex items-center mt-1">
-                    <Tag className="w-4 h-4 text-emerald-600 mr-1.5" />
-                    <span>Volume Discount</span>
+                  <span className="text-xs text-text-muted font-semibold block">Warehouse Stock Available</span>
+                  <span className="text-xl font-bold flex items-center mt-1">
+                    {selectedProduct.stock > 10 ? (
+                      <span className="text-emerald-700 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span>{selectedProduct.stock} units in stock</span>
+                      </span>
+                    ) : selectedProduct.stock > 0 ? (
+                      <span className="text-amber-700 flex items-center gap-1.5">
+                        <Boxes className="w-4 h-4 text-amber-600" />
+                        <span>Low Stock: {selectedProduct.stock} left</span>
+                      </span>
+                    ) : (
+                      <span className="text-red-700 flex items-center gap-1.5">
+                        <Boxes className="w-4 h-4 text-red-600" />
+                        <span>Out of Stock</span>
+                      </span>
+                    )}
                   </span>
-                  <span className="text-[11px] text-text-muted block font-medium">Negotiable with Sales Rep</span>
+                  <span className="text-[11px] text-text-muted block font-medium">Auto-deducted on purchase</span>
                 </div>
               </div>
 
@@ -394,102 +491,305 @@ export default function Marketplace() {
                     <CheckCircle2 className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-[10px] text-text-muted block font-semibold">Availability Status</span>
-                    <span className="text-emerald-700 font-bold">In Stock &amp; Ready for Quote</span>
+                    <span className="text-[10px] text-text-muted block font-semibold">Inventory Status</span>
+                    <span className="text-emerald-700 font-bold">
+                      {selectedProduct.stock > 0 ? `${selectedProduct.stock} Units Ready for Dispatch` : 'Pending Restock'}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Quote Request Form */}
-              <form onSubmit={handleRequestQuote} className="bg-gradient-to-br from-[#110d1a] to-[#201925] p-6 rounded-2xl text-white space-y-4 shadow-lg">
-                <div className="flex flex-wrap justify-between items-center gap-4">
-                  <div>
-                    <h4 className="font-bold text-sm text-white">Request Official Commercial Proposal</h4>
-                    <p className="text-xs text-slate-300">Submit an inquiry to trigger parallel approvals and volume discount models.</p>
+              {/* Order Confirmation Screen if Purchase Successful */}
+              {purchaseSuccessOrder ? (
+                <div className="bg-gradient-to-br from-emerald-950 to-slate-900 border border-emerald-500/30 rounded-2xl p-6 text-white space-y-4 shadow-xl">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center text-2xl font-bold shadow-lg shadow-emerald-500/30">
+                      ✓
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-extrabold text-white">Purchase Confirmed!</h4>
+                      <p className="text-xs text-emerald-300">Warehouse stock decremented &amp; order confirmed in pipeline.</p>
+                    </div>
                   </div>
 
-                  {/* Quantity Stepper */}
-                  <div className="flex items-center space-x-3 bg-white/10 px-3 py-1.5 rounded-xl border border-white/15">
-                    <span className="text-xs font-semibold text-slate-300">Qty:</span>
-                    <button
-                      type="button"
-                      onClick={() => setModalQuantity(prev => Math.max(1, prev - 1))}
-                      className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center text-xs transition-colors cursor-pointer"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min="1"
-                      value={modalQuantity}
-                      onChange={(e) => setModalQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-12 text-center bg-transparent border-0 text-xs font-bold text-emerald-400 py-1 focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setModalQuantity(prev => prev + 1)}
-                      className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center text-xs transition-colors cursor-pointer"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                {/* Email and Notes Inputs */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <input
-                    type="email"
-                    placeholder="Your work email (for proposal dispatch)..."
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                    className="w-full bg-white/10 border border-white/15 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                  <input
-                    type="text"
-                    placeholder="Specific requirements or target delivery date..."
-                    value={customerNotes}
-                    onChange={(e) => setCustomerNotes(e.target.value)}
-                    className="w-full bg-white/10 border border-white/15 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-
-                <div className="pt-3 border-t border-white/15 flex flex-wrap justify-between items-center gap-4">
-                  <div>
-                    <span className="text-[11px] text-slate-400 block">Estimated Base Subtotal:</span>
-                    <span className="text-xl font-black text-emerald-400 font-mono">
-                      {formatMoney(parseFloat(selectedProduct.base_price || 0) * modalQuantity)}
-                    </span>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white/10 p-4 rounded-xl border border-white/10 text-xs">
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Order Ref:</span>
+                      <span className="font-mono font-bold text-emerald-400">{purchaseSuccessOrder.orderId}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Qty Purchased:</span>
+                      <span className="font-bold text-white">{purchaseSuccessOrder.quantityPurchased} units</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Amount:</span>
+                      <span className="font-mono font-bold text-white">{formatMoney(purchaseSuccessOrder.totalAmount)}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Remaining Stock:</span>
+                      <span className="font-mono font-bold text-amber-300">{purchaseSuccessOrder.remainingStock} units</span>
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex justify-end pt-2">
                     <button
-                      type="button"
-                      onClick={() => setSelectedProduct(null)}
-                      className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs text-white font-semibold transition-colors cursor-pointer"
+                      onClick={() => {
+                        setPurchaseSuccessOrder(null);
+                        setSelectedProduct(null);
+                      }}
+                      className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl shadow transition-all cursor-pointer"
                     >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={submittingInquiry}
-                      className="btn-primary py-2.5 px-5 text-xs shadow-lg flex items-center gap-2"
-                    >
-                      {submittingInquiry ? (
-                        <>
-                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span>Dispatching...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-3.5 h-3.5" />
-                          <span>Dispatch Proposal Request</span>
-                        </>
-                      )}
+                      Done • Continue Shopping
                     </button>
                   </div>
                 </div>
-              </form>
+              ) : (
+                <div className="space-y-4">
+                  {/* Action Mode Toggle */}
+                  <div className="flex bg-slate-100 p-1.5 rounded-xl gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveActionTab('buy')}
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        activeActionTab === 'buy'
+                          ? 'bg-emerald-600 text-white shadow-sm'
+                          : 'text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Instant Buy &amp; Decrement Stock</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveActionTab('quote')}
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        activeActionTab === 'quote'
+                          ? 'bg-purple-700 text-white shadow-sm'
+                          : 'text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Request Custom Proposal</span>
+                    </button>
+                  </div>
+
+                  {activeActionTab === 'buy' ? (
+                    /* Instant Buy Form */
+                    <form onSubmit={handleInstantBuy} className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-2xl text-white space-y-4 shadow-lg border border-slate-700">
+                      <div className="flex flex-wrap justify-between items-center gap-4">
+                        <div>
+                          <h4 className="font-bold text-sm text-white flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Direct Purchase &amp; Instant Fulfillment
+                          </h4>
+                          <p className="text-xs text-slate-300">
+                            Available in warehouse: <strong className="text-emerald-400">{selectedProduct.stock} units</strong>
+                          </p>
+                        </div>
+
+                        {/* Quantity Stepper */}
+                        <div className="flex items-center space-x-3 bg-white/10 px-3 py-1.5 rounded-xl border border-white/15">
+                          <span className="text-xs font-semibold text-slate-300">Qty:</span>
+                          <button
+                            type="button"
+                            onClick={() => setModalQuantity(prev => Math.max(1, prev - 1))}
+                            className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center text-xs transition-colors cursor-pointer"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min="1"
+                            max={selectedProduct.stock ?? 9999}
+                            value={modalQuantity > (selectedProduct.stock ?? 9999) ? (selectedProduct.stock ?? 9999) : modalQuantity}
+                            onChange={(e) => setModalQuantity(Math.max(1, Math.min(selectedProduct.stock ?? 9999, parseInt(e.target.value) || 1)))}
+                            className="w-12 text-center bg-transparent border-0 text-xs font-bold text-emerald-400 py-1 focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setModalQuantity(prev => Math.min(selectedProduct.stock ?? 9999, prev + 1))}
+                            className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center text-xs transition-colors cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Payment Method Selector */}
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">Payment Method</label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { id: 'card', label: 'Credit/Debit Card', icon: '💳' },
+                            { id: 'upi', label: 'UPI / Instant QR', icon: '📱' },
+                            { id: 'cod', label: 'Cash on Delivery', icon: '💵' }
+                          ].map(pm => (
+                            <button
+                              key={pm.id}
+                              type="button"
+                              onClick={() => setPaymentMethod(pm.id)}
+                              className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                                paymentMethod === pm.id
+                                  ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
+                                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                              }`}
+                            >
+                              <span>{pm.icon}</span>
+                              <span>{pm.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Email Input */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <input
+                          type="email"
+                          placeholder="Your work/buyer email..."
+                          value={customerEmail}
+                          onChange={(e) => setCustomerEmail(e.target.value)}
+                          className="w-full bg-white/10 border border-white/15 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          required
+                        />
+                        <input
+                          type="text"
+                          placeholder="Delivery notes or purchase order ref (optional)..."
+                          value={customerNotes}
+                          onChange={(e) => setCustomerNotes(e.target.value)}
+                          className="w-full bg-white/10 border border-white/15 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+
+                      <div className="pt-3 border-t border-white/15 flex flex-wrap justify-between items-center gap-4">
+                        <div>
+                          <span className="text-[11px] text-slate-400 block">Total Due ({modalQuantity} units):</span>
+                          <span className="text-xl font-black text-emerald-400 font-mono">
+                            {formatMoney(parseFloat(selectedProduct.base_price || 0) * modalQuantity * (1 + (parseFloat(selectedProduct.tax_rate || 0) / 100)))}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedProduct(null)}
+                            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs text-white font-semibold transition-colors cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={submittingPurchase || selectedProduct.stock <= 0}
+                            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 py-2.5 px-5 rounded-xl text-xs font-bold text-white shadow-lg flex items-center gap-2 cursor-pointer transition-all"
+                          >
+                            {submittingPurchase ? (
+                              <>
+                                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>Processing Purchase...</span>
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Confirm Purchase &amp; Deduct Stock</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  ) : (
+                    /* Quote Request Form */
+                    <form onSubmit={handleRequestQuote} className="bg-gradient-to-br from-[#110d1a] to-[#201925] p-6 rounded-2xl text-white space-y-4 shadow-lg">
+                      <div className="flex flex-wrap justify-between items-center gap-4">
+                        <div>
+                          <h4 className="font-bold text-sm text-white">Request Official Commercial Proposal</h4>
+                          <p className="text-xs text-slate-300">Submit an inquiry to trigger parallel approvals and volume discount models.</p>
+                        </div>
+
+                        {/* Quantity Stepper */}
+                        <div className="flex items-center space-x-3 bg-white/10 px-3 py-1.5 rounded-xl border border-white/15">
+                          <span className="text-xs font-semibold text-slate-300">Qty:</span>
+                          <button
+                            type="button"
+                            onClick={() => setModalQuantity(prev => Math.max(1, prev - 1))}
+                            className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center text-xs transition-colors cursor-pointer"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min="1"
+                            value={modalQuantity}
+                            onChange={(e) => setModalQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                            className="w-12 text-center bg-transparent border-0 text-xs font-bold text-emerald-400 py-1 focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setModalQuantity(prev => prev + 1)}
+                            className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center text-xs transition-colors cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Email and Notes Inputs */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                        <input
+                          type="email"
+                          placeholder="Your work email (for proposal dispatch)..."
+                          value={customerEmail}
+                          onChange={(e) => setCustomerEmail(e.target.value)}
+                          className="w-full bg-white/10 border border-white/15 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
+                          required
+                        />
+                        <input
+                          type="text"
+                          placeholder="Specific requirements or target delivery date..."
+                          value={customerNotes}
+                          onChange={(e) => setCustomerNotes(e.target.value)}
+                          className="w-full bg-white/10 border border-white/15 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+
+                      <div className="pt-3 border-t border-white/15 flex flex-wrap justify-between items-center gap-4">
+                        <div>
+                          <span className="text-[11px] text-slate-400 block">Estimated Base Subtotal:</span>
+                          <span className="text-xl font-black text-emerald-400 font-mono">
+                            {formatMoney(parseFloat(selectedProduct.base_price || 0) * modalQuantity)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedProduct(null)}
+                            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs text-white font-semibold transition-colors cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={submittingInquiry}
+                            className="btn-primary py-2.5 px-5 text-xs shadow-lg flex items-center gap-2"
+                          >
+                            {submittingInquiry ? (
+                              <>
+                                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>Dispatching...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Send className="w-3.5 h-3.5" />
+                                <span>Dispatch Proposal Request</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
             </div>
 
           </div>

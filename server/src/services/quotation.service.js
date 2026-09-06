@@ -153,7 +153,7 @@ class QuotationService {
         totalBase += truePrice * qty;
         totalNet += truePrice * (1 - safeDiscount / 100) * qty;
       }
-      
+
       let overallDiscount = 0;
       if (totalBase > 0) {
         overallDiscount = ((totalBase - totalNet) / totalBase) * 100;
@@ -607,25 +607,52 @@ class QuotationService {
 
         // Auto-deduct inventory stock for customer purchase
         try {
-          const linesRows = await quotationRepository.findQuotationLinesWithCategory(quotationId);
+          const splitsRes = await client.query(
+            `SELECT fs.warehouse_id, fs.quantity, ql.product_id
+             FROM fulfillment_splits fs
+             JOIN quotation_lines ql ON fs.quotation_id = ql.quotation_id
+             WHERE fs.quotation_id = $1`,
+            [quotationId]
+          );
 
-          // Get warehouse ID via warehouseRepository
-          const targetWarehouseId = await warehouseRepository.findFirstWarehouse(quotation.company_id, client);
-
-          for (const line of linesRows) {
-            const prodId = line.product_id;
-            const qty = parseInt(line.quantity, 10) || 1;
-            await inventoryRepository.adjustStock(
-              client,
-              quotation.company_id || 'c1',
-              targetWarehouseId,
-              prodId,
-              quotation.customer_id || null,
-              'out',
-              qty,
-              `Customer Purchase (Quote #${quotationId})`,
-              quotationId
+          if (splitsRes.rows.length > 0) {
+            // Deduct based on configured fulfillment splits
+            for (const split of splitsRes.rows) {
+              const qty = parseInt(split.quantity, 10) || 1;
+              await inventoryRepository.adjustStock(
+                client,
+                quotation.company_id || 'c1',
+                split.warehouse_id,
+                split.product_id,
+                quotation.customer_id || null,
+                'out',
+                qty,
+                `Fulfillment Split Dispatch (Quote #${quotationId})`,
+                quotationId
+              );
+            }
+          } else {
+            // Deduct dynamically across warehouses using deductProductStock
+            const linesRes = await client.query(
+              `SELECT ql.product_id, ql.quantity
+               FROM quotation_lines ql
+               WHERE ql.quotation_id = $1`,
+              [quotationId]
             );
+
+            for (const line of linesRes.rows) {
+              const prodId = line.product_id;
+              const qty = parseInt(line.quantity, 10) || 1;
+              await inventoryRepository.deductProductStock(
+                client,
+                quotation.company_id || 'c1',
+                prodId,
+                qty,
+                quotation.customer_id || null,
+                `Customer Purchase (Quote #${quotationId})`,
+                quotationId
+              );
+            }
           }
         } catch (invErr) {
           console.warn('Auto stock deduction warning:', invErr.message);

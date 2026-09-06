@@ -360,8 +360,27 @@ class QuotationRepository {
     if (updatedQuotation) {
       await logAction('quotation', quotationId, null, 'status_updated', { status, risk_score: blendedRiskScore });
       
+      // Auto-update linked inquiry status to paid when quotation is confirmed/closed
+      if (status === 'confirmed' || status === 'closed') {
+        try {
+          if (updatedQuotation.inquiry_id) {
+            await client.query(
+              `UPDATE inquiries SET status = 'paid', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+              [updatedQuotation.inquiry_id]
+            );
+          } else if (updatedQuotation.customer_id) {
+            await client.query(
+              `UPDATE inquiries SET status = 'paid', updated_at = CURRENT_TIMESTAMP WHERE customer_id = $1 AND status IN ('open', 'in_progress')`,
+              [updatedQuotation.customer_id]
+            );
+          }
+        } catch (inqErr) {
+          console.warn('[System] Error updating inquiry status to paid:', inqErr.message);
+        }
+      }
+
       // Auto-generate Order and Invoice if confirmed
-      if (status === 'confirmed') {
+      if (status === 'confirmed' || status === 'closed') {
         try {
           // Create Order
           const orderRes = await client.query(

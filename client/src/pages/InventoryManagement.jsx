@@ -17,6 +17,7 @@ export default function InventoryManagement() {
   // Adjustment form state
   const [adjustForm, setAdjustForm] = useState({
     warehouseId: '',
+    toWarehouseId: '',
     productId: '',
     type: 'in',
     quantity: 1,
@@ -34,8 +35,13 @@ export default function InventoryManagement() {
 
   // Auto-select initial dropdown defaults if available
   useEffect(() => {
-    if (uniqueWarehouses.length > 0 && !adjustForm.warehouseId) {
-      setAdjustForm(prev => ({ ...prev, warehouseId: uniqueWarehouses[0].id }));
+    if (uniqueWarehouses.length > 0) {
+      if (!adjustForm.warehouseId) {
+        setAdjustForm(prev => ({ ...prev, warehouseId: uniqueWarehouses[0].id }));
+      }
+      if (!adjustForm.toWarehouseId && uniqueWarehouses.length > 1) {
+        setAdjustForm(prev => ({ ...prev, toWarehouseId: uniqueWarehouses[1].id }));
+      }
     }
     if (uniqueProducts.length > 0 && !adjustForm.productId) {
       setAdjustForm(prev => ({ ...prev, productId: uniqueProducts[0].id }));
@@ -79,9 +85,21 @@ export default function InventoryManagement() {
     if (!adjustForm.warehouseId || !adjustForm.productId) {
       return showAlert('Warning', 'Please select warehouse and product', 'warning');
     }
+    if (adjustForm.type === 'transfer') {
+      if (!adjustForm.toWarehouseId) {
+        return showAlert('Warning', 'Please select a destination warehouse for stock transfer', 'warning');
+      }
+      if (adjustForm.warehouseId === adjustForm.toWarehouseId) {
+        return showAlert('Warning', 'Source and destination warehouses cannot be the same', 'warning');
+      }
+    }
     try {
-      await api.post('/inventory/adjust', adjustForm);
-      showAlert('Success', 'Stock adjusted successfully! Inventory updated across all modules.', 'success');
+      await api.post('/inventory/adjust', {
+        ...adjustForm,
+        fromWarehouseId: adjustForm.warehouseId,
+        toWarehouseId: adjustForm.toWarehouseId
+      });
+      showAlert('Success', adjustForm.type === 'transfer' ? 'Stock transferred successfully between warehouses!' : 'Stock adjusted successfully! Inventory updated across all modules.', 'success');
       setAdjustForm(prev => ({ ...prev, quantity: 1, reason: '' }));
       fetchData(false);
       setActiveTab('overview');
@@ -90,14 +108,34 @@ export default function InventoryManagement() {
     }
   };
 
-  // Filtered Stock calculation
-  const filteredStock = stock.filter(item => {
+  // Filtered and Grouped Stock calculation
+  const rawFiltered = stock.filter(item => {
     const matchesSearch = item.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
                           (item.warehouse_name && item.warehouse_name.toLowerCase().includes(searchQuery.toLowerCase()));
-    
     if (!matchesSearch) return false;
+    return true;
+  });
 
+  const groupedStock = Object.values(rawFiltered.reduce((acc, item) => {
+    if (!acc[item.product_id]) {
+      acc[item.product_id] = { 
+        ...item, 
+        quantity_available: 0,
+        warehouse_names: new Set()
+      };
+    }
+    acc[item.product_id].quantity_available += parseInt(item.quantity_available || 0, 10);
+    if (parseInt(item.quantity_available || 0, 10) > 0) {
+      acc[item.product_id].warehouse_names.add(item.warehouse_name);
+    }
+    return acc;
+  }, {})).map(group => ({
+    ...group,
+    warehouse_summary: group.warehouse_names.size > 1 
+      ? `${group.warehouse_names.size} Locations` 
+      : (Array.from(group.warehouse_names)[0] || 'All Locations (0 Stock)')
+  })).filter(item => {
     if (statusFilter === 'out') return item.quantity_available <= 0;
     if (statusFilter === 'low') return item.quantity_available > 0 && item.quantity_available < 10;
     if (statusFilter === 'in') return item.quantity_available >= 10;
@@ -105,9 +143,15 @@ export default function InventoryManagement() {
   });
 
   // Calculate Metrics
-  const totalStockItems = stock.reduce((sum, item) => sum + parseInt(item.quantity_available || 0, 10), 0);
-  const lowStockCount = stock.filter(item => item.quantity_available > 0 && item.quantity_available < 10).length;
-  const outOfStockCount = stock.filter(item => item.quantity_available <= 0).length;
+  const fullGroupedStock = Object.values(stock.reduce((acc, item) => {
+    if (!acc[item.product_id]) acc[item.product_id] = 0;
+    acc[item.product_id] += parseInt(item.quantity_available || 0, 10);
+    return acc;
+  }, {}));
+
+  const totalStockItems = fullGroupedStock.reduce((sum, qty) => sum + qty, 0);
+  const lowStockCount = fullGroupedStock.filter(qty => qty > 0 && qty < 10).length;
+  const outOfStockCount = fullGroupedStock.filter(qty => qty <= 0).length;
   const selectedProductStock = stock.find(s => s.product_id === adjustForm.productId && s.warehouse_id === adjustForm.warehouseId);
 
   return (
@@ -267,7 +311,7 @@ export default function InventoryManagement() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {filteredStock.length === 0 ? (
+                      {groupedStock.length === 0 ? (
                         <tr>
                           <td colSpan="6" className="p-12 text-center text-slate-500">
                             <i className="fa-solid fa-box-open text-3xl mb-2 text-slate-300"></i>
@@ -275,7 +319,7 @@ export default function InventoryManagement() {
                           </td>
                         </tr>
                       ) : (
-                        filteredStock.map((item, idx) => (
+                        groupedStock.map((item, idx) => (
                           <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
                             <td className="p-4 font-bold text-slate-800">
                               {item.product_name}
@@ -288,7 +332,7 @@ export default function InventoryManagement() {
                             </td>
                             <td className="p-4 text-slate-700">
                               <i className="fa-solid fa-warehouse mr-1.5 text-slate-400"></i>
-                              {item.warehouse_name}
+                              {item.warehouse_summary}
                             </td>
                             <td className="p-4 text-right font-extrabold text-slate-800 text-base">
                               {item.quantity_available}
@@ -353,17 +397,16 @@ export default function InventoryManagement() {
                 <form onSubmit={handleAdjustSubmit} className="space-y-5">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Warehouse Location</label>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Movement Type</label>
                       <select 
-                        required
-                        className="w-full p-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-primary bg-white"
-                        value={adjustForm.warehouseId}
-                        onChange={e => setAdjustForm({...adjustForm, warehouseId: e.target.value})}
+                        className="w-full p-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-primary bg-white font-semibold"
+                        value={adjustForm.type}
+                        onChange={e => setAdjustForm({...adjustForm, type: e.target.value})}
                       >
-                        <option value="">Select Warehouse</option>
-                        {uniqueWarehouses.map(w => (
-                          <option key={w.id} value={w.id}>{w.name}</option>
-                        ))}
+                        <option value="in">📦 Stock In (Received from Supplier)</option>
+                        <option value="out">📤 Stock Out (Deduction / Removal)</option>
+                        <option value="transfer">🔄 Inter-Warehouse Transfer</option>
+                        <option value="adjustment">⚖️ Audit Adjustment</option>
                       </select>
                     </div>
 
@@ -385,44 +428,94 @@ export default function InventoryManagement() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Movement Type</label>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        {adjustForm.type === 'transfer' ? 'Source Warehouse (From)' : 'Warehouse Location'}
+                      </label>
                       <select 
+                        required
                         className="w-full p-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-primary bg-white"
-                        value={adjustForm.type}
-                        onChange={e => setAdjustForm({...adjustForm, type: e.target.value})}
+                        value={adjustForm.warehouseId}
+                        onChange={e => setAdjustForm({...adjustForm, warehouseId: e.target.value})}
                       >
-                        <option value="in">📦 Stock In (Received from Supplier)</option>
-                        <option value="out">📤 Stock Out (Deduction / Removal)</option>
-                        <option value="adjustment">⚖️ Audit Adjustment</option>
+                        <option value="">Select Warehouse</option>
+                        {uniqueWarehouses.map(w => (
+                          <option key={w.id} value={w.id}>{w.name}</option>
+                        ))}
                       </select>
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Quantity</label>
-                      <input 
-                        type="number" 
-                        min="1" 
-                        required
-                        className="w-full p-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-primary" 
-                        value={adjustForm.quantity}
-                        onChange={e => setAdjustForm({...adjustForm, quantity: parseInt(e.target.value, 10) || 1})}
-                      />
-                    </div>
+                    {adjustForm.type === 'transfer' ? (
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-purple-700 mb-1.5">
+                          Destination Warehouse (To)
+                        </label>
+                        <select 
+                          required
+                          className="w-full p-3 rounded-lg border border-purple-300 text-sm focus:outline-none focus:border-purple-500 bg-purple-50/50"
+                          value={adjustForm.toWarehouseId}
+                          onChange={e => setAdjustForm({...adjustForm, toWarehouseId: e.target.value})}
+                        >
+                          <option value="">Select Target Warehouse</option>
+                          {uniqueWarehouses
+                            .filter(w => w.id !== adjustForm.warehouseId)
+                            .map(w => (
+                              <option key={w.id} value={w.id}>{w.name}</option>
+                            ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Quantity</label>
+                        <input 
+                          type="number" 
+                          min="1" 
+                          required
+                          className="w-full p-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-primary" 
+                          value={adjustForm.quantity}
+                          onChange={e => setAdjustForm({...adjustForm, quantity: parseInt(e.target.value, 10) || 1})}
+                        />
+                      </div>
+                    )}
                   </div>
+
+                  {adjustForm.type === 'transfer' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Transfer Quantity</label>
+                        <input 
+                          type="number" 
+                          min="1" 
+                          required
+                          className="w-full p-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-primary font-bold text-purple-700" 
+                          value={adjustForm.quantity}
+                          onChange={e => setAdjustForm({...adjustForm, quantity: parseInt(e.target.value, 10) || 1})}
+                        />
+                      </div>
+                      <div className="flex items-center text-xs text-slate-500 pt-5">
+                        <i className="fa-solid fa-arrow-right-arrow-left text-purple-600 mr-2 text-base"></i>
+                        <span>Units will be deducted from source depot and credited to destination depot.</span>
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Reason / Reference Notes</label>
                     <input 
                       type="text" 
                       className="w-full p-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-primary" 
-                      placeholder="e.g. PO-8821 Supplier Batch, Inventory Audit, Damaged Return"
+                      placeholder={adjustForm.type === 'transfer' ? 'e.g. Rebalancing regional stock, Emergency transfer' : 'e.g. PO-8821 Supplier Batch, Inventory Audit, Damaged Return'}
                       value={adjustForm.reason}
                       onChange={e => setAdjustForm({...adjustForm, reason: e.target.value})}
                     />
                   </div>
 
-                  <button type="submit" className="w-full py-3.5 bg-primary text-black font-bold rounded-lg shadow-sm hover:bg-primary-dark transition flex items-center justify-center gap-2">
-                    <i className="fa-solid fa-check-circle"></i> Save & Commit Stock Movement
+                  <button type="submit" className={`w-full py-3.5 font-bold rounded-lg shadow-sm transition flex items-center justify-center gap-2 cursor-pointer ${
+                    adjustForm.type === 'transfer'
+                      ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                      : 'bg-primary text-black hover:bg-primary-dark'
+                  }`}>
+                    <i className="fa-solid fa-check-circle"></i>
+                    <span>{adjustForm.type === 'transfer' ? 'Execute Warehouse Transfer' : 'Save & Commit Stock Movement'}</span>
                   </button>
                 </form>
               </div>
@@ -456,7 +549,9 @@ export default function InventoryManagement() {
                           <td className="p-4">
                             <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${
                               txn.type === 'in' ? 'bg-emerald-100 text-emerald-800' :
-                              txn.type === 'out' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                              txn.type === 'out' ? 'bg-red-100 text-red-800' :
+                              txn.type === 'transfer' ? 'bg-purple-100 text-purple-800' :
+                              'bg-blue-100 text-blue-800'
                             }`}>
                               {txn.type}
                             </span>

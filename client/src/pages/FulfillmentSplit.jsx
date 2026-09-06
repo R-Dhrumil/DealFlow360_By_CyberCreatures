@@ -22,21 +22,15 @@ export default function FulfillmentSplit() {
     try {
       setLoading(true);
       const response = await api.get(`/warehouses/quotations/${quotationId}/suggest-split`);
-      if (response.data && response.data.length > 0) {
+      if (response.data && Array.isArray(response.data)) {
         setSplits(response.data);
       } else {
-        // Mock default splits for demo
-        setSplits([
-          { quotationLineId: 1, productId: '1111', productName: 'Enterprise Server X1', warehouseId: 'wh-main', warehouseName: 'Main Warehouse Depot', quantity: 2, shipmentCost: 15.00 },
-          { quotationLineId: 2, productId: '2222', productName: 'SaaS Platform Setup Package', warehouseId: 'wh-east', warehouseName: 'East Coast Logistics', quantity: 50, shipmentCost: 8.50 }
-        ]);
+        setSplits([]);
       }
     } catch (error) {
       console.error('Failed to fetch splits', error);
-      setSplits([
-        { quotationLineId: 1, productId: '1111', productName: 'Enterprise Server X1', warehouseId: 'wh-main', warehouseName: 'Main Warehouse Depot', quantity: 2, shipmentCost: 15.00 },
-        { quotationLineId: 2, productId: '2222', productName: 'SaaS Platform Setup Package', warehouseId: 'wh-east', warehouseName: 'East Coast Logistics', quantity: 50, shipmentCost: 8.50 }
-      ]);
+      showNotification('error', 'Unable to calculate warehouse fulfillment splits for this quote.');
+      setSplits([]);
     } finally {
       setLoading(false);
     }
@@ -179,8 +173,17 @@ export default function FulfillmentSplit() {
       </div>
 
       {/* Warehouse Allocation Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {Object.entries(warehouseGroups).map(([warehouseId, group]) => (
+      {splits.length === 0 ? (
+        <div className="bg-white p-12 text-center rounded-xl border border-surface-soft shadow-sm">
+          <div className="w-16 h-16 bg-slate-50 text-text-muted rounded-full flex items-center justify-center mx-auto mb-4">
+            <i className="fa-solid fa-boxes-packing text-2xl"></i>
+          </div>
+          <h3 className="text-lg font-semibold text-text-main">No Fulfillment Splits Required</h3>
+          <p className="text-text-muted max-w-md mx-auto mt-2">All line items for this quotation are digital services or already fulfilled from available warehouse stock.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {Object.entries(warehouseGroups).map(([warehouseId, group]) => (
           <div key={warehouseId} className="bg-white rounded-xl border border-surface-soft shadow-sm overflow-hidden">
             <div className="bg-slate-100 px-5 py-3.5 border-b border-surface-soft flex justify-between items-center">
               <div className="flex items-center space-x-2.5">
@@ -227,6 +230,7 @@ export default function FulfillmentSplit() {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }

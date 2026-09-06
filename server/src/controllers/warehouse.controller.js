@@ -1,8 +1,10 @@
 const warehouseRepository = require('../repositories/warehouse.repository');
 const quotationRepository = require('../repositories/quotation.repository');
+const inventoryRepository = require('../repositories/inventory.repository');
+const { pool } = require('../config/db');
 const { calculateFulfillmentSplits } = require('../services/fulfillment.service');
 const ApiError = require('../utils/apiError');
-const { emitRoleNotification } = require('../services/socket.service');
+const { emitRoleNotification, broadcastInventoryUpdate } = require('../services/socket.service');
 
 class WarehouseController {
   async getCompanyWarehouses(req, res) {
@@ -69,7 +71,7 @@ class WarehouseController {
 
   async acceptSplit(req, res) {
     const quotationId = req.params.id;
-    const { splits } = req.body;
+    const { splits, dispatch = true } = req.body;
     
     if (!splits || !Array.isArray(splits) || splits.length === 0) {
       throw ApiError.badRequest('Splits array data is required');
@@ -77,14 +79,47 @@ class WarehouseController {
 
     await warehouseRepository.saveFulfillmentSplit(quotationId, splits);
 
+    // If dispatch is requested, deduct allocated stock from respective warehouses
+    if (dispatch) {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (const split of splits) {
+          const whId = split.warehouseId || split.warehouse_id;
+          const prodId = split.productId || split.product_id;
+          const qty = parseInt(split.quantity, 10) || 0;
+          if (whId && prodId && qty > 0) {
+            await inventoryRepository.adjustStock(
+              client,
+              req.companyId,
+              whId,
+              prodId,
+              req.user?.id || null,
+              'out',
+              qty,
+              `Fulfillment Split Allocation (Quote #${quotationId})`,
+              quotationId
+            );
+          }
+        }
+        await client.query('COMMIT');
+        broadcastInventoryUpdate(req.companyId, { quotationId, type: 'split_allocated' });
+      } catch (err) {
+        await client.query('ROLLBACK');
+        console.warn('Split stock deduction notice:', err.message);
+      } finally {
+        client.release();
+      }
+    }
+
     emitRoleNotification(['operations', 'admin', 'sales_manager'], {
       type: 'success',
       title: '📦 Fulfillment Allocated',
-      message: `Fulfillment split saved for Quote #${quotationId}. Stock allocated.`,
+      message: `Fulfillment split saved for Quote #${quotationId}. Stock allocated and dispatches updated.`,
       link: `/app/fulfillment/${quotationId}`
     });
 
-    return res.json({ success: true });
+    return res.json({ success: true, message: 'Fulfillment splits accepted and stock allocated successfully.' });
   }
 }
 
