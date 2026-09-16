@@ -9,6 +9,7 @@ import { useCurrency } from '../contexts/CurrencyContext';
 export default function FinanceOperations() {
   const { formatMoney } = useCurrency();
   const { showNotification } = useNotification();
+  const [loading, setLoading] = useState(true);
   const [approvals, setApprovals] = useState([]);
   const [billingSchedules, setBillingSchedules] = useState([]);
   const [creditNotes, setCreditNotes] = useState([]);
@@ -210,7 +211,7 @@ export default function FinanceOperations() {
               </thead>
               <tbody>
                 {creditNotes.length === 0 ? (
-                  <tr><td colSpan="4" className="p-4 text-center text-xs text-text-muted">No credit notes issued.</td></tr>
+                  <tr><td colSpan="5" className="p-4 text-center text-xs text-text-muted">No credit notes issued.</td></tr>
                 ) : (
                   creditNotes.map(cn => (
                     <tr key={cn.id} className="border-b border-surface-soft hover:bg-slate-50 transition-colors">

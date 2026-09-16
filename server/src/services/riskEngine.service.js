@@ -98,7 +98,7 @@ class RiskEngineService {
     // Load customer
     let customer = null;
     if (customerId) {
-      const resCust = await query('SELECT * FROM customers WHERE id = $1 AND (company_id = $2 OR company_id IS NULL)', [customerId, companyId]);
+      const resCust = await query('SELECT * FROM customers WHERE id = $1', [customerId]);
       customer = resCust.rows[0];
     }
 
